@@ -62,6 +62,31 @@ namespace Xipin.UIAITools
             Debug.Log($"UI component candidate index validation passed: {rows.Count} candidates.");
         }
 
+        public static void ValidateContract()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsComponentCandidateContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                var profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+                profile.logRoot = root;
+                var indexRow = IndexRow("Component00000001");
+                WriteIndexCsv(profile, new[] { indexRow });
+                ReadIndexRows(profile);
+                ExpectFailure("duplicate_index_row", "Duplicate UI component candidate id", () => WriteIndexCsv(profile, new[] { indexRow, indexRow }), () => ReadIndexRows(profile));
+
+                var reviewRow = ReviewRow("Component00000001");
+                WriteReviewCsv(profile, new[] { reviewRow });
+                ReadReviewRows(profile);
+                ExpectFailure("duplicate_review_row", "Duplicate UI component candidate review id", () => WriteReviewCsv(profile, new[] { reviewRow, reviewRow }), () => ReadReviewRows(profile));
+            }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
+            Debug.Log("UI component candidate contract validation passed.");
+        }
+
         public static List<Dictionary<string, string>> ReadIndexRows(UIAIToolsProfile profile)
         {
             UIReportValidationService.ValidateReport(profile, UIReportFiles.ComponentCandidateIndex, UIReportFiles.ComponentCandidateIndexHeader);
@@ -450,6 +475,79 @@ namespace Xipin.UIAITools
         {
             value = value ?? "";
             return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+
+        static void WriteIndexCsv(UIAIToolsProfile profile, IEnumerable<string> rows)
+        {
+            WriteCsv(UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateIndex), UIReportFiles.ComponentCandidateIndexHeader, rows);
+        }
+
+        static void WriteReviewCsv(UIAIToolsProfile profile, IEnumerable<string> rows)
+        {
+            WriteCsv(UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateReview), UIReportFiles.ComponentCandidateReviewHeader, rows);
+        }
+
+        static void WriteCsv(string path, string header, IEnumerable<string> rows)
+        {
+            File.WriteAllLines(path, new[] { header }.Concat(rows), new UTF8Encoding(true));
+        }
+
+        static string IndexRow(string componentId)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(componentId),
+                Csv("Button"),
+                Csv("Button"),
+                Csv("Image"),
+                Csv("Sprite"),
+                Csv("Assets/Art/UI/Button.png"),
+                Csv("Assets/Art/UI/UI.spriteatlasv2"),
+                "3",
+                "2",
+                Csv("Assets/Prefab/A.prefab;Assets/Prefab/B.prefab"),
+                Csv("Assets/Prefab/A.prefab#Root/Button"),
+                Csv("candidate")
+            });
+        }
+
+        static string ReviewRow(string componentId)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(componentId),
+                Csv("Button"),
+                Csv("HighReuseButton"),
+                Csv("NeedsReview"),
+                "3",
+                "2",
+                Csv("Assets/Art/UI/Button.png"),
+                Csv("Assets/Art/UI/UI.spriteatlasv2"),
+                Csv("Assets/Prefab/A.prefab;Assets/Prefab/B.prefab"),
+                Csv("Assets/Prefab/A.prefab#Root/Button"),
+                Csv(""),
+                Csv(""),
+                Csv("normal;disabled;selected;pressed"),
+                Csv(""),
+                Csv(""),
+                Csv("")
+            });
+        }
+
+        static void ExpectFailure(string name, string expectedMessage, Action writeRows, Action readRows)
+        {
+            writeRows();
+            try
+            {
+                readRows();
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI component candidate contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI component candidate contract sample did not fail: " + name);
         }
 
         struct CandidateKey
