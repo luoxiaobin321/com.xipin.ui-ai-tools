@@ -18,12 +18,13 @@
 
 # Run / Test
 - `UIAssetTriageScanner.ValidateHostApplyResultContractBatch`；`UIAssetTriageScanner.ValidateUICreationHostGenerateResultContractBatch`
-- 最近推送：`be95ecb Require skipped host apply messages`；`b8ee2b0 Require skipped creation result messages`；`c047afc Validate creation result actions`。
+- 最近推送：宿主结果报告覆盖、Skipped 说明、Creation Action 白名单与正样例覆盖。
 - 最近已跑：`ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_Coverage.log`；`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_Coverage.log`；`ValidateUICreationHostGenerateResultContractBatch` -> `Logs/Verify_UICreationHostGenerateResultContract_CreatePrefabCoverage.log`；`ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json` -> `Logs/Verify_UICreationHostGenerateResult_CreatePrefabCoverage.log`；均 exit code 0。
 - 覆盖收紧后已跑：`ValidateMarkdownSectionContractBatch` -> `Logs/Verify_MarkdownSectionContract_AfterCoverageTightening.log`；`ValidateCsvContractBatch` -> `Logs/Verify_CsvContract_AfterCoverageTightening.log`；`ValidateJsonContractBatch` -> `Logs/Verify_JsonContract_AfterCoverageTightening.log`；均 exit code 0。
 - 阻断计划结果规则已跑：`ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_BlockingPlan.log`；`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_BlockingPlan.log`；均 exit code 0。
 - Skipped 说明规则已跑：`ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_SkippedMessage.log`；`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_SkippedMessage.log`；均 exit code 0。
 - Creation Action 白名单已跑：`ValidateUICreationHostGenerateResultContractBatch` -> `Logs/Verify_UICreationHostGenerateResultContract_ActionWhitelist.log`；`ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json` -> `Logs/Verify_UICreationHostGenerateResult_ActionWhitelist.log`；均 exit code 0。
+- Creation Action 正样例覆盖已跑：`ValidateUICreationHostGenerateResultContractBatch` -> `Logs/Verify_UICreationHostGenerateResultContract_ActionSampleCoverage.log`；exit code 0。
 - 预期阻断已确认：`ValidateHostApplyChecklistBatch` -> `Logs/Verify_HostApplyChecklist_ExpectedBlocked_AfterBlockingResultRule.log`；Unity exit code 1，命中 `PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 - `UIAssetTriageScanner.ValidateCsvContractBatch`；`UIAssetTriageScanner.ValidateJsonContractBatch`；`UIAssetTriageScanner.ValidateMarkdownSectionContractBatch`
 - `UIAssetTriageScanner.ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json`

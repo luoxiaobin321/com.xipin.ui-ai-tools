@@ -108,10 +108,14 @@ namespace Xipin.UIAITools
                 WriteCsv(profile, new[]
                 {
                     Row("0", "CreatePrefab", "Applied", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "created"),
-                    Row("1", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("2", "ApplyLayout", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("3", "ApplyText", "Skipped", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "", "empty"),
-                    Row("4", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
+                    Row("1", "CreateTemplateNode", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Panel.png", "", "QA-1", "created"),
+                    Row("2", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("3", "ApplyAssetReference", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Panel.png", "", "QA-1", "asset"),
+                    Row("4", "ApplyBindingPlaceholder", "Skipped", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "", "empty"),
+                    Row("5", "InstantiateComponent", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Text.prefab", "", "QA-1", "created"),
+                    Row("6", "ApplyLayout", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("7", "ApplyText", "Skipped", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "", "empty"),
+                    Row("8", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
                 });
                 GenerateSummary(profile, "Demo", 2);
                 Validate(profile);
