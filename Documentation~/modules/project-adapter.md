@@ -85,7 +85,7 @@ public static class UIAssetTriageScanner
 | 外部生成输入包 | `GenerateReplacementExternalInputPackageBatch`、`ValidateReplacementExternalInputPackageBatch` |
 | 宿主替换前清单 | `GenerateHostApplyChecklistBatch`、`ValidateHostApplyChecklistBatch` |
 | 宿主替换结果 | `GenerateHostApplyBlockedResultSampleBatch`、`ValidateHostApplyBlockedResultSampleBatch`、`GenerateHostApplyResultSummaryBatch`、`ValidateHostApplyResultBatch`、`ValidateHostApplyResultContractBatch` |
-| 基础契约自检 | `ValidateControlCatalogContractBatch`、`ValidateReportFilesContractBatch`、`ValidateMarkdownSectionContractBatch`、`ValidateJsonContractBatch`、`ValidateCsvContractBatch` |
+| 基础契约自检 | `ValidateProfileContractBatch`、`ValidateControlCatalogContractBatch`、`ValidateReportFilesContractBatch`、`ValidateMarkdownSectionContractBatch`、`ValidateJsonContractBatch`、`ValidateCsvContractBatch` |
 | 链路契约自检 | `ValidateScanSummaryContractBatch`、`ValidateReplacementPlanStatusContractBatch`、`ValidateReplacementPlanDryRunContractBatch`、`ValidateReplacementExecutionPlanContractBatch`、`ValidateReplacementExternalInputPackageContractBatch`、`ValidateHostApplyChecklistContractBatch`、`ValidateHostApplyResultContractBatch` |
 
 ## 宿主职责

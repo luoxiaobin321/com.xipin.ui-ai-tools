@@ -5,6 +5,7 @@
 ## UIAIToolsProfile
 
 通过 `Create > Xipin > UI AI Tools > Profile` 创建。
+默认路径、文本扫描根和地图排除开关可用 `ValidateProfileContractBatch` 复验。
 
 | 字段 | 默认值 | 用途 |
 | --- | --- | --- |
