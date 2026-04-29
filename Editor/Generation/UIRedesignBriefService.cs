@@ -10,6 +10,8 @@ namespace Xipin.UIAITools
 {
     public static class UIRedesignBriefService
     {
+        const string DuplicateAssetRule = "- `oldAssetPath` 和 `newAssetPath` 不允许重复，`targetAtlasPath` 必须是 `.spriteatlasv2`。";
+
         public static string GenerateBrief(UIAIToolsProfile profile, UIRedesignRequest request)
         {
             UIReportValidationService.Validate(profile);
@@ -76,6 +78,23 @@ namespace Xipin.UIAITools
             return path;
         }
 
+        public static void ValidateContract()
+        {
+            var lines = ContractLines();
+            ValidateSections(lines.ToArray());
+            ValidateOutputRules(lines);
+
+            var missingSection = ContractLines();
+            missingSection.Remove("## 图片归属");
+            ExpectFailure("missing_image_section", "missing section", () => ValidateSections(missingSection.ToArray()));
+
+            var missingRule = ContractLines();
+            missingRule.Remove(DuplicateAssetRule);
+            ExpectFailure("missing_duplicate_asset_rule", "output constraint is missing", () => ValidateOutputRules(missingRule));
+
+            Debug.Log("UI redesign brief contract validation passed.");
+        }
+
         static void AddSplitItems(List<string> lines, string title, string value, int count)
         {
             lines.Add($"## {title}");
@@ -140,7 +159,7 @@ namespace Xipin.UIAITools
             lines.Add("- `draftPreviewPath`、`generatedImageFolder` 和替换项路径必须使用 `Assets/...`，不得包含 `..` 路径段，新图必须位于 `generatedImageFolder` 下。");
             lines.Add("- `draftPreviewPath` 和 `newAssetPath` 必须是 `.png`。");
             lines.Add("- `replacementPlan.items` 必须存在，可为空数组。");
-            lines.Add("- `oldAssetPath` 和 `newAssetPath` 不允许重复，`targetAtlasPath` 必须是 `.spriteatlasv2`。");
+            lines.Add(DuplicateAssetRule);
             lines.Add("- `risks` 必须存在，可为空数组。");
             lines.Add("- 每个 `UIReplacementItem` 都必须保持 `requiresConfirmation = true`。");
             lines.Add("- 草稿 JSON 返回后先保存安全快照，再运行替换计划 dry-run，查看 `Logs/UIReplacementPlanDryRun.csv` 和 `Logs/UIReplacementPlanDryRunSummary.md`。");
@@ -197,6 +216,49 @@ namespace Xipin.UIAITools
         static void ValidateSections(string[] lines)
         {
             UIReportMarkdown.RequireExactSectionOrder("UI redesign brief", lines, "## Request Seed", "## 当前扫描结论", "## 断批建议", "## 纹理切换", "## 图片归属", "## 图集拆解", "## 直挂 UITexture", "## 复用与归属风险", "## 空 Sprite Image", "## AI 输出约束", "## AI 输出格式");
+        }
+
+        static void ValidateOutputRules(List<string> lines)
+        {
+            if (!lines.Contains(DuplicateAssetRule))
+                throw new Exception("UI redesign brief output constraint is missing: duplicate old/new asset rule");
+        }
+
+        static List<string> ContractLines()
+        {
+            var lines = new List<string>();
+            AddBriefSection(lines, "Request Seed");
+            AddBriefSection(lines, "当前扫描结论");
+            AddBriefSection(lines, "断批建议");
+            AddBriefSection(lines, "纹理切换");
+            AddBriefSection(lines, "图片归属");
+            AddBriefSection(lines, "图集拆解");
+            AddBriefSection(lines, "直挂 UITexture");
+            AddBriefSection(lines, "复用与归属风险");
+            AddBriefSection(lines, "空 Sprite Image");
+            AddOutputRules(lines);
+            return lines;
+        }
+
+        static void AddBriefSection(List<string> lines, string title)
+        {
+            lines.Add("## " + title);
+            lines.Add("");
+        }
+
+        static void ExpectFailure(string name, string expectedMessage, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI redesign brief contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI redesign brief contract sample did not fail: " + name);
         }
     }
 }
