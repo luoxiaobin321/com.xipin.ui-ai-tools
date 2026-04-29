@@ -116,7 +116,7 @@ public static partial class UIAssetScanService
         var lines = new List<string> { UIReportFiles.ReuseSearchResultsHeader };
         lines.AddRange(rows.OrderBy(r => float.Parse(r[6], CultureInfo.InvariantCulture)).Take(80).Select(r => string.Join(",", r.Select(Csv))));
         File.WriteAllLines(ReuseSearchPath, lines, new UTF8Encoding(true));
-        UIReportValidationService.ValidateReport(Profile, UIReportFiles.ReuseSearchResults, UIReportFiles.ReuseSearchResultsHeader);
+        UIReuseSearchResultService.ReadRows(Profile);
         EditorUtility.ClearProgressBar();
         Debug.Log($"按截图查找已有图片完成：{ReuseSearchPath}");
         if (!Application.isBatchMode)
