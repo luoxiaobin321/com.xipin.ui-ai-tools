@@ -54,6 +54,7 @@ namespace Xipin.UIAITools
             if (actualTargetPrefab != expectedTargetPrefab)
                 throw new Exception($"Invalid UI creation host generate result: TargetPrefab mismatch {actualTargetPrefab}->{expectedTargetPrefab}");
             RequireChecklistTarget(profile, expectedTargetPrefab);
+            RequireChecklistComponents(profile, draft);
             ValidateDraftNodeRows(rows, draft);
             ValidateDraftLayoutRows(rows, draft);
             ValidateGenerateVerification(rows, expectedTargetPrefab);
@@ -131,6 +132,9 @@ namespace Xipin.UIAITools
                 ValidateAgainstLayoutDraft(profile, draftJsonPath);
                 ExpectTargetFailure(profile, "Assets/Art/UI/AI/Other/Other.prefab", "TargetPrefab mismatch");
                 ExpectChecklistTargetFailure(profile, draftJsonPath, WriteDraftJson(profile, "Other", "Assets/Art/UI/AI/Other"));
+                UICreationLayoutDryRunService.Run(profile, draftJsonPath);
+                UICreationHostGenerateChecklistService.Generate(profile, draftJsonPath);
+                ExpectChecklistComponentFailure(profile, draftJsonPath, WritePanelOnlyDraftJson(profile, "Demo", "Assets/Art/UI/AI/Demo"));
                 UICreationLayoutDryRunService.Run(profile, draftJsonPath);
                 UICreationHostGenerateChecklistService.Generate(profile, draftJsonPath);
                 ExpectDraftFailure(profile, WriteDraftJson(profile, "Other", "Assets/Art/UI/AI/Other"), "TargetPrefab mismatch");
@@ -238,6 +242,49 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI creation host generate result: checklist target mismatch " + expectedTargetPrefab);
         }
 
+        static void RequireChecklistComponents(UIAIToolsProfile profile, UILayoutDraft draft)
+        {
+            var dryRunComponentIds = CurrentDryRunComponentIds(UICreationLayoutDryRunService.ReadRows(profile));
+            var draftComponentIds = DraftComponentIds(draft);
+            if (!SameValues(dryRunComponentIds, draftComponentIds))
+                throw new Exception($"Invalid UI creation host generate result: checklist component mismatch {Join(dryRunComponentIds)}->{Join(draftComponentIds)}");
+        }
+
+        static List<string> CurrentDryRunComponentIds(List<Dictionary<string, string>> rows)
+        {
+            return rows.Where(r => r["Check"] == "NodeComponentId" && r["Status"] == "OK")
+                .Select(DryRunComponentId)
+                .Distinct()
+                .OrderBy(id => id)
+                .ToList();
+        }
+
+        static string DryRunComponentId(Dictionary<string, string> row)
+        {
+            var evidence = row["Evidence"];
+            var end = evidence.IndexOf(' ');
+            return end > 0 ? evidence.Substring(0, end) : evidence;
+        }
+
+        static List<string> DraftComponentIds(UILayoutDraft draft)
+        {
+            return draft.nodes.Where(n => !string.IsNullOrEmpty(n.componentId))
+                .Select(n => n.componentId)
+                .Distinct()
+                .OrderBy(id => id)
+                .ToList();
+        }
+
+        static bool SameValues(List<string> left, List<string> right)
+        {
+            return left.Count == right.Count && !left.Where((value, index) => value != right[index]).Any();
+        }
+
+        static string Join(List<string> values)
+        {
+            return values.Count == 0 ? "" : string.Join(";", values);
+        }
+
         static void ValidateDraftNodeRows(List<Dictionary<string, string>> rows, UILayoutDraft draft)
         {
             var nodes = draft.nodes.ToDictionary(n => n.nodeId);
@@ -317,6 +364,14 @@ namespace Xipin.UIAITools
         {
             var path = UIReportFiles.GetPath(profile.logRoot, "UICreationHostGenerateResultContractDraft_" + name + ".json");
             var json = "{\"root\":{\"name\":\"" + name + "\",\"uiType\":\"Dialog\",\"targetFolder\":\"" + targetFolder + "\",\"referenceResolution\":\"1080x1920\",\"safeAreaPolicy\":\"\"},\"nodes\":[{\"nodeId\":\"Root\",\"parentId\":\"\",\"name\":\"Root\",\"componentRole\":\"Panel\",\"componentId\":\"" + PanelComponentId + "\",\"anchor\":\"stretch_full\",\"position\":\"0,0\",\"size\":\"1080x1920\"},{\"nodeId\":\"Title\",\"parentId\":\"Root\",\"name\":\"Title\",\"componentRole\":\"Text\",\"componentId\":\"" + TextComponentId + "\",\"anchor\":\"top_center\",\"position\":\"0,-80\",\"size\":\"520x80\",\"text\":\"Demo Title\"}],\"assets\":[],\"interactions\":[],\"risks\":[],\"requiresConfirmation\":true}";
+            File.WriteAllText(path, json, new UTF8Encoding(true));
+            return path;
+        }
+
+        static string WritePanelOnlyDraftJson(UIAIToolsProfile profile, string name, string targetFolder)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, "UICreationHostGenerateResultContractDraft_PanelOnly_" + name + ".json");
+            var json = "{\"root\":{\"name\":\"" + name + "\",\"uiType\":\"Dialog\",\"targetFolder\":\"" + targetFolder + "\",\"referenceResolution\":\"1080x1920\",\"safeAreaPolicy\":\"\"},\"nodes\":[{\"nodeId\":\"Root\",\"parentId\":\"\",\"name\":\"Root\",\"componentRole\":\"Panel\",\"componentId\":\"" + PanelComponentId + "\",\"anchor\":\"stretch_full\",\"position\":\"0,0\",\"size\":\"1080x1920\"}],\"assets\":[],\"interactions\":[],\"risks\":[],\"requiresConfirmation\":true}";
             File.WriteAllText(path, json, new UTF8Encoding(true));
             return path;
         }
@@ -422,6 +477,13 @@ namespace Xipin.UIAITools
             UICreationLayoutDryRunService.Run(profile, staleDraftJsonPath);
             UICreationHostGenerateChecklistService.Generate(profile, staleDraftJsonPath);
             ExpectDraftFailure(profile, draftJsonPath, "checklist target mismatch");
+        }
+
+        static void ExpectChecklistComponentFailure(UIAIToolsProfile profile, string draftJsonPath, string staleDraftJsonPath)
+        {
+            UICreationLayoutDryRunService.Run(profile, staleDraftJsonPath);
+            UICreationHostGenerateChecklistService.Generate(profile, staleDraftJsonPath);
+            ExpectDraftFailure(profile, draftJsonPath, "checklist component mismatch");
         }
 
         static void ExpectSummaryFailure(UIAIToolsProfile profile, string name, string title, string expectedMessage)
