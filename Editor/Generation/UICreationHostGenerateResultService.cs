@@ -172,6 +172,8 @@ namespace Xipin.UIAITools
                 });
                 GenerateSummary(profile, "Demo", 2);
                 ExpectDraftFailure(profile, draftJsonPath, "missing CreatePrefab");
+                WriteCsv(profile, new[] { Row("0", "CreateTemplateNode", "Applied", "Root", PanelComponentId, "Assets/Demo.prefab", "Resources/unity_builtin_extra", "", "QA-1", "created") });
+                ReadRows(profile);
                 ExpectSummaryFailure(profile, "bad_title", "# Bad", "unexpected title");
                 ExpectFailure(profile, "empty_rows", null, "result rows are required");
                 ExpectFailure(profile, "bad_item_index", Row("x", "CreatePrefab", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "ItemIndex must be an integer");
@@ -180,6 +182,10 @@ namespace Xipin.UIAITools
                 ExpectFailure(profile, "bad_status", Row("0", "CreatePrefab", "Done", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "invalid status");
                 ExpectFailure(profile, "missing_target_prefab", Row("0", "CreatePrefab", "Applied", "", "", "", "", "", "QA-1", "bad"), "TargetPrefab is required");
                 ExpectFailure(profile, "bad_target_prefab_path", Row("0", "CreatePrefab", "Applied", "", "", "Generated/Demo.prefab", "", "", "QA-1", "bad"), "TargetPrefab path is invalid");
+                ExpectFailure(profile, "bad_asset_path", Row("0", "ApplyAssetReference", "Applied", "Root", PanelComponentId, "Assets/Demo.prefab", "Panel.png", "", "QA-1", "bad"), "AssetPath path is invalid");
+                ExpectFailure(profile, "bad_asset_extension", Row("0", "ApplyAssetReference", "Applied", "Root", PanelComponentId, "Assets/Demo.prefab", "Assets/Panel.prefab", "", "QA-1", "bad"), "AssetPath must be an image path");
+                ExpectFailure(profile, "bad_component_asset_extension", Row("0", "InstantiateComponent", "Applied", "Root", PanelComponentId, "Assets/Demo.prefab", "Assets/Panel.png", "", "QA-1", "bad"), "AssetPath must be .prefab");
+                ExpectFailure(profile, "layout_asset_path", Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Demo.prefab", "Assets/Panel.png", "", "QA-1", "bad"), "AssetPath must be empty");
                 ExpectFailure(profile, "missing_node_reference", Row("0", "ApplyText", "Skipped", "", "", "Assets/Demo.prefab", "", "", "", "empty"), "node action requires NodeId and ComponentId");
                 ExpectFailure(profile, "target_action_with_node", Row("0", "VerifyAfterGenerate", "Verified", "Title", TextComponentId, "Assets/Demo.prefab", "", "", "QA-1", "bad"), "target action must not reference NodeId or ComponentId");
                 ExpectRowsFailure(profile, "inconsistent_target_prefab", new[]
@@ -217,6 +223,7 @@ namespace Xipin.UIAITools
             if (string.IsNullOrEmpty(row["TargetPrefab"]))
                 throw new Exception("Invalid UI creation host generate result: TargetPrefab is required");
             RequirePrefabPath(row["TargetPrefab"]);
+            ValidateAssetPath(row);
             var nodeAction = row["Action"] != "CreatePrefab" && row["Action"] != "VerifyAfterGenerate";
             if (nodeAction && (string.IsNullOrEmpty(row["NodeId"]) || string.IsNullOrEmpty(row["ComponentId"])))
                 throw new Exception("Invalid UI creation host generate result: node action requires NodeId and ComponentId");
@@ -238,10 +245,49 @@ namespace Xipin.UIAITools
             return targetPrefab;
         }
 
+        static void ValidateAssetPath(Dictionary<string, string> row)
+        {
+            var assetPath = row["AssetPath"];
+            if (string.IsNullOrEmpty(assetPath))
+                return;
+            if (assetPath == "Resources/unity_builtin_extra")
+            {
+                if (row["Action"] == "CreateTemplateNode" || row["Action"] == "ApplyAssetReference")
+                    return;
+                throw new Exception("Invalid UI creation host generate result: AssetPath must be empty for " + row["Action"]);
+            }
+            if (!ValidUnityPath(assetPath))
+                throw new Exception("Invalid UI creation host generate result: AssetPath path is invalid");
+            if (row["Action"] == "InstantiateComponent")
+            {
+                if (!assetPath.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase))
+                    throw new Exception("Invalid UI creation host generate result: AssetPath must be .prefab");
+                return;
+            }
+            if (row["Action"] == "CreateTemplateNode" || row["Action"] == "ApplyAssetReference")
+            {
+                if (!IsImagePath(assetPath))
+                    throw new Exception("Invalid UI creation host generate result: AssetPath must be an image path");
+                return;
+            }
+            throw new Exception("Invalid UI creation host generate result: AssetPath must be empty for " + row["Action"]);
+        }
+
         static void RequirePrefabPath(string path)
         {
-            if (!path.StartsWith("Assets/", StringComparison.Ordinal) || path.Contains("\\") || path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal) || !path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase))
+            if (!ValidUnityPath(path) || !path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase))
                 throw new Exception("Invalid UI creation host generate result: TargetPrefab path is invalid");
+        }
+
+        static bool ValidUnityPath(string path)
+        {
+            return path.StartsWith("Assets/", StringComparison.Ordinal) && !path.Contains("\\") && !path.Contains("/../") && !path.EndsWith("/..", StringComparison.Ordinal);
+        }
+
+        static bool IsImagePath(string path)
+        {
+            var extension = Path.GetExtension(path).ToLowerInvariant();
+            return extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".tga" || extension == ".psd";
         }
 
         static void ValidateNoDuplicateRows(List<Dictionary<string, string>> rows)

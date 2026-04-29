@@ -72,7 +72,7 @@ UIAssetTriageScanner.ValidateUICreationHostGenerateResultContractBatch
 | `NodeId` | 对应 `UILayoutDraft.nodes` 的节点 ID；节点动作必填，`CreatePrefab`/`VerifyAfterGenerate` 留空。 |
 | `ComponentId` | 对应 `UIComponentCandidateIndex.csv` 的稳定组件候选 ID；节点动作必填，`CreatePrefab`/`VerifyAfterGenerate` 留空。 |
 | `TargetPrefab` | 生成的 `Assets/*.prefab` 路径。 |
-| `AssetPath` | 实际写入的资源路径。 |
+| `AssetPath` | 实际写入的资源路径；实例化组件必须是 `Assets/*.prefab`，静态图片必须是 `Assets` 图片路径或 `Resources/unity_builtin_extra`。 |
 | `Binding` | 数据绑定或交互绑定说明。 |
 | `Confirmation` | 宿主人工确认记录标识。 |
 | `Message` | 执行结果说明。 |
