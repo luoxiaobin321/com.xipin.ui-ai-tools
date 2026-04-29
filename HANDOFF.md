@@ -2,7 +2,7 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前优先稳定改版和新 UI 生成链路的 gate 与宿主结果契约。
 
 # Status
-替换链路的 manifest、dry-run、pending input、external input package、execution plan、core scan rows、scan summary、reuse search result、component candidate、host apply checklist 和 host apply result 已串起前置复验；dry-run、pending input、readiness、external input package、execution plan、core scan rows、reuse search result 和 component candidate 都会拒绝重复逻辑行，scan summary 和 panel focus 有独立 Markdown section 顺序 contract，external input package 有独立重复输出目录/参考输入/输入项 contract，execution plan 也有独立重复计划行 contract，host apply checklist 有独立 gate 行契约，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。Redesign brief contract 覆盖 Markdown section 顺序和 duplicate old/new asset 输出约束；Redesign draft template 会给同名旧图生成唯一 newAssetPath，并覆盖 `_2` 后缀碰撞；Redesign draft contract 覆盖重复旧图、重复新图和 newAssetPath 越过 generatedImageFolder；Redesign package contract 覆盖 outputFolder 只能是 `Assets/` 且不能包含反斜杠或 `..`。Creation brief contract 覆盖 targetFolder 路径和数组项类型；Layout draft contract 覆盖必需节点字段和交互数组项类型；Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，Creation host generate checklist 也有独立 Ready gate 行契约，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。CSV 底层契约补充覆盖 quoted 字段跨物理行和引号后夹空格的严格拒绝样本；JSON 底层契约补充覆盖改版草稿重复 newAssetPath；Markdown section 契约会用 duplicate section 明确报错重复合法标题，并忽略 fenced code block 内的 `## `。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
+替换链路的 manifest、dry-run、pending input、external input package、execution plan、plan status、core scan rows、scan summary、reuse search result、component candidate、host apply checklist 和 host apply result 已串起前置复验；dry-run、pending input、readiness、external input package、execution plan、core scan rows、reuse search result 和 component candidate 都会拒绝重复逻辑行，plan status 有独立阻断状态、汇总顺序和 severity 顺序 contract，scan summary 和 panel focus 有独立 Markdown section 顺序 contract，external input package 有独立重复输出目录/参考输入/输入项 contract，execution plan 也有独立重复计划行 contract，host apply checklist 有独立 gate 行契约，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。Redesign brief contract 覆盖 Markdown section 顺序和 duplicate old/new asset 输出约束；Redesign draft template 会给同名旧图生成唯一 newAssetPath，并覆盖 `_2` 后缀碰撞；Redesign draft contract 覆盖重复旧图、重复新图和 newAssetPath 越过 generatedImageFolder；Redesign package contract 覆盖 outputFolder 只能是 `Assets/` 且不能包含反斜杠或 `..`。Creation brief contract 覆盖 targetFolder 路径和数组项类型；Layout draft contract 覆盖必需节点字段和交互数组项类型；Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，Creation host generate checklist 也有独立 Ready gate 行契约，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。CSV 底层契约补充覆盖 quoted 字段跨物理行和引号后夹空格的严格拒绝样本；JSON 底层契约补充覆盖改版草稿重复 newAssetPath；Markdown section 契约会用 duplicate section 明确报错重复合法标题，并忽略 fenced code block 内的 `## `。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 
 # Key Files
 - `Editor/Generation/UIReplacementPlanDryRunService.cs`：替换 dry-run 读取、校验和重复检查行 gate。
@@ -10,6 +10,7 @@
 - `Editor/Generation/UIReplacementPendingInputReadinessService.cs`：待补输入就绪检查读取、校验和重复行 gate。
 - `Editor/Generation/UIReplacementExternalInputPackageService.cs`：外部输入包生成、JSON 读回和重复 item gate。
 - `Editor/Generation/UIReplacementExecutionPlanService.cs`：替换执行计划读取、校验和重复计划行 gate。
+- `Editor/Generation/UIReplacementPlanStatus.cs`：替换计划阻断状态、汇总和 severity 顺序契约。
 - `Editor/Generation/UIReplacementHostApplyResultService.cs`：host apply 结果读回和执行计划覆盖契约。
 - `Editor/Generation/UIReplacementHostApplyChecklistService.cs`：host apply 前置清单 gate。
 - `Editor/Generation/UIRedesignBriefService.cs`：改版 Brief Markdown section 和 AI 输出约束 gate。
@@ -40,6 +41,7 @@
 - `ValidateJsonContractBatch` -> `Logs/Verify_JsonContract_RedesignDuplicateNewAsset.log`，覆盖改版草稿重复 newAssetPath 复验，return code 0。
 - `ValidateReplacementExternalInputPackageContractBatch` -> `Logs/Verify_ReplacementExternalInputPackageContract_DuplicateRows.log`，覆盖外部输入包重复目录、参考输入和输入项复验，return code 0。
 - `ValidateReplacementExecutionPlanContractBatch` -> `Logs/Verify_ReplacementExecutionPlanContract_DuplicateRows.log`，覆盖执行计划重复 plan row 复验，return code 0。
+- `ValidateReplacementPlanStatusContractBatch` -> `Logs/Verify_ReplacementPlanStatusContract_Order.log`，覆盖替换计划阻断状态、汇总顺序和 severity 顺序复验，return code 0。
 - `ValidateRedesignBriefContractBatch` -> `Logs/Verify_RedesignBriefContract_OutputRules.log`，覆盖改版 Brief section 顺序和重复新旧图输出约束复验，return code 0。
 - `ValidateRedesignDraftTemplateContractBatch` -> `Logs/Verify_RedesignDraftTemplateContract_SuffixCollision.log`，覆盖草稿模板同名旧图和 `_2` 后缀碰撞 newAssetPath 去重复验，return code 0。
 - `ValidateRedesignDraftContractBatch` -> `Logs/Verify_RedesignDraftContract_DuplicateAssets.log`，覆盖改版草稿重复旧图、重复新图和新图目录越界复验，return code 0。
