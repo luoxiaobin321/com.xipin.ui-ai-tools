@@ -11,7 +11,7 @@ AI 相关代码目前是协议层，目标是把“生成建议”和“执行�
 `UIRedesignBriefService` 负责把 request 和已有扫描报告整理成 Markdown Brief，并在生成时校验顶层标题结构；`sourcePreviewPath` 为空时会先生成旧版基准图。它是 provider 前置输入，不调用 AI，也不产生资源改动。
 `UIRedesignBriefWindow` 只负责手动填写 request 字段并调用 Brief 服务，不保存配置、不执行替换。
 Brief 可以包含复用风险、`UIRedesignDraft` 输出格式和执行前 gate 提示，但这些内容仍是草稿输入，不是执行结果。
-`UIRedesignDraftTemplateService` 可以根据扫描报告生成草稿 JSON 模板，模板中的替换项只是候选项；模板写盘会保留 `replacementPlan.items` 和 `risks` 数组字段，并立即复用 `LoadDraft` 读回校验。
+`UIRedesignDraftTemplateService` 可以根据扫描报告生成草稿 JSON 模板，模板中的替换项只是候选项；同名旧图会生成唯一 `newAssetPath`，包含 `_2` 后缀碰撞场景；模板写盘会保留 `replacementPlan.items` 和 `risks` 数组字段，并立即复用 `LoadDraft` 读回校验。
 provider 返回实际 `UIRedesignDraft` 后，`UIRedesignDraftService.SaveDraft` 只负责落盘经过 request 与草稿校验且强制人工确认的草稿 JSON；写盘会保留必需数组字段并立即读回校验。`UIRedesignPackageService.Prepare(profile, request, draft)` 只用该草稿继续生成 dry-run、执行计划、待补输入、就绪检查、外部生成输入包、宿主执行清单和 manifest。AI 或人工已经写好草稿 JSON 时，用 `UIRedesignPackageService.PrepareFromDraftJson` 走同一套报告闭环，并在 manifest 记录原输入 JSON 与包内快照 JSON。
 外部 JSON 的包内快照使用 `UIRedesignDraft_*_Snapshot.json`，如果输入路径已经是该快照名，会继续使用 `Snapshot2` 等后缀，避免覆盖输入草稿。
 
