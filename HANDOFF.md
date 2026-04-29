@@ -36,6 +36,12 @@
 - 最近已验证：`GenerateComponentCandidateIndexBatch` -> `Logs/Generate_ComponentCandidateIndex_CoreRowValidation.log`，exit code 0。
 - 最近已验证：`GenerateRedesignBriefBatch -uiPrefabPath Assets/Bundle/Prefab/UIVipcard/UIVipcard.prefab -uiPreviewPath Logs/UIPrefabBaseline_Bundle_Prefab_UIVipcard_UIVipcard.png` -> `Logs/Generate_RedesignBrief_CoreRowValidation.log`，exit code 0。
 - 最近已验证：`ValidateReports` -> `Logs/Verify_Reports_AllCoreRowValidation.log`，exit code 0。
+- 最近已验证：`ValidateMarkdownSectionContractBatch` -> `Logs/Verify_MarkdownContract_PostCoreRows.log`，exit code 0。
+- 最近已验证：`ValidateCsvContractBatch` -> `Logs/Verify_CsvContract_PostCoreRows.log`，exit code 0。
+- 最近已验证：`ValidateJsonContractBatch` -> `Logs/Verify_JsonContract_PostCoreRows.log`，exit code 0。
+- 最近已验证：`ValidateUICreationHostGenerateResultContractBatch` -> `Logs/Verify_UICreationHostGenerateResultContract_PostCoreRows.log`，exit code 0。
+- 最近已验证：`ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_PostCoreRows.log`，exit code 0。
+- 最近已验证：`ValidateRedesignPackageBatch -uiPrefabPath Assets/Bundle/Prefab/UIVipcard/UIVipcard.prefab` -> `Logs/Verify_RedesignPackage_PostCoreRows.log`，exit code 0。
 
 # Constraints
 - 包不得编译引用 `GameApp`、`MotionFramework`、`com.xipin.lframework` 或 YooAsset。
