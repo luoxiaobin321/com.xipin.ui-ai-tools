@@ -52,6 +52,7 @@ namespace Xipin.UIAITools
             ValidateDraftNodeRows(rows, draft);
             ValidateDraftLayoutRows(rows, draft);
             ValidateGenerateVerification(rows, expectedTargetPrefab);
+            ValidatePrefabCreation(rows, expectedTargetPrefab);
             Debug.Log($"UI creation host generate result layout draft validation passed: {expectedTargetPrefab}, {draft.nodes.Count} nodes, {rows.Count} rows.");
         }
 
@@ -142,6 +143,14 @@ namespace Xipin.UIAITools
                 });
                 GenerateSummary(profile, "Demo", 2);
                 ExpectDraftFailure(profile, draftJsonPath, "missing VerifyAfterGenerate");
+                WriteCsv(profile, new[]
+                {
+                    Row("0", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("1", "ApplyLayout", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("2", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
+                });
+                GenerateSummary(profile, "Demo", 2);
+                ExpectDraftFailure(profile, draftJsonPath, "missing CreatePrefab");
                 ExpectSummaryFailure(profile, "bad_title", "# Bad", "unexpected title");
                 ExpectFailure(profile, "empty_rows", null, "result rows are required");
                 ExpectFailure(profile, "bad_item_index", Row("x", "CreatePrefab", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "ItemIndex must be an integer");
@@ -226,6 +235,13 @@ namespace Xipin.UIAITools
             var verified = rows.Any(r => r["Action"] == "VerifyAfterGenerate" && r["Status"] == "Verified" && r["TargetPrefab"] == targetPrefab);
             if (!verified)
                 throw new Exception("Invalid UI creation host generate result: missing VerifyAfterGenerate");
+        }
+
+        static void ValidatePrefabCreation(List<Dictionary<string, string>> rows, string targetPrefab)
+        {
+            var created = rows.Any(r => r["Action"] == "CreatePrefab" && r["Status"] == "Applied" && r["TargetPrefab"] == targetPrefab);
+            if (!created)
+                throw new Exception("Invalid UI creation host generate result: missing CreatePrefab");
         }
 
         static void ValidateSummary(UIAIToolsProfile profile, List<Dictionary<string, string>> rows)

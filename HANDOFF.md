@@ -2,11 +2,11 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前先稳定 AI 改版和新 UI 制作的输入、gate 与宿主结果报告契约。
 
 # Status
-总纲进度约 68%；“宿主结果报告契约回归”已完成并推送到 `origin/main`。包侧已提供 `UIReplacementHostApplyResult.csv/md` 与 `UICreationHostGenerateResult.csv/md` 只读契约，host apply checklist 增强为内容级校验；新 UI 生成结果可通过 `ValidateAgainstLayoutDraft` 校验当前草稿目标、NodeId/ComponentId 归属、每个草稿节点至少一条结果行、每个节点的 `Applied ApplyLayout` 行和目标 prefab 的 `Verified VerifyAfterGenerate` 行，宿主替换结果可通过 `ValidateAgainstExecutionPlan` 匹配当前执行计划，并要求计划内 `ApplyPrefabReference` / `VerifyAfterApply` 都有结果行覆盖。测试宿主已有阻断结果样例，可从 UIVipcard 执行计划生成 26 行 `Skipped` 并读回校验。UIVipcard 仍缺新版预览、13 张新图和目标图集，host apply gate 预期阻断。
+总纲进度约 68%；“宿主结果报告契约回归”已完成并推送到 `origin/main`。包侧已提供 `UIReplacementHostApplyResult.csv/md` 与 `UICreationHostGenerateResult.csv/md` 只读契约，host apply checklist 增强为内容级校验；新 UI 生成结果可通过 `ValidateAgainstLayoutDraft` 校验当前草稿目标、NodeId/ComponentId 归属、每个草稿节点至少一条结果行、每个节点的 `Applied ApplyLayout` 行、目标 prefab 的 `Applied CreatePrefab` 行和 `Verified VerifyAfterGenerate` 行，宿主替换结果可通过 `ValidateAgainstExecutionPlan` 匹配当前执行计划，并要求计划内 `ApplyPrefabReference` / `VerifyAfterApply` 都有结果行覆盖。测试宿主已有阻断结果样例，可从 UIVipcard 执行计划生成 26 行 `Skipped` 并读回校验。UIVipcard 仍缺新版预览、13 张新图和目标图集，host apply gate 预期阻断。
 
 # Key Files
 - `Editor/Generation/UIReplacementHostApplyResultService.cs`：AI 改版宿主执行结果报告契约，包含当前执行计划反查和 apply/verify 覆盖校验。
-- `Editor/Generation/UICreationHostGenerateResultService.cs`：新 UI 宿主生成结果报告契约和基础汇总生成，包含草稿节点布局行和生成后复验覆盖校验。
+- `Editor/Generation/UICreationHostGenerateResultService.cs`：新 UI 宿主生成结果报告契约和基础汇总生成，包含 prefab 创建、草稿节点布局行和生成后复验覆盖校验。
 - `Editor/Generation/UIReplacementHostApplyChecklistService.cs`：宿主替换前清单和 gate。
 - `Editor/Scanning/UIReportFiles.cs`：核心文件名和 CSV 表头常量。
 - `Documentation~/modules/ui-creation-host-generator.md`：宿主 prefab 草稿生成器接入说明。
@@ -19,7 +19,7 @@
 # Run / Test
 - `UIAssetTriageScanner.ValidateHostApplyResultContractBatch`；`UIAssetTriageScanner.ValidateUICreationHostGenerateResultContractBatch`
 - 最近推送：`910ed70 Validate host apply result coverage`；`aa534a3 Validate creation result coverage`。
-- 最近已跑：`ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_Coverage.log`；`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_Coverage.log`；`ValidateUICreationHostGenerateResultContractBatch` -> `Logs/Verify_UICreationHostGenerateResultContract_Coverage.log`；`ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json` -> `Logs/Verify_UICreationHostGenerateResult_Coverage.log`；均 exit code 0。
+- 最近已跑：`ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_Coverage.log`；`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_Coverage.log`；`ValidateUICreationHostGenerateResultContractBatch` -> `Logs/Verify_UICreationHostGenerateResultContract_CreatePrefabCoverage.log`；`ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json` -> `Logs/Verify_UICreationHostGenerateResult_CreatePrefabCoverage.log`；均 exit code 0。
 - `UIAssetTriageScanner.ValidateCsvContractBatch`；`UIAssetTriageScanner.ValidateJsonContractBatch`；`UIAssetTriageScanner.ValidateMarkdownSectionContractBatch`
 - `UIAssetTriageScanner.ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json`
 - `UIAssetTriageScanner.ValidateRedesignPackageBatch -uiPrefabPath Assets/Bundle/Prefab/UIVipcard/UIVipcard.prefab`；`UIAssetTriageScanner.ValidateHostApplyChecklistBatch` 预期因 `PendingPreview：1，PendingAsset：13，PendingAtlas：13` 阻断。
