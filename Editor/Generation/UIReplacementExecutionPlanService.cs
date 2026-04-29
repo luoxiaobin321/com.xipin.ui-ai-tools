@@ -21,8 +21,7 @@ namespace Xipin.UIAITools
         public static string GenerateFromCurrentDryRun(UIAIToolsProfile profile, string draftJsonPath)
         {
             var draft = UIRedesignDraftService.LoadDraft(draftJsonPath);
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPlanDryRun, UIReportFiles.ReplacementPlanDryRunHeader);
-            var dryRunRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPlanDryRun);
+            var dryRunRows = UIReplacementPlanDryRunService.ReadRows(profile);
             var lines = new List<string> { UIReportFiles.ReplacementExecutionPlanHeader };
 
             AddDraftPreview(lines, draft);
@@ -167,7 +166,7 @@ namespace Xipin.UIAITools
         static string GenerateSummary(UIAIToolsProfile profile, UIRedesignDraft draft)
         {
             UIReportValidationService.ValidateReport(profile, UIReportFiles.ReuseIndex, UIReportFiles.ReuseIndexHeader);
-            var dryRunRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPlanDryRun);
+            var dryRunRows = UIReplacementPlanDryRunService.ReadRows(profile);
             var planRows = ReadRows(profile);
             var reuseRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReuseIndex);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementExecutionPlanSummary);

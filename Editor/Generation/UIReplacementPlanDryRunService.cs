@@ -10,6 +10,9 @@ namespace Xipin.UIAITools
 {
     public static class UIReplacementPlanDryRunService
     {
+        static readonly HashSet<string> AllowedSeverities = new HashSet<string> { "Info", "Warning", "Review", "Error" };
+        static readonly HashSet<string> AllowedStatuses = new HashSet<string> { "OK", "Missing", "Risk", "Review", "DuplicateName", "Skipped" };
+
         public static string Run(UIAIToolsProfile profile, string draftJsonPath)
         {
             UIReportValidationService.Validate(profile);
@@ -22,16 +25,26 @@ namespace Xipin.UIAITools
 
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementPlanDryRun);
             File.WriteAllLines(path, lines, new UTF8Encoding(true));
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPlanDryRun, UIReportFiles.ReplacementPlanDryRunHeader);
+            ReadRows(profile);
             var summaryPath = GenerateSummary(profile);
             Debug.Log($"UI replacement plan dry-run generated: {path}, summary: {summaryPath}, {draft.replacementPlan.items.Count} items.");
             return path;
         }
 
-        public static string GenerateSummary(UIAIToolsProfile profile)
+        public static List<Dictionary<string, string>> ReadRows(UIAIToolsProfile profile)
         {
             UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPlanDryRun, UIReportFiles.ReplacementPlanDryRunHeader);
             var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPlanDryRun);
+            if (rows.Count == 0)
+                throw new Exception("Invalid UI replacement plan dry-run: rows are required");
+            foreach (var row in rows)
+                ValidateRow(row);
+            return rows;
+        }
+
+        public static string GenerateSummary(UIAIToolsProfile profile)
+        {
+            var rows = ReadRows(profile);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementPlanDryRunSummary);
             var lines = new List<string>
             {
@@ -69,13 +82,28 @@ namespace Xipin.UIAITools
 
         public static void ValidateNoErrors(UIAIToolsProfile profile)
         {
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPlanDryRun, UIReportFiles.ReplacementPlanDryRunHeader);
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPlanDryRun);
+            var rows = ReadRows(profile);
             ValidateSummary(profile);
             var errors = rows.Where(r => r["Severity"] == "Error").ToList();
             if (errors.Count > 0)
                 throw new Exception($"UI replacement plan dry-run has {errors.Count} error checks. See {UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementPlanDryRunSummary)}");
             Debug.Log($"UI replacement plan dry-run gate passed: {rows.Count} checks, 0 errors.");
+        }
+
+        static void ValidateRow(Dictionary<string, string> row)
+        {
+            if (!int.TryParse(row["ItemIndex"], out _))
+                throw new Exception("Invalid UI replacement plan dry-run: ItemIndex must be an integer");
+            if (string.IsNullOrEmpty(row["Check"]))
+                throw new Exception("Invalid UI replacement plan dry-run: Check is required");
+            if (!AllowedSeverities.Contains(row["Severity"]))
+                throw new Exception("Invalid UI replacement plan dry-run: invalid severity " + row["Severity"]);
+            if (!AllowedStatuses.Contains(row["Status"]))
+                throw new Exception("Invalid UI replacement plan dry-run: invalid status " + row["Status"]);
+            if (string.IsNullOrEmpty(row["OldAsset"]) || string.IsNullOrEmpty(row["NewAsset"]) || string.IsNullOrEmpty(row["TargetAtlas"]))
+                throw new Exception("Invalid UI replacement plan dry-run: asset paths are required");
+            if (string.IsNullOrEmpty(row["Message"]))
+                throw new Exception("Invalid UI replacement plan dry-run: Message is required");
         }
 
         static void AddItem(List<string> lines, UIAIToolsProfile profile, UIReplacementItem item, int index, List<Dictionary<string, string>> reuseRows, List<Dictionary<string, string>> detailRows)
