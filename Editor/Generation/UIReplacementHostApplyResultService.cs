@@ -80,18 +80,22 @@ namespace Xipin.UIAITools
                 profile.logRoot = root;
                 WriteCsv(profile, new[]
                 {
+                    Row("0", "MoveNewAsset", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "moved"),
                     Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab", "QA-1", "updated"),
                     Row("0", "VerifyAfterApply", "Verified", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab", "QA-1", "verified"),
                     Row("1", "UpdateAtlas", "Skipped", "Assets/Old2.png", "Assets/New2.png", "Assets/Atlas.spriteatlasv2", "", "", "no atlas change"),
+                    Row("1", "UpdateAddress", "Skipped", "Assets/Old2.png", "Assets/New2.png", "Assets/Atlas.spriteatlasv2", "", "", "no address change"),
                     Row("2", "ApplyPrefabReference", "Failed", "Assets/Old3.png", "Assets/New3.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab", "QA-2", "missing sprite")
                 });
                 GenerateSummary(profile);
                 Validate(profile);
                 WritePlanCsv(profile, new[]
                 {
+                    PlanRow("0", "MoveNewAsset", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "", ""),
                     PlanRow("0", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab"),
                     PlanRow("0", "VerifyAfterApply", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab"),
                     PlanRow("1", "UpdateAtlas", "PendingConfirmation", "Assets/Old2.png", "Assets/New2.png", "Assets/Atlas.spriteatlasv2", ""),
+                    PlanRow("1", "UpdateAddress", "PendingConfirmation", "Assets/Old2.png", "Assets/New2.png", "Assets/Atlas.spriteatlasv2", ""),
                     PlanRow("2", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old3.png", "Assets/New3.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab")
                 });
                 ValidateAgainstExecutionPlan(profile);
