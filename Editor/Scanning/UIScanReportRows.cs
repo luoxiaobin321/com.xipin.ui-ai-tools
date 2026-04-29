@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using UnityEngine;
 
 namespace Xipin.UIAITools
 {
@@ -9,6 +13,26 @@ namespace Xipin.UIAITools
         {
             foreach (var report in UIReportFiles.CoreReports)
                 ReadCore(profile, report);
+        }
+
+        public static void ValidateContract()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsScanReportRowsContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                var profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+                profile.logRoot = root;
+                var row = ReuseIndexRow("Assets/Art/UI/Icon.png");
+                WriteCsv(profile, UIReportFiles.ReuseIndex, UIReportFiles.ReuseIndexHeader, new[] { row });
+                ReadReuseIndex(profile);
+                ExpectFailure(profile, "duplicate_reuse_index_row", new[] { row, row }, "duplicate reuse index row");
+            }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
+            Debug.Log("UI scan report rows contract validation passed.");
         }
 
         public static List<Dictionary<string, string>> ReadAssetTriage(UIAIToolsProfile profile)
@@ -77,7 +101,17 @@ namespace Xipin.UIAITools
             var rows = UIReportCsv.ReadRows(profile.logRoot, report);
             foreach (var row in rows)
                 ValidateRow(report, row);
+            ValidateNoDuplicateRows(report, rows);
             return rows;
+        }
+
+        static void ValidateNoDuplicateRows(string report, List<Dictionary<string, string>> rows)
+        {
+            if (report != UIReportFiles.ReuseIndex)
+                return;
+            var duplicate = rows.GroupBy(row => row["Path"]).FirstOrDefault(group => group.Count() > 1);
+            if (duplicate != null)
+                throw new Exception("Invalid UIReuseIndex.csv: duplicate reuse index row for " + duplicate.Key);
         }
 
         static void ValidateRow(string report, Dictionary<string, string> row)
@@ -190,6 +224,58 @@ namespace Xipin.UIAITools
                 if (!long.TryParse(row[field], out _))
                     throw new Exception($"Invalid {report}: {field} must be an integer");
             }
+        }
+
+        static void WriteCsv(UIAIToolsProfile profile, string report, string header, IEnumerable<string> rows)
+        {
+            File.WriteAllLines(UIReportFiles.GetPath(profile.logRoot, report), new[] { header }.Concat(rows), new UTF8Encoding(true));
+        }
+
+        static string ReuseIndexRow(string path)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(path),
+                Csv("Icon"),
+                Csv("guid"),
+                "64",
+                "64",
+                Csv("Small"),
+                Csv("Image"),
+                Csv("Assets/Art/UI/UI.spriteatlasv2"),
+                Csv("UI"),
+                "1",
+                "1",
+                Csv("Owner"),
+                Csv("Assets/Prefab/A.prefab"),
+                Csv(""),
+                Csv("hash"),
+                "1",
+                Csv(""),
+                Csv("Reuse"),
+                Csv("same")
+            });
+        }
+
+        static void ExpectFailure(UIAIToolsProfile profile, string name, IEnumerable<string> rows, string expectedMessage)
+        {
+            WriteCsv(profile, UIReportFiles.ReuseIndex, UIReportFiles.ReuseIndexHeader, rows);
+            try
+            {
+                ReadReuseIndex(profile);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI scan report rows contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI scan report rows contract sample did not fail: " + name);
+        }
+
+        static string Csv(string value)
+        {
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
         }
     }
 }
