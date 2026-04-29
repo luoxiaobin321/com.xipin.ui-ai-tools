@@ -49,10 +49,10 @@ UIReplacementHostApplyChecklistService.ValidateNoBlockingSteps(profile);
 | `ItemIndex` | 对应 `UIReplacementExecutionPlan.csv` 的替换项。 |
 | `Action` | 宿主执行动作，只允许 `MoveNewAsset`、`ApplyPrefabReference`、`UpdateAtlas`、`UpdateAddress`、`VerifyAfterApply`。 |
 | `Status` | `Applied`、`Skipped`、`Failed` 或 `Verified`。 |
-| `OldAsset` | 旧资源路径。 |
-| `NewAsset` | 新资源路径。 |
-| `TargetAtlas` | 目标图集。 |
-| `PrefabRefs` | 实际处理的 prefab。 |
+| `OldAsset` | 旧资源 `Assets/*.png` 路径。 |
+| `NewAsset` | 新资源 `Assets/*.png` 路径。 |
+| `TargetAtlas` | 目标 `Assets/*.spriteatlasv2` 图集，可为空。 |
+| `PrefabRefs` | 实际处理的 `Assets/*.prefab`，多个用 `;` 分隔。 |
 | `Confirmation` | 宿主人工确认记录标识。 |
 | `Message` | 执行结果说明。 |
 

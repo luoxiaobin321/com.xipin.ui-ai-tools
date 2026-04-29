@@ -115,6 +115,10 @@ namespace Xipin.UIAITools
                 ExpectFailure(profile, "missing_action", Row("0", "", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "bad"), "Action is required");
                 ExpectFailure(profile, "unknown_action", Row("0", "ApplyTypo", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "bad"), "invalid action");
                 ExpectFailure(profile, "bad_status", Row("0", "ApplyPrefabReference", "Done", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "bad"), "invalid status");
+                ExpectFailure(profile, "bad_old_asset_path", Row("0", "ApplyPrefabReference", "Applied", "Old.png", "Assets/New.png", "", "", "QA-1", "bad"), "OldAsset path is invalid");
+                ExpectFailure(profile, "bad_new_asset_extension", Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.jpg", "", "", "QA-1", "bad"), "NewAsset must be .png");
+                ExpectFailure(profile, "bad_target_atlas_extension", Row("0", "UpdateAtlas", "Applied", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.png", "", "QA-1", "bad"), "TargetAtlas must be .spriteatlasv2");
+                ExpectFailure(profile, "bad_prefab_ref_path", Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "", "Assets/UI.prefab;UI.prefab", "QA-1", "bad"), "PrefabRefs path is invalid");
                 ExpectFailure(profile, "missing_confirmation", Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "", "bad"), "confirmation is required");
                 ExpectFailure(profile, "missing_skipped_message", Row("0", "ApplyPrefabReference", "Skipped", "Assets/Old.png", "Assets/New.png", "", "", "", ""), "skipped message is required");
                 ExpectFailure(profile, "missing_failed_message", Row("0", "ApplyPrefabReference", "Failed", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", ""), "failed message is required");
@@ -154,6 +158,11 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement host apply result: invalid action " + row["Action"]);
             if (!AllowedStatuses.Contains(row["Status"]))
                 throw new Exception("Invalid UI replacement host apply result: invalid status " + row["Status"]);
+            RequirePath(row["OldAsset"], "OldAsset", ".png");
+            RequirePath(row["NewAsset"], "NewAsset", ".png");
+            RequirePath(row["TargetAtlas"], "TargetAtlas", ".spriteatlasv2");
+            foreach (var prefab in row["PrefabRefs"].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                RequirePath(prefab, "PrefabRefs", ".prefab");
             if ((row["Status"] == "Applied" || row["Status"] == "Verified") && string.IsNullOrEmpty(row["Confirmation"]))
                 throw new Exception("Invalid UI replacement host apply result: confirmation is required");
             if (row["Status"] == "Skipped" && string.IsNullOrEmpty(row["Message"]))
@@ -175,6 +184,16 @@ namespace Xipin.UIAITools
             }).FirstOrDefault(group => group.Count() > 1);
             if (duplicate != null)
                 throw new Exception($"Invalid UI replacement host apply result: duplicate result row for Item {duplicate.Key.ItemIndex} / {duplicate.Key.Action}");
+        }
+
+        static void RequirePath(string path, string label, string extension)
+        {
+            if (string.IsNullOrEmpty(path))
+                return;
+            if (!path.StartsWith("Assets/", StringComparison.Ordinal) || path.Contains("\\") || path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal))
+                throw new Exception($"Invalid UI replacement host apply result: {label} path is invalid");
+            if (!path.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+                throw new Exception($"Invalid UI replacement host apply result: {label} must be {extension}");
         }
 
         static bool SamePlanRow(Dictionary<string, string> plan, Dictionary<string, string> row)
