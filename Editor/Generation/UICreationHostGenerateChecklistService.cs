@@ -117,6 +117,32 @@ namespace Xipin.UIAITools
             Debug.Log("UI creation host generate checklist validation passed.");
         }
 
+        public static void ValidateContract()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsCreationHostGenerateChecklistContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                var profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+                profile.logRoot = root;
+                const string componentId = "Component00000001";
+                WriteComponentCandidateReports(profile, componentId);
+                var draftJsonPath = WriteDraftJson(profile, componentId);
+                WriteDryRun(profile, componentId);
+                var checklistPath = Generate(profile, draftJsonPath);
+                ValidateNoBlockingSteps(profile);
+                var lines = File.ReadAllLines(checklistPath).Where(line => line != "- 资源需求全部为 `Ready`。").ToArray();
+                File.WriteAllLines(checklistPath, lines, new UTF8Encoding(true));
+                ExpectFailure("missing_ready_gate_line", "checklist gate line missing", () => ValidateNoBlockingSteps(profile));
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
+            Debug.Log("UI creation host generate checklist contract validation passed.");
+        }
+
         static void ValidateReadyGateLines(string checklist)
         {
             RequireChecklistLine(checklist, "- 布局 dry-run gate 已通过。");
@@ -342,6 +368,86 @@ namespace Xipin.UIAITools
         static void ValidateSections(string[] lines)
         {
             UIReportMarkdown.RequireExactSectionOrder("UI creation host generate checklist", lines, "## 目标", "## 阻断项", "## 人工复核项", "## 组件候选确认", "## 宿主生成前确认", "## 宿主生成器允许动作", "## 宿主生成器禁止动作", "## 生成后验证");
+        }
+
+        static void WriteDryRun(UIAIToolsProfile profile, string componentId)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationLayoutDryRun);
+            File.WriteAllLines(path, new[]
+            {
+                UIReportFiles.CreationLayoutDryRunHeader,
+                DryRunRow("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo"),
+                DryRunRow("2", "TargetPrefab", "Info", "OK", "目标 prefab 可创建", "Assets/Art/UI/AI/Demo/Demo.prefab"),
+                DryRunRow("3", "RequiresConfirmation", "Info", "OK", "需要人工确认", ""),
+                DryRunRow("4", "LayoutNodes", "Info", "OK", "布局节点已提供", "1"),
+                DryRunRow("5", "NodeComponentId", "Info", "OK", "组件已确认", componentId + " Root")
+            }, new UTF8Encoding(true));
+        }
+
+        static string WriteDraftJson(UIAIToolsProfile profile, string componentId)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, "UICreationHostGenerateChecklistContractDraft.json");
+            var json = "{\"root\":{\"name\":\"Demo\",\"uiType\":\"Dialog\",\"targetFolder\":\"Assets/Art/UI/AI/Demo\",\"referenceResolution\":\"1080x1920\",\"safeAreaPolicy\":\"\"},\"nodes\":[{\"nodeId\":\"Root\",\"parentId\":\"\",\"name\":\"Root\",\"componentRole\":\"Panel\",\"componentId\":\"" + componentId + "\",\"anchor\":\"stretch_full\",\"position\":\"0,0\",\"size\":\"1080x1920\"}],\"assets\":[],\"interactions\":[],\"risks\":[],\"requiresConfirmation\":true}";
+            File.WriteAllText(path, json, new UTF8Encoding(true));
+            return path;
+        }
+
+        static void WriteComponentCandidateReports(UIAIToolsProfile profile, string componentId)
+        {
+            File.WriteAllLines(UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateIndex), new[]
+            {
+                UIReportFiles.ComponentCandidateIndexHeader,
+                CandidateRow(componentId)
+            }, new UTF8Encoding(true));
+            File.WriteAllLines(UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateReview), new[]
+            {
+                UIReportFiles.ComponentCandidateReviewHeader,
+                ReviewRow(componentId)
+            }, new UTF8Encoding(true));
+            File.WriteAllLines(UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateIndexSummary), new[]
+            {
+                "# UI 组件候选索引",
+                "",
+                "## 角色分布",
+                "## 高频候选",
+                "## Button 复核队列",
+                "## 使用方式"
+            }, new UTF8Encoding(true));
+        }
+
+        static string CandidateRow(string componentId)
+        {
+            return string.Join(",", new[] { componentId, "Panel", "Image", "Image", "Sprite", "Assets/Panel.png", "", "1", "1", "Assets/Demo.prefab", "Assets/Demo.prefab#Root", "contract" }.Select(Csv));
+        }
+
+        static string ReviewRow(string componentId)
+        {
+            return string.Join(",", new[] { componentId, "Panel", "Candidate", "Approved", "1", "1", "Assets/Panel.png", "", "Assets/Demo.prefab", "Assets/Demo.prefab#Root", "Assets/Components/Panel.prefab", "", "normal", "contract", "QA", "approved" }.Select(Csv));
+        }
+
+        static string DryRunRow(string itemIndex, string check, string severity, string status, string message, string evidence)
+        {
+            return string.Join(",", new[] { itemIndex, check, severity, status, message, evidence }.Select(Csv));
+        }
+
+        static string Csv(string value)
+        {
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+
+        static void ExpectFailure(string name, string expectedMessage, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI creation host generate checklist contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI creation host generate checklist contract sample did not fail: " + name);
         }
     }
 }

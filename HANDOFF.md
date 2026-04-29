@@ -2,7 +2,7 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前优先稳定改版和新 UI 生成链路的 gate 与宿主结果契约。
 
 # Status
-替换链路的 manifest、dry-run、pending input、external input package、execution plan、core scan rows、reuse search result、component candidate、host apply checklist 和 host apply result 已串起前置复验；dry-run、pending input、readiness、external input package、execution plan、core scan rows、reuse search result 和 component candidate 都会拒绝重复逻辑行，execution plan 也有独立重复计划行 contract，host apply checklist 有独立 gate 行契约，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。CSV 底层契约补充覆盖 quoted 字段跨物理行和引号后夹空格的严格拒绝样本；Markdown section 契约会用 duplicate section 明确报错重复合法标题，并忽略 fenced code block 内的 `## `。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
+替换链路的 manifest、dry-run、pending input、external input package、execution plan、core scan rows、reuse search result、component candidate、host apply checklist 和 host apply result 已串起前置复验；dry-run、pending input、readiness、external input package、execution plan、core scan rows、reuse search result 和 component candidate 都会拒绝重复逻辑行，execution plan 也有独立重复计划行 contract，host apply checklist 有独立 gate 行契约，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，Creation host generate checklist 也有独立 Ready gate 行契约，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。CSV 底层契约补充覆盖 quoted 字段跨物理行和引号后夹空格的严格拒绝样本；Markdown section 契约会用 duplicate section 明确报错重复合法标题，并忽略 fenced code block 内的 `## `。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 
 # Key Files
 - `Editor/Generation/UIReplacementPlanDryRunService.cs`：替换 dry-run 读取、校验和重复检查行 gate。
@@ -41,6 +41,7 @@
 - `ValidateComponentCandidateContractBatch` -> `Logs/Verify_ComponentCandidateContract_DuplicateRows.log`，覆盖组件候选索引和 review 清单重复 ComponentId 复验，return code 0。
 - `ValidateUICreationLayoutDryRunContractBatch` -> `Logs/Verify_UICreationLayoutDryRunContract_DuplicateRows.log`，覆盖 Creation layout dry-run 重复检查行复验，return code 0。
 - `ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_PlanStatusHelper.log`，日志显示 26 行 skipped 阻断样例通过，return code 0。
+- `ValidateUICreationHostGenerateChecklistContractBatch` -> `Logs/Verify_UICreationHostGenerateChecklistContract_GateLines.log`，覆盖 Creation 生成前清单 Ready gate 行复验，return code 0。
 - `ValidateUICreationHostGenerateResultContractBatch` -> `Logs/Verify_UICreationHostGenerateResultContract_ChecklistGateLines.log`，覆盖 Creation 清单目标、组件列表、Ready gate 文案和重复结果行复验，return code 0。
 
 # Constraints
