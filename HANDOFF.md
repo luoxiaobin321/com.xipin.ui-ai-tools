@@ -2,7 +2,7 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前先稳定 AI 改版和新 UI 制作的输入、gate 与宿主结果报告契约。
 
 # Status
-总纲进度约 69%；“宿主结果报告契约回归”已推送到 `origin/main`（最新功能提交 `4613968`）。包侧已提供 `UIReplacementHostApplyResult.csv/md` 与 `UICreationHostGenerateResult.csv/md` 只读契约，host apply checklist 增强为内容级校验；新 UI 生成结果可通过 `ValidateAgainstLayoutDraft` 校验当前草稿目标、NodeId/ComponentId 归属、Action 白名单、节点动作字段形状、每个草稿节点至少一条结果行、每个节点的 `Applied ApplyLayout` 行、目标 prefab 的 `Applied CreatePrefab` 行和 `Verified VerifyAfterGenerate` 行，宿主替换结果可通过 `ValidateAgainstExecutionPlan` 匹配当前执行计划，要求计划内 `ApplyPrefabReference` / `VerifyAfterApply` 都有结果行覆盖，并在当前执行计划仍有阻断步骤时只允许 `Skipped` 结果。测试宿主已有阻断结果样例，可从 UIVipcard 执行计划生成 26 行 `Skipped` 并读回校验。UIVipcard 仍缺新版预览、13 张新图和目标图集，host apply gate 预期阻断。
+总纲进度约 69%；“宿主结果报告契约回归”已推送到 `origin/main`（最新功能提交 `c1aaf59`）。包侧已提供 `UIReplacementHostApplyResult.csv/md` 与 `UICreationHostGenerateResult.csv/md` 只读契约，host apply checklist 增强为内容级校验；新 UI 生成结果可通过 `ValidateAgainstLayoutDraft` 校验当前草稿目标、NodeId/ComponentId 归属、Action 白名单、节点动作字段形状、每个草稿节点至少一条结果行、每个节点的 `Applied ApplyLayout` 行、目标 prefab 的 `Applied CreatePrefab` 行和 `Verified VerifyAfterGenerate` 行，宿主替换结果可通过 `ValidateAgainstExecutionPlan` 匹配当前执行计划，要求计划内 `ApplyPrefabReference` / `VerifyAfterApply` 都有结果行覆盖，并在当前执行计划仍有阻断步骤时只允许 `Skipped` 结果。测试宿主已有阻断结果样例，可从 UIVipcard 执行计划生成 26 行 `Skipped` 并读回校验。UIVipcard 仍缺新版预览、13 张新图和目标图集，host apply gate 预期阻断。
 
 # Key Files
 - `Editor/Generation/UIReplacementHostApplyResultService.cs`：AI 改版宿主执行结果报告契约，包含 Action 白名单、当前执行计划反查、apply/verify 覆盖校验、阻断计划只允许跳过结果和 Skipped/Failed 说明必填校验。
