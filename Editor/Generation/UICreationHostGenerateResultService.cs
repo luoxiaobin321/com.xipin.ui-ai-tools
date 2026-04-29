@@ -53,6 +53,7 @@ namespace Xipin.UIAITools
             var actualTargetPrefab = TargetPrefab(rows);
             if (actualTargetPrefab != expectedTargetPrefab)
                 throw new Exception($"Invalid UI creation host generate result: TargetPrefab mismatch {actualTargetPrefab}->{expectedTargetPrefab}");
+            RequireChecklistTarget(profile, expectedTargetPrefab);
             ValidateDraftNodeRows(rows, draft);
             ValidateDraftLayoutRows(rows, draft);
             ValidateGenerateVerification(rows, expectedTargetPrefab);
@@ -129,6 +130,9 @@ namespace Xipin.UIAITools
                 UICreationHostGenerateChecklistService.Generate(profile, draftJsonPath);
                 ValidateAgainstLayoutDraft(profile, draftJsonPath);
                 ExpectTargetFailure(profile, "Assets/Art/UI/AI/Other/Other.prefab", "TargetPrefab mismatch");
+                ExpectChecklistTargetFailure(profile, draftJsonPath, WriteDraftJson(profile, "Other", "Assets/Art/UI/AI/Other"));
+                UICreationLayoutDryRunService.Run(profile, draftJsonPath);
+                UICreationHostGenerateChecklistService.Generate(profile, draftJsonPath);
                 ExpectDraftFailure(profile, WriteDraftJson(profile, "Other", "Assets/Art/UI/AI/Other"), "TargetPrefab mismatch");
                 WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "MissingNode", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
                 GenerateSummary(profile, "Demo", 1);
@@ -224,6 +228,14 @@ namespace Xipin.UIAITools
         static string TargetPrefabPath(UILayoutDraft draft)
         {
             return (draft.root.targetFolder.TrimEnd('/', '\\') + "/" + draft.root.name + ".prefab").Replace('\\', '/');
+        }
+
+        static void RequireChecklistTarget(UIAIToolsProfile profile, string expectedTargetPrefab)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationHostGenerateChecklist);
+            var expectedLine = $"- 建议 prefab：`{expectedTargetPrefab}`";
+            if (!File.ReadAllLines(path).Contains(expectedLine))
+                throw new Exception("Invalid UI creation host generate result: checklist target mismatch " + expectedTargetPrefab);
         }
 
         static void ValidateDraftNodeRows(List<Dictionary<string, string>> rows, UILayoutDraft draft)
@@ -403,6 +415,13 @@ namespace Xipin.UIAITools
                 throw new Exception($"Unexpected UI creation host generate result layout draft contract failure: {exception.Message}");
             }
             throw new Exception("UI creation host generate result layout draft contract sample did not fail");
+        }
+
+        static void ExpectChecklistTargetFailure(UIAIToolsProfile profile, string draftJsonPath, string staleDraftJsonPath)
+        {
+            UICreationLayoutDryRunService.Run(profile, staleDraftJsonPath);
+            UICreationHostGenerateChecklistService.Generate(profile, staleDraftJsonPath);
+            ExpectDraftFailure(profile, draftJsonPath, "checklist target mismatch");
         }
 
         static void ExpectSummaryFailure(UIAIToolsProfile profile, string name, string title, string expectedMessage)
