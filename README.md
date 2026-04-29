@@ -14,8 +14,8 @@
 ## 能力范围
 
 - 资源治理：图片归类、图集审计、复用反查、prefab 依赖和 DrawCall 静态风险报告。
-- 自动换皮输入链路：旧 prefab 基准图、Brief、草稿 JSON、dry-run、执行计划、待补输入、外部生成输入包、Prompt Pack、引用素材清单、宿主执行清单和 manifest。
-- 自动制作 UI 输入链路：需求 Brief、组件候选索引、布局草稿、资源需求清单、prefab 生成前 dry-run 和宿主确认清单。
+- 自动换皮输入链路：旧 prefab 基准图、Brief、草稿 JSON、dry-run、执行计划、待补输入、外部生成输入包、Prompt Pack、引用素材清单、宿主执行清单、宿主执行结果只读校验和 manifest。
+- 自动制作 UI 输入链路：需求 Brief、组件候选索引、布局草稿、资源需求清单、prefab 生成前 dry-run、宿主确认清单和宿主生成结果只读校验。
 
 ## 文档入口
 

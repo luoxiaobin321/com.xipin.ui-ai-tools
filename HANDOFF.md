@@ -1,26 +1,28 @@
 # Current Goal
-维护独立 UPM 包 `com.xipin.ui-ai-tools`，用 `E:\Work\UIAIToolsClient` 作为 Unity 测试宿主验证扫描、AI 改版输入链路和新 UI 生成前 gate。
+把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前先稳定 AI 改版和新 UI 制作的输入、gate 与宿主结果报告契约。
 
 # Status
-包已从原游戏项目迁出为独立仓库形态，远端目标是 `https://github.com/luoxiaobin321/com.xipin.ui-ai-tools.git`。当前最新能力包括 CSV/JSON/Markdown 契约校验、外部输入包读回校验、字符串转义校验、ASCII 整数校验、对象字段分隔校验；UIVipcard redesign package 最近验证仍是预期 `15 inputs / 15 missing`。宿主 wrapper 和真实资源只用于测试，不进入包仓库。
+总纲进度约 66%；“宿主结果报告契约回归”已完成并在包仓库本地提交，`main` ahead `origin/main` 1 个提交。包侧已提供 `UIReplacementHostApplyResult.csv/md` 与 `UICreationHostGenerateResult.csv/md` 只读契约，host apply checklist 增强为内容级校验；新 UI 生成结果可由包侧生成基础 Markdown 汇总，并校验 target prefab 一致性。测试宿主已有阻断结果样例，可从 UIVipcard 执行计划生成 26 行 `Skipped` 并读回校验。UIVipcard 仍缺新版预览、13 张新图和目标图集，host apply gate 预期阻断。
 
 # Key Files
-- `Editor/Generation/UICreationBriefTemplateService.cs`：Brief/layout JSON 边界校验。
-- `Editor/Generation/UIRedesignDraftService.cs`：redesign draft JSON 边界校验。
-- `Editor/Generation/UIReplacementExternalInputPackageService.cs`：外部输入包生成、读回和 validate gate。
-- `Editor/Scanning/UIReportValidationService.cs`：CSV/JSON/Markdown 契约自检样例。
-- `Development~/modules/*contracts.md`、`Documentation~/modules/*.md`：契约说明。
+- `Editor/Generation/UIReplacementHostApplyResultService.cs`：AI 改版宿主执行结果报告契约。
+- `Editor/Generation/UICreationHostGenerateResultService.cs`：新 UI 宿主生成结果报告契约和基础汇总生成。
+- `Editor/Generation/UIReplacementHostApplyChecklistService.cs`：宿主替换前清单和 gate。
+- `Editor/Scanning/UIReportFiles.cs`：核心文件名和 CSV 表头常量。
+- `Documentation~/modules/ui-creation-host-generator.md`：宿主 prefab 草稿生成器接入说明。
 
 # Next Steps
-1. 初始化并推送包目录 Git 仓库。
-2. 在测试宿主跑 `UIAssetTriageScanner.ValidateJsonContractBatch` 做轻量回归。
-3. 继续只读推进时，优先排查其它 JSON 读回/外部输入边界，补最小自检样例和文档。
-4. 若 UIVipcard 外部产物已落位，按 readiness、外部输入包验证、Ready gate、执行计划 gate、prepare/validate redesign package 顺序重跑。
+1. 需要同步远端时，在包仓库推送当前 ahead 1 的提交。
+2. 不依赖外部图片时，继续补更多宿主生成器回归数据或真实宿主执行器样例。
+3. 外部产物落位后，按 readiness、外部输入包、Ready gate、执行计划 gate、host apply gate 顺序重跑。
+4. 发布前，再跑一轮核心扫描和项目 UI 回归。
 
 # Run / Test
-- 宿主 batch：`UIAssetTriageScanner.ValidateJsonContractBatch`
-- 宿主 batch：`UIAssetTriageScanner.ValidateRedesignPackageBatch -uiPrefabPath Assets/Bundle/Prefab/UIVipcard/UIVipcard.prefab`
-- 包目录：`git status --short --branch`
+- `UIAssetTriageScanner.ValidateHostApplyResultContractBatch`；`UIAssetTriageScanner.ValidateUICreationHostGenerateResultContractBatch`
+- `UIAssetTriageScanner.ValidateCsvContractBatch`；`UIAssetTriageScanner.ValidateJsonContractBatch`；`UIAssetTriageScanner.ValidateMarkdownSectionContractBatch`
+- `UIAssetTriageScanner.ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json`
+- `UIAssetTriageScanner.ValidateRedesignPackageBatch -uiPrefabPath Assets/Bundle/Prefab/UIVipcard/UIVipcard.prefab`；`UIAssetTriageScanner.ValidateHostApplyChecklistBatch` 预期因 `PendingPreview：1，PendingAsset：13，PendingAtlas：13` 阻断。
+- `UIAssetTriageScanner.GenerateHostApplyBlockedResultSampleBatch`；`UIAssetTriageScanner.ValidateHostApplyBlockedResultSampleBatch`；`UIAssetTriageScanner.GenerateHostApplyResultSummaryBatch`；`UIAssetTriageScanner.ValidateHostApplyResultBatch`
 
 # Constraints
 - 包不得编译引用 `GameApp`、`MotionFramework`、`com.xipin.lframework` 或 YooAsset。

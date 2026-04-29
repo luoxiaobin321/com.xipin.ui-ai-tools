@@ -42,7 +42,7 @@ UIReplacementHostApplyChecklistService.ValidateNoBlockingSteps(profile);
 
 ## 输出
 
-建议宿主输出独立报告，例如 `UIReplacementHostApplyResult.csv` 和 `UIReplacementHostApplyResult.md`。字段至少包含：
+建议宿主输出独立报告：`UIReplacementHostApplyResult.csv` 和 `UIReplacementHostApplyResult.md`。包侧提供只读校验和 Markdown 汇总生成入口；它只校验报告，不执行资源改动。CSV 字段为：
 
 | 字段 | 含义 |
 | --- | --- |
@@ -55,6 +55,10 @@ UIReplacementHostApplyChecklistService.ValidateNoBlockingSteps(profile);
 | `PrefabRefs` | 实际处理的 prefab。 |
 | `Confirmation` | 宿主人工确认记录标识。 |
 | `Message` | 执行结果说明。 |
+
+包侧会校验 CSV 精确表头、非空结果行、`ItemIndex`、`Action`、状态、Applied/Verified 确认记录、Failed 说明、Markdown 顶层标题、状态分布和执行后复验清单。
+
+测试宿主可用 `GenerateHostApplyBlockedResultSampleBatch` 从当前执行计划生成阻断样例结果，并用 `ValidateHostApplyBlockedResultSampleBatch` 读回逐行比对执行计划。它只写 `Skipped` 报告行并复用包侧汇总和校验，不移动资源、不覆盖 prefab、不修改图集。
 
 ## 执行后复验
 

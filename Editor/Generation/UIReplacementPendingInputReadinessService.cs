@@ -89,7 +89,7 @@ namespace Xipin.UIAITools
                 "",
                 $"生成时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}",
                 "",
-                "本文件只检查待补输入是否已落位，不生成图片、不创建图集、不导入资源。",
+                "本文件只检查待补输入的当前路径状态和 PNG 可读性，不生成图片、不创建图集、不导入资源。",
                 "",
                 "## Gate 状态",
                 $"- CSV：`{csvPath}`",
@@ -151,6 +151,7 @@ namespace Xipin.UIAITools
             var missing = MissingRows(rows);
             var invalid = InvalidRows(rows);
             ValidateSummarySections(lines);
+            RequireLine(lines, "本文件只检查待补输入的当前路径状态和 PNG 可读性，不生成图片、不创建图集、不导入资源。");
             RequireLine(lines, $"- CSV：`{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness)}`");
             RequireLine(lines, $"- 待补总数：{rows.Count}");
             RequireLine(lines, $"- 已就绪：{ReadyRows(rows).Count}");
@@ -168,18 +169,18 @@ namespace Xipin.UIAITools
         static void AddAcceptanceChecklist(List<string> lines, List<Dictionary<string, string>> rows)
         {
             lines.Add("## 外部落位验收");
-            AddAcceptanceLine(lines, rows, "Preview", "新版预览 PNG 已落位，尺寸和视觉效果已人工确认。");
-            AddAcceptanceLine(lines, rows, "NewAsset", "替换 PNG 已落位，尺寸、透明通道、命名和目标图集归属已人工确认。");
-            AddAcceptanceLine(lines, rows, "TargetAtlas", "目标 SpriteAtlas 已存在，并等待宿主确认纳入对应替换图。");
+            AddAcceptanceLine(lines, rows, "Preview", "验收要求：新版预览 PNG 可解码，尺寸和视觉效果需人工确认。");
+            AddAcceptanceLine(lines, rows, "NewAsset", "验收要求：替换 PNG 可解码，尺寸、透明通道、命名和目标图集归属需人工确认。");
+            AddAcceptanceLine(lines, rows, "TargetAtlas", "验收要求：目标 SpriteAtlas 路径存在，并由宿主确认纳入对应替换图。");
             lines.Add("");
         }
 
         static void ValidateAcceptanceChecklist(string[] lines, List<Dictionary<string, string>> rows)
         {
             RequireLine(lines, "## 外部落位验收");
-            RequireLine(lines, AcceptanceLine(rows, "Preview", "新版预览 PNG 已落位，尺寸和视觉效果已人工确认。"));
-            RequireLine(lines, AcceptanceLine(rows, "NewAsset", "替换 PNG 已落位，尺寸、透明通道、命名和目标图集归属已人工确认。"));
-            RequireLine(lines, AcceptanceLine(rows, "TargetAtlas", "目标 SpriteAtlas 已存在，并等待宿主确认纳入对应替换图。"));
+            RequireLine(lines, AcceptanceLine(rows, "Preview", "验收要求：新版预览 PNG 可解码，尺寸和视觉效果需人工确认。"));
+            RequireLine(lines, AcceptanceLine(rows, "NewAsset", "验收要求：替换 PNG 可解码，尺寸、透明通道、命名和目标图集归属需人工确认。"));
+            RequireLine(lines, AcceptanceLine(rows, "TargetAtlas", "验收要求：目标 SpriteAtlas 路径存在，并由宿主确认纳入对应替换图。"));
         }
 
         static void AddAcceptanceLine(List<string> lines, List<Dictionary<string, string>> rows, string kind, string text)

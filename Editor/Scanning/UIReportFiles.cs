@@ -41,12 +41,16 @@ namespace Xipin.UIAITools
         public const string ReplacementExternalPromptItemList = "UIReplacementExternalPromptItems.md";
         public const string ReplacementExternalReferenceCopyList = "UIReplacementExternalReferenceCopyList.md";
         public const string ReplacementHostApplyChecklist = "UIReplacementHostApplyChecklist.md";
+        public const string ReplacementHostApplyResult = "UIReplacementHostApplyResult.csv";
+        public const string ReplacementHostApplyResultSummary = "UIReplacementHostApplyResult.md";
         public const string ComponentCandidateIndex = "UIComponentCandidateIndex.csv";
         public const string ComponentCandidateIndexSummary = "UIComponentCandidateIndexSummary.md";
         public const string ComponentCandidateReview = "UIComponentCandidateReview.csv";
         public const string CreationLayoutDryRun = "UICreationLayoutDryRun.csv";
         public const string CreationLayoutDryRunSummary = "UICreationLayoutDryRunSummary.md";
         public const string CreationHostGenerateChecklist = "UICreationHostGenerateChecklist.md";
+        public const string CreationHostGenerateResult = "UICreationHostGenerateResult.csv";
+        public const string CreationHostGenerateResultSummary = "UICreationHostGenerateResult.md";
 
         public const string AssetTriageReportHeader = "Path,Name,Guid,Width,Height,Bytes,Memory,Importer,Atlas,PrefabRefs,TextRefs,NameDup,Hash,Advice,Reason";
         public const string AssetTriagePlanHeader = "Action,Risk,Source,Target,Feature,Width,Height,PrefabCount,Advice,Note,PrefabRefs";
@@ -71,9 +75,11 @@ namespace Xipin.UIAITools
         public const string ReplacementExecutionPlanHeader = "ItemIndex,Action,Status,OldAsset,NewAsset,TargetAtlas,PrefabRefs,RequiresManualConfirmation,Note,Reason";
         public const string ReplacementPendingInputsHeader = "InputKind,Status,Path,ReferencePath,TargetAtlas,ItemIndices,Count,SourceAction,Note";
         public const string ReplacementPendingInputReadinessHeader = "InputKind,PendingStatus,Readiness,Path,ActualWidth,ActualHeight,ReferencePath,TargetAtlas,ItemIndices,Count,SourceAction,Note";
+        public const string ReplacementHostApplyResultHeader = "ItemIndex,Action,Status,OldAsset,NewAsset,TargetAtlas,PrefabRefs,Confirmation,Message";
         public const string ComponentCandidateIndexHeader = "ComponentId,Role,Source,Type,Kind,ImageAsset,Atlas,UseCount,PrefabCount,SamplePrefabs,SampleNodes,Notes";
         public const string ComponentCandidateReviewHeader = "ComponentId,Role,ReviewTier,SuggestedDecision,UseCount,PrefabCount,ImageAsset,Atlas,SamplePrefabs,SampleNodes,ComponentPrefabPath,PreviewPath,States,UsageNotes,Reviewer,ReviewNotes";
         public const string CreationLayoutDryRunHeader = "ItemIndex,Check,Severity,Status,Message,Evidence";
+        public const string CreationHostGenerateResultHeader = "ItemIndex,Action,Status,NodeId,ComponentId,TargetPrefab,AssetPath,Binding,Confirmation,Message";
 
         public static readonly string[] CoreReports =
         {
