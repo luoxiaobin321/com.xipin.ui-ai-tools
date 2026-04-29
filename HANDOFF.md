@@ -2,13 +2,13 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前优先稳定 AI 改版和新 UI 制作的输入、gate 与宿主结果报告契约。
 
 # Status
-宿主结果报告契约、Creation 生成结果契约、替换执行计划读回契约已落地；执行计划统一通过 `UIReplacementExecutionPlanService.ReadRows(profile)` 校验 Action/Status/人工确认/说明字段。当前包侧 `UIRedesignPackageService` 已复用该读回契约，测试宿主阻断结果样例也能从 UIVipcard 执行计划生成并读回校验。UIVipcard 仍因外部产物缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
+宿主结果报告契约、Creation 生成结果契约、替换执行计划读回契约已落地；执行计划统一通过 `UIReplacementExecutionPlanService.ReadRows(profile)` 校验 Action/Status/人工确认/说明字段。当前包侧 `UIRedesignPackageService` 已复用该契约，Creation layout dry-run 也新增 `ReadRows(profile)` 校验 ItemIndex、Check、Severity、Status 和 Message，并被宿主生成清单复用。UIVipcard 仍因外部产物缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 
 # Key Files
 - `Editor/Generation/UIReplacementExecutionPlanService.cs`：替换执行计划生成与读回契约。
 - `Editor/Generation/UIRedesignPackageService.cs`：改版包 manifest 生成与校验入口。
 - `Editor/Generation/UIReplacementHostApplyResultService.cs`：宿主 apply 结果报告契约。
-- `Editor/Generation/UIReplacementHostApplyChecklistService.cs`：宿主替换前清单与 gate。
+- `Editor/Generation/UICreationLayoutDryRunService.cs`：新 UI 布局 dry-run 与读回契约。
 - `Editor/Generation/UICreationHostGenerateResultService.cs`：新 UI 宿主生成结果报告契约。
 - `Editor/Scanning/UIReportFiles.cs`：报告文件名与 CSV 表头常量。
 
@@ -20,7 +20,8 @@
 # Run / Test
 - 最近已验证：`ValidateRedesignPackageBatch -uiPrefabPath Assets/Bundle/Prefab/UIVipcard/UIVipcard.prefab` -> `Logs/Verify_RedesignPackage_ExecutionPlanReadRows.log`，exit code 0。
 - 最近已验证：`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_ReadRowsWrapper.log`，exit code 0。
-- 最近已验证：`GenerateHostApplyBlockedResultSampleBatch` -> `Logs/Generate_HostApplyBlockedResultSample_ReadRowsWrapper.log`，exit code 0。
+- 最近已验证：`GenerateUICreationHostGenerateChecklistBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json` -> `Logs/Generate_UICreationHostChecklist_LayoutDryRunReadRows.log`，exit code 0。
+- 最近已验证：`ValidateUICreationLayoutDryRunBatch` -> `Logs/Verify_UICreationLayoutDryRun_ExpectedBlocked_ReadRows.log`，预期 exit code 1，命中 `UI creation layout dry-run has blocking errors: 1`。
 
 # Constraints
 - 包不得编译引用 `GameApp`、`MotionFramework`、`com.xipin.lframework` 或 YooAsset。

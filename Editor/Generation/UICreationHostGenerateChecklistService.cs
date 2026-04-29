@@ -14,8 +14,7 @@ namespace Xipin.UIAITools
             UIComponentCandidateIndexService.Validate(profile);
             var draft = UILayoutDraftTemplateService.LoadDraft(layoutDraftJsonPath);
             var targetPrefab = TargetPrefabPath(draft);
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.CreationLayoutDryRun, UIReportFiles.CreationLayoutDryRunHeader);
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.CreationLayoutDryRun);
+            var rows = UICreationLayoutDryRunService.ReadRows(profile);
             var dryRunErrors = rows.Where(r => r["Severity"] == "Error").ToList();
             var errors = new List<Dictionary<string, string>>(dryRunErrors);
             var componentReviews = ComponentReviewRows(profile, draft);
@@ -96,8 +95,7 @@ namespace Xipin.UIAITools
         public static void ValidateNoBlockingSteps(UIAIToolsProfile profile)
         {
             UIComponentCandidateIndexService.Validate(profile);
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.CreationLayoutDryRun, UIReportFiles.CreationLayoutDryRunHeader);
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.CreationLayoutDryRun);
+            var rows = UICreationLayoutDryRunService.ReadRows(profile);
             var errors = rows.Count(r => r["Severity"] == "Error");
             if (errors > 0)
                 throw new Exception($"UI creation host generate checklist has blocking steps: {errors}");

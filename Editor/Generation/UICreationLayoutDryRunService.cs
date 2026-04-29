@@ -61,6 +61,8 @@ namespace Xipin.UIAITools
             "Missing",
             "NeedsReview"
         };
+        static readonly HashSet<string> AllowedSeverities = new HashSet<string> { "Info", "Warning", "Error" };
+        static readonly HashSet<string> AllowedStatuses = new HashSet<string> { "OK", "Missing", "NeedsReview", "Exists", "Duplicate", "Unknown", "Invalid", "Ready" };
 
         public static string Run(UIAIToolsProfile profile, string layoutDraftJsonPath)
         {
@@ -87,21 +89,45 @@ namespace Xipin.UIAITools
 
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationLayoutDryRun);
             File.WriteAllLines(path, lines, new UTF8Encoding(true));
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.CreationLayoutDryRun, UIReportFiles.CreationLayoutDryRunHeader);
+            ReadRows(profile);
             var summaryPath = GenerateSummary(profile);
             Debug.Log($"UI creation layout dry-run generated: {path}, summary: {summaryPath}");
             return path;
         }
 
-        public static void ValidateNoErrors(UIAIToolsProfile profile)
+        public static List<Dictionary<string, string>> ReadRows(UIAIToolsProfile profile)
         {
             UIReportValidationService.ValidateReport(profile, UIReportFiles.CreationLayoutDryRun, UIReportFiles.CreationLayoutDryRunHeader);
             var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.CreationLayoutDryRun);
+            if (rows.Count == 0)
+                throw new Exception("Invalid UI creation layout dry-run: rows are required");
+            foreach (var row in rows)
+                ValidateRow(row);
+            return rows;
+        }
+
+        public static void ValidateNoErrors(UIAIToolsProfile profile)
+        {
+            var rows = ReadRows(profile);
             ValidateSummary(profile);
             var errors = rows.Count(r => r["Severity"] == "Error");
             if (errors > 0)
                 throw new Exception($"UI creation layout dry-run has blocking errors: {errors}");
             Debug.Log("UI creation layout dry-run validation passed.");
+        }
+
+        static void ValidateRow(Dictionary<string, string> row)
+        {
+            if (!int.TryParse(row["ItemIndex"], out _))
+                throw new Exception("Invalid UI creation layout dry-run: ItemIndex must be an integer");
+            if (string.IsNullOrEmpty(row["Check"]))
+                throw new Exception("Invalid UI creation layout dry-run: Check is required");
+            if (!AllowedSeverities.Contains(row["Severity"]))
+                throw new Exception("Invalid UI creation layout dry-run: invalid severity " + row["Severity"]);
+            if (!AllowedStatuses.Contains(row["Status"]))
+                throw new Exception("Invalid UI creation layout dry-run: invalid status " + row["Status"]);
+            if (string.IsNullOrEmpty(row["Message"]))
+                throw new Exception("Invalid UI creation layout dry-run: Message is required");
         }
 
         static void AddNodeTreeChecks(List<string> lines, ref int index, List<UILayoutNode> nodes)
@@ -317,7 +343,7 @@ namespace Xipin.UIAITools
 
         static string GenerateSummary(UIAIToolsProfile profile)
         {
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.CreationLayoutDryRun);
+            var rows = ReadRows(profile);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationLayoutDryRunSummary);
             var errors = rows.Count(r => r["Severity"] == "Error");
             var lines = new List<string>
