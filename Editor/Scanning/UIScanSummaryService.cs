@@ -10,6 +10,20 @@ namespace Xipin.UIAITools
 {
     public static class UIScanSummaryService
     {
+        static readonly string[] SummarySections =
+        {
+            "## 图片归类分布",
+            "## UITexture 尺寸分布",
+            "## 直挂散图候选",
+            "## 复用索引建议",
+            "## 优化目标 Top",
+            "## 相邻断批原因",
+            "## 相邻断批建议",
+            "## 空 Sprite Image",
+            "## 空 Sprite 待确认样例",
+            "## 建议下一步"
+        };
+
         public static void Generate(UIAIToolsProfile profile)
         {
             UIReportValidationService.Validate(profile);
@@ -80,6 +94,25 @@ namespace Xipin.UIAITools
             Debug.Log($"UI AI Tools panel focus generated: {path}");
             if (!Application.isBatchMode)
                 EditorUtility.RevealInFinder(Path.GetFullPath(path));
+        }
+
+        public static void ValidateContract()
+        {
+            ValidateSummarySections(SummarySections);
+            ExpectSectionFailure("summary_missing_section", "UI AI tools summary is missing section: ## UITexture 尺寸分布", () =>
+                ValidateSummarySections(SummarySections.Where(section => section != "## UITexture 尺寸分布").ToArray()));
+            ExpectSectionFailure("summary_out_of_order", "UI AI tools summary section is out of order", () =>
+                ValidateSummarySections(new[] { SummarySections[1], SummarySections[0] }.Concat(SummarySections.Skip(2)).ToArray()));
+
+            var targets = new List<Dictionary<string, string>>
+            {
+                new Dictionary<string, string> { { "Prefab", "Assets/Bundle/Prefab/Home.prefab" } },
+                new Dictionary<string, string> { { "Prefab", "Assets/Bundle/Prefab/Shop.prefab" } }
+            };
+            ValidatePanelFocusSections(new[] { "## Home", "## Shop" }, targets);
+            ExpectSectionFailure("panel_focus_out_of_order", "UI AI tools panel focus section is out of order", () =>
+                ValidatePanelFocusSections(new[] { "## Shop", "## Home" }, targets));
+            Debug.Log("UI scan summary contract validation passed.");
         }
 
         static void AddGroup(List<string> lines, string title, List<Dictionary<string, string>> rows, string field, int count)
@@ -187,12 +220,27 @@ namespace Xipin.UIAITools
 
         static void ValidateSummarySections(string[] lines)
         {
-            UIReportMarkdown.RequireExactSectionOrder("UI AI tools summary", lines, "## 图片归类分布", "## UITexture 尺寸分布", "## 直挂散图候选", "## 复用索引建议", "## 优化目标 Top", "## 相邻断批原因", "## 相邻断批建议", "## 空 Sprite Image", "## 空 Sprite 待确认样例", "## 建议下一步");
+            UIReportMarkdown.RequireExactSectionOrder("UI AI tools summary", lines, SummarySections);
         }
 
         static void ValidatePanelFocusSections(string[] lines, List<Dictionary<string, string>> targets)
         {
             UIReportMarkdown.RequireExactSectionOrder("UI AI tools panel focus", lines, targets.Select(target => "## " + ShortPrefab(target["Prefab"])).ToArray());
+        }
+
+        static void ExpectSectionFailure(string name, string expectedMessage, Action validate)
+        {
+            try
+            {
+                validate();
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI scan summary contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI scan summary contract sample did not fail: " + name);
         }
     }
 }
