@@ -87,6 +87,36 @@ namespace Xipin.UIAITools
             Debug.Log($"UI replacement host apply checklist gate passed: {rows.Count} steps, 0 blocking steps.");
         }
 
+        public static void ValidateContract()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsHostApplyChecklistContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                var profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+                profile.logRoot = root;
+                WriteExecutionPlan(profile, new[]
+                {
+                    PlanRow("-1", "ConfirmDraftPreview", "PendingPreview", "", "Assets/Preview.png", "", "", "true", "人工确认新版预览", ""),
+                    PlanRow("0", "ConfirmNewAsset", "PendingAsset", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/Prefab/A.prefab", "true", "人工确认新图", ""),
+                    PlanRow("0", "ConfirmTargetAtlas", "PendingAtlas", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/Prefab/A.prefab", "true", "人工确认目标图集", ""),
+                    PlanRow("0", "ConfirmRiskChecks", "NeedsReview", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/Prefab/A.prefab", "true", "复用风险：人工确认", "risk"),
+                    PlanRow("0", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/Prefab/A.prefab", "true", "人工确认后替换 prefab", ""),
+                    PlanRow("0", "VerifyAfterApply", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/Prefab/A.prefab", "true", "执行后复验", "")
+                });
+                var path = Generate(profile);
+                var lines = File.ReadAllLines(path).Where(line => line != "- 宿主执行前置：阻断").ToArray();
+                File.WriteAllLines(path, lines, new UTF8Encoding(true));
+                ExpectFailure("missing_gate_line", "宿主执行前置", () => Validate(profile));
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
+            Debug.Log("UI replacement host apply checklist contract validation passed.");
+        }
+
         static bool IsManualConfirmation(Dictionary<string, string> row)
         {
             return !UIReplacementPlanStatus.IsBlocking(row["Status"])
@@ -198,5 +228,35 @@ namespace Xipin.UIAITools
             UIReportMarkdown.RequireExactSectionOrder("UI replacement host apply checklist", lines, "## Gate 状态", "## 待补输入", "## 复核项分布", "## 阻断项", "## 执行前人工确认", "## Prefab 替换候选", "## 执行后验证");
         }
 
+        static void WriteExecutionPlan(UIAIToolsProfile profile, IEnumerable<string> rows)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            File.WriteAllLines(path, new[] { UIReportFiles.ReplacementExecutionPlanHeader }.Concat(rows), new UTF8Encoding(true));
+        }
+
+        static string PlanRow(string itemIndex, string action, string status, string oldAsset, string newAsset, string targetAtlas, string prefabRefs, string requiresManualConfirmation, string note, string risk)
+        {
+            return string.Join(",", new[] { itemIndex, action, status, oldAsset, newAsset, targetAtlas, prefabRefs, requiresManualConfirmation, note, risk }.Select(Csv));
+        }
+
+        static string Csv(string value)
+        {
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+
+        static void ExpectFailure(string name, string expectedMessage, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI replacement host apply checklist contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI replacement host apply checklist contract sample did not fail: " + name);
+        }
     }
 }
