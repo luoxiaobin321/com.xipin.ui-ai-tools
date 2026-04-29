@@ -163,6 +163,7 @@ namespace Xipin.UIAITools
                     Row("1", "VerifyAfterGenerate", "Verified", "", "", "Assets/Other.prefab", "", "", "QA-1", "verified")
                 }, "TargetPrefab must be consistent");
                 ExpectFailure(profile, "missing_confirmation", Row("0", "CreatePrefab", "Applied", "", "", "Assets/Demo.prefab", "", "", "", "bad"), "confirmation is required");
+                ExpectFailure(profile, "missing_skipped_message", Row("0", "ApplyText", "Skipped", "Title", "builtin:Text", "Assets/Demo.prefab", "", "", "", ""), "skipped message is required");
                 ExpectFailure(profile, "missing_failed_message", Row("0", "CreatePrefab", "Failed", "", "", "Assets/Demo.prefab", "", "", "QA-1", ""), "failed message is required");
             }
             finally
@@ -185,6 +186,8 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI creation host generate result: TargetPrefab is required");
             if ((row["Status"] == "Applied" || row["Status"] == "Verified") && string.IsNullOrEmpty(row["Confirmation"]))
                 throw new Exception("Invalid UI creation host generate result: confirmation is required");
+            if (row["Status"] == "Skipped" && string.IsNullOrEmpty(row["Message"]))
+                throw new Exception("Invalid UI creation host generate result: skipped message is required");
             if (row["Status"] == "Failed" && string.IsNullOrEmpty(row["Message"]))
                 throw new Exception("Invalid UI creation host generate result: failed message is required");
         }

@@ -6,7 +6,7 @@
 
 # Key Files
 - `Editor/Generation/UIReplacementHostApplyResultService.cs`：AI 改版宿主执行结果报告契约，包含当前执行计划反查、apply/verify 覆盖校验、阻断计划只允许跳过结果和 Skipped/Failed 说明必填校验。
-- `Editor/Generation/UICreationHostGenerateResultService.cs`：新 UI 宿主生成结果报告契约和基础汇总生成，包含 prefab 创建、草稿节点布局行和生成后复验覆盖校验。
+- `Editor/Generation/UICreationHostGenerateResultService.cs`：新 UI 宿主生成结果报告契约和基础汇总生成，包含 prefab 创建、草稿节点布局行、生成后复验覆盖和 Skipped/Failed 说明必填校验。
 - `Editor/Generation/UIReplacementHostApplyChecklistService.cs`：宿主替换前清单和 gate。
 - `Editor/Scanning/UIReportFiles.cs`：核心文件名和 CSV 表头常量。
 - `Documentation~/modules/ui-creation-host-generator.md`：宿主 prefab 草稿生成器接入说明。
