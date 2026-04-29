@@ -70,6 +70,11 @@ namespace Xipin.UIAITools
             Debug.Log($"UI replacement host apply result execution plan validation passed: {rows.Count} rows.");
         }
 
+        public static bool RequiresResultAction(string action)
+        {
+            return AllowedActions.Contains(action);
+        }
+
         public static void ValidateContract()
         {
             var root = Path.Combine(Path.GetTempPath(), "UIAIToolsHostApplyResultContract_" + Guid.NewGuid().ToString("N"));
@@ -138,7 +143,7 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement host apply result: ItemIndex must be an integer");
             if (string.IsNullOrEmpty(row["Action"]))
                 throw new Exception("Invalid UI replacement host apply result: Action is required");
-            if (!AllowedActions.Contains(row["Action"]))
+            if (!RequiresResultAction(row["Action"]))
                 throw new Exception("Invalid UI replacement host apply result: invalid action " + row["Action"]);
             if (!AllowedStatuses.Contains(row["Status"]))
                 throw new Exception("Invalid UI replacement host apply result: invalid status " + row["Status"]);
@@ -171,7 +176,7 @@ namespace Xipin.UIAITools
 
         static bool RequiresResultRow(Dictionary<string, string> plan)
         {
-            return AllowedActions.Contains(plan["Action"]);
+            return RequiresResultAction(plan["Action"]);
         }
 
         static void ValidateBlockingPlanDidNotExecute(List<Dictionary<string, string>> planRows, List<Dictionary<string, string>> rows)

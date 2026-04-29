@@ -2,7 +2,7 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前优先稳定改版和新 UI 生成链路的 gate 与宿主结果契约。
 
 # Status
-替换链路的 manifest、host apply checklist 和 host apply result 已串起前置复验；host apply result 现在要求执行计划中所有可产生结果的 action（`MoveNewAsset`、`ApplyPrefabReference`、`UpdateAtlas`、`UpdateAddress`、`VerifyAfterApply`）都有结果行。Creation host generate result 会复验生成前清单，并校验目标 prefab 与当前 dry-run 组件列表。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
+替换链路的 manifest、host apply checklist 和 host apply result 已串起前置复验；host apply result 现在要求执行计划中所有可产生结果的 action（`MoveNewAsset`、`ApplyPrefabReference`、`UpdateAtlas`、`UpdateAddress`、`VerifyAfterApply`）都有结果行，并通过 `RequiresResultAction` 暴露同一判断给宿主样例复用。Creation host generate result 会复验生成前清单，并校验目标 prefab 与当前 dry-run 组件列表。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 
 # Key Files
 - `Editor/Generation/UIReplacementHostApplyResultService.cs`：host apply 结果读回和执行计划覆盖契约。
@@ -18,8 +18,8 @@
 3. 发布前重跑核心 CSV/JSON/Markdown 契约和 UIVipcard 改版包校验。
 
 # Run / Test
-- `ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_AllResultActions.log`，日志显示 checklist、execution plan 和 result contract validation passed。
-- `ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_AllResultActions.log`，日志显示 26 行 skipped 阻断样例通过。
+- `ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_ResultActionHelper_Retry.log`，日志显示 checklist、execution plan 和 result contract validation passed，return code 0。
+- `ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_ResultActionHelper.log`，日志显示 26 行 skipped 阻断样例通过，return code 0。
 - `ValidateUICreationHostGenerateResultContractBatch` -> `Logs/Verify_UICreationHostGenerateResultContract_ChecklistComponents.log`，用于覆盖 Creation 清单目标和组件列表复验。
 
 # Constraints
