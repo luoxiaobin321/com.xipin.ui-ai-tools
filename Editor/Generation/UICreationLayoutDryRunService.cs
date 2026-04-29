@@ -103,7 +103,35 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI creation layout dry-run: rows are required");
             foreach (var row in rows)
                 ValidateRow(row);
+            ValidateNoDuplicateRows(rows);
             return rows;
+        }
+
+        public static void ValidateContract()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsCreationLayoutDryRunContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                var profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+                profile.logRoot = root;
+                WriteCsv(profile, new[]
+                {
+                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo")
+                });
+                ReadRows(profile);
+                ExpectRowsFailure(profile, "duplicate_dry_run_row", new[]
+                {
+                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo"),
+                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo")
+                }, "duplicate dry-run row");
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
+            Debug.Log("UI creation layout dry-run contract validation passed.");
         }
 
         public static void ValidateNoErrors(UIAIToolsProfile profile)
@@ -128,6 +156,18 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI creation layout dry-run: invalid status " + row["Status"]);
             if (string.IsNullOrEmpty(row["Message"]))
                 throw new Exception("Invalid UI creation layout dry-run: Message is required");
+        }
+
+        static void ValidateNoDuplicateRows(List<Dictionary<string, string>> rows)
+        {
+            var duplicate = rows.GroupBy(row => new
+            {
+                ItemIndex = row["ItemIndex"],
+                Check = row["Check"],
+                Evidence = row["Evidence"]
+            }).FirstOrDefault(group => group.Count() > 1);
+            if (duplicate != null)
+                throw new Exception($"Invalid UI creation layout dry-run: duplicate dry-run row for Item {duplicate.Key.ItemIndex} / {duplicate.Key.Check}");
         }
 
         static void AddNodeTreeChecks(List<string> lines, ref int index, List<UILayoutNode> nodes)
@@ -459,6 +499,33 @@ namespace Xipin.UIAITools
         {
             value = value ?? "";
             return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+
+        static void WriteCsv(UIAIToolsProfile profile, IEnumerable<string> rows)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationLayoutDryRun);
+            File.WriteAllLines(path, new[] { UIReportFiles.CreationLayoutDryRunHeader }.Concat(rows), new UTF8Encoding(true));
+        }
+
+        static string Row(string itemIndex, string check, string severity, string status, string message, string evidence)
+        {
+            return string.Join(",", new[] { itemIndex, check, severity, status, message, evidence }.Select(Csv));
+        }
+
+        static void ExpectRowsFailure(UIAIToolsProfile profile, string name, IEnumerable<string> rows, string expectedMessage)
+        {
+            WriteCsv(profile, rows);
+            try
+            {
+                ReadRows(profile);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI creation layout dry-run contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI creation layout dry-run contract sample did not fail: " + name);
         }
     }
 }
