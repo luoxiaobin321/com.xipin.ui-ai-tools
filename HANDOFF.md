@@ -13,7 +13,7 @@
 - `Editor/Generation/UIReplacementHostApplyResultService.cs`：host apply 结果读回和执行计划覆盖契约。
 - `Editor/Generation/UIReplacementHostApplyChecklistService.cs`：host apply 前置清单 gate。
 - `Editor/Generation/UIRedesignPackageService.cs`：改版包 manifest 生成与校验入口。
-- `Editor/Scanning/UIScanReportRows.cs`：核心扫描报告读取和 `UIReuseIndex.csv`、`UIAssetTriageReport.csv`、`UITextureSizeReport.csv` 重复 Path gate。
+- `Editor/Scanning/UIScanReportRows.cs`：核心扫描报告读取和 `UIReuseIndex.csv`、`UIAssetTriageReport.csv`、`UITextureSizeReport.csv`、`UIACommonUsage.csv`、`UILooseTextureCandidates.csv` 重复 Path gate。
 - `Editor/Scanning/UIReuseSearchResultService.cs`：复用搜索结果读取、校验和重复结果行 gate。
 - `Editor/Generation/UIComponentCandidateIndexService.cs`：组件候选索引和 review 清单读取、校验和重复 ComponentId gate。
 - `Editor/Generation/UICreationLayoutDryRunService.cs`：Creation layout dry-run 读取、校验和重复检查行 gate。
@@ -30,7 +30,7 @@
 - `ValidateReplacementPendingInputContractsBatch` -> `Logs/Verify_ReplacementPendingInputContracts_DuplicateRows.log`，覆盖待补输入清单和就绪检查重复行复验，return code 0。
 - `ValidateJsonContractBatch` -> `Logs/Verify_JsonContract_ExternalPackageDuplicateItems.log`，覆盖外部输入包 JSON 重复 list item 复验，return code 0。
 - `ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_DuplicatePlanRows.log`，覆盖缺失结果、阻断 plan、重复 plan 行和 result 契约，return code 0。
-- `ValidateScanReportRowsContractBatch` -> `Logs/Verify_ScanReportRowsContract_DuplicateAssetPathRows.log`，覆盖 `UIReuseIndex.csv`、`UIAssetTriageReport.csv` 和 `UITextureSizeReport.csv` 重复 Path 复验，return code 0。
+- `ValidateScanReportRowsContractBatch` -> `Logs/Verify_ScanReportRowsContract_DuplicateReusableAssetRows.log`，覆盖 `UIReuseIndex.csv`、`UIAssetTriageReport.csv`、`UITextureSizeReport.csv`、`UIACommonUsage.csv` 和 `UILooseTextureCandidates.csv` 重复 Path 复验，return code 0。
 - `ValidateReuseSearchResultContractBatch` -> `Logs/Verify_ReuseSearchResultContract_DuplicateRows.log`，覆盖复用搜索结果重复结果行复验，return code 0。
 - `ValidateComponentCandidateContractBatch` -> `Logs/Verify_ComponentCandidateContract_DuplicateRows.log`，覆盖组件候选索引和 review 清单重复 ComponentId 复验，return code 0。
 - `ValidateUICreationLayoutDryRunContractBatch` -> `Logs/Verify_UICreationLayoutDryRunContract_DuplicateRows.log`，覆盖 Creation layout dry-run 重复检查行复验，return code 0。

@@ -37,6 +37,16 @@ namespace Xipin.UIAITools
                 WriteCsv(profile, UIReportFiles.TextureSizeReport, UIReportFiles.TextureSizeReportHeader, new[] { row });
                 ReadTextureSizes(profile);
                 ExpectFailure(profile, "duplicate_texture_size_row", UIReportFiles.TextureSizeReport, UIReportFiles.TextureSizeReportHeader, new[] { row, row }, () => ReadTextureSizes(profile), "duplicate texture size row");
+
+                row = ACommonUsageRow("Assets/Art/UI/ACommon/Icon.png");
+                WriteCsv(profile, UIReportFiles.ACommonUsage, UIReportFiles.ACommonUsageHeader, new[] { row });
+                ReadCore(profile, UIReportFiles.ACommonUsage);
+                ExpectFailure(profile, "duplicate_acommon_usage_row", UIReportFiles.ACommonUsage, UIReportFiles.ACommonUsageHeader, new[] { row, row }, () => ReadCore(profile, UIReportFiles.ACommonUsage), "duplicate ACommon usage row");
+
+                row = LooseTextureCandidateRow("Assets/Art/UI/Loose/Icon.png");
+                WriteCsv(profile, UIReportFiles.LooseTextureCandidates, UIReportFiles.LooseTextureCandidatesHeader, new[] { row });
+                ReadLooseTextureCandidates(profile);
+                ExpectFailure(profile, "duplicate_loose_texture_candidate_row", UIReportFiles.LooseTextureCandidates, UIReportFiles.LooseTextureCandidatesHeader, new[] { row, row }, () => ReadLooseTextureCandidates(profile), "duplicate loose texture candidate row");
             }
             finally
             {
@@ -117,7 +127,11 @@ namespace Xipin.UIAITools
 
         static void ValidateNoDuplicateRows(string report, List<Dictionary<string, string>> rows)
         {
-            if (report != UIReportFiles.ReuseIndex && report != UIReportFiles.AssetTriageReport && report != UIReportFiles.TextureSizeReport)
+            if (report != UIReportFiles.ReuseIndex &&
+                report != UIReportFiles.AssetTriageReport &&
+                report != UIReportFiles.TextureSizeReport &&
+                report != UIReportFiles.ACommonUsage &&
+                report != UIReportFiles.LooseTextureCandidates)
                 return;
             var duplicate = rows.GroupBy(row => row["Path"]).FirstOrDefault(group => group.Count() > 1);
             if (duplicate != null)
@@ -128,7 +142,13 @@ namespace Xipin.UIAITools
         {
             if (report == UIReportFiles.ReuseIndex)
                 return "reuse index row";
-            return report == UIReportFiles.TextureSizeReport ? "texture size row" : "asset triage row";
+            if (report == UIReportFiles.TextureSizeReport)
+                return "texture size row";
+            if (report == UIReportFiles.ACommonUsage)
+                return "ACommon usage row";
+            if (report == UIReportFiles.LooseTextureCandidates)
+                return "loose texture candidate row";
+            return "asset triage row";
         }
 
         static void ValidateRow(string report, Dictionary<string, string> row)
@@ -313,6 +333,49 @@ namespace Xipin.UIAITools
                 Csv("hash"),
                 Csv("Small"),
                 Csv("Review")
+            });
+        }
+
+        static string ACommonUsageRow(string path)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(path),
+                Csv("Icon"),
+                Csv("guid"),
+                "64",
+                "64",
+                Csv("Assets/Art/UI/ACommon.spriteatlasv2"),
+                "1",
+                "1",
+                Csv("Owner"),
+                Csv("Assets/Prefab/A.prefab"),
+                Csv(""),
+                Csv("hash"),
+                Csv("Review")
+            });
+        }
+
+        static string LooseTextureCandidateRow(string path)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(path),
+                Csv("Icon"),
+                Csv("guid"),
+                "64",
+                "64",
+                Csv("Small"),
+                "1",
+                "1",
+                Csv("Assets/Prefab/A.prefab"),
+                Csv("Assets/Prefab/A.prefab#Root/Icon"),
+                Csv(""),
+                "1",
+                Csv("Owner"),
+                Csv("Review"),
+                Csv("same"),
+                Csv("Assets/Art/UI/Target/Icon.png")
             });
         }
 
