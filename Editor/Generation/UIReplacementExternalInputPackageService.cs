@@ -81,6 +81,35 @@ namespace Xipin.UIAITools
             Validate(profile, request, ManifestPath(lines, "- Brief："), ManifestPath(lines, "- 草稿 JSON："));
         }
 
+        public static void ValidateContract()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsExternalInputPackageContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                WritePackageJson(root, "valid.json", ContractPackage());
+                LoadPackageJson(Path.Combine(root, "valid.json"));
+
+                var duplicateDirectory = ContractPackage();
+                duplicateDirectory.outputDirectories.Add(ContractOutputDirectory());
+                ExpectFailure(root, "duplicate_directory.json", duplicateDirectory, "duplicate output directory");
+
+                var duplicateReference = ContractPackage();
+                duplicateReference.referenceInputs.Add(ContractReferenceInput());
+                ExpectFailure(root, "duplicate_reference.json", duplicateReference, "duplicate reference input");
+
+                var duplicateInput = ContractPackage();
+                duplicateInput.inputs.Add(ContractInput());
+                ExpectFailure(root, "duplicate_input.json", duplicateInput, "duplicate input");
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
+            Debug.Log("UI replacement external input package contract validation passed.");
+        }
+
         static ExternalInputPackage Package(UIAIToolsProfile profile, UIRedesignRequest request, string briefPath, string draftJsonPath)
         {
             var package = new ExternalInputPackage
@@ -1451,6 +1480,110 @@ namespace Xipin.UIAITools
         {
             UIReplacementPendingInputReadinessService.Validate(profile);
             UIScanReportRows.ReadReuseIndex(profile);
+        }
+
+        static ExternalInputPackage ContractPackage()
+        {
+            return new ExternalInputPackage
+            {
+                generatedAt = "2026-04-29 00:00:00",
+                sourcePrefabPath = "Assets/Bundle/Prefab/Demo.prefab",
+                sourcePreviewPath = "",
+                sourcePreviewReadiness = "Missing",
+                stylePrompt = "",
+                outputFolder = "Assets/Art/UI/AI/Demo",
+                briefPath = "Logs/brief.md",
+                draftJsonPath = "Logs/draft.json",
+                pendingInputsCsvPath = "Logs/pending.csv",
+                pendingInputReadinessCsvPath = "Logs/readiness.csv",
+                outputDirectories = new List<ExternalOutputDirectory> { ContractOutputDirectory() },
+                referenceInputs = new List<ExternalReferenceInput> { ContractReferenceInput() },
+                inputs = new List<ExternalInput> { ContractInput() }
+            };
+        }
+
+        static ExternalOutputDirectory ContractOutputDirectory()
+        {
+            return new ExternalOutputDirectory
+            {
+                path = "Assets/Art/UI/AI/Demo",
+                readiness = "Missing",
+                inputCount = 1,
+                notReadyCount = 1,
+                missingCount = 1,
+                invalidCount = 0,
+                inputKinds = "Preview"
+            };
+        }
+
+        static ExternalReferenceInput ContractReferenceInput()
+        {
+            return new ExternalReferenceInput
+            {
+                referenceKind = "Preview",
+                path = "Logs/old.png",
+                readiness = "Missing",
+                width = "",
+                height = "",
+                copyFileName = "preview.png",
+                useCount = 1,
+                itemIndices = "1",
+                inputKinds = "Preview"
+            };
+        }
+
+        static ExternalInput ContractInput()
+        {
+            return new ExternalInput
+            {
+                inputKind = "Preview",
+                pendingStatus = "PendingPreview",
+                readiness = "Missing",
+                outputPath = "Assets/Art/UI/AI/Demo/preview.png",
+                outputDirectory = "Assets/Art/UI/AI/Demo",
+                outputFileName = "preview.png",
+                outputWidth = "1080",
+                outputHeight = "1920",
+                actualWidth = "",
+                actualHeight = "",
+                sizeStatus = "Pending",
+                outputDirectoryReadiness = "Missing",
+                referencePath = "Logs/old.png",
+                targetAtlasPath = "",
+                referenceReadiness = "Missing",
+                referenceWidth = "",
+                referenceHeight = "",
+                referenceCopyFileName = "preview.png",
+                itemIndices = "1",
+                count = 1,
+                sourceAction = "Preview",
+                note = "",
+                taskPrompt = "Generate preview",
+                acceptanceCheck = "PNG"
+            };
+        }
+
+        static void WritePackageJson(string root, string fileName, ExternalInputPackage package)
+        {
+            var path = Path.Combine(root, fileName);
+            File.WriteAllText(path, UICreationBriefTemplateService.ToJsonWithRootArrays(package, "outputDirectories", "referenceInputs", "inputs"), new UTF8Encoding(true));
+        }
+
+        static void ExpectFailure(string root, string fileName, ExternalInputPackage package, string expectedMessage)
+        {
+            var path = Path.Combine(root, fileName);
+            WritePackageJson(root, fileName, package);
+            try
+            {
+                LoadPackageJson(path);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI replacement external input package contract failure for {fileName}: {exception.Message}");
+            }
+            throw new Exception("UI replacement external input package contract sample did not fail: " + fileName);
         }
 
         static void RequireSummarySections(string[] lines)

@@ -2,7 +2,7 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前优先稳定改版和新 UI 生成链路的 gate 与宿主结果契约。
 
 # Status
-替换链路的 manifest、dry-run、pending input、external input package、execution plan、core scan rows、reuse search result、component candidate、host apply checklist 和 host apply result 已串起前置复验；dry-run、pending input、readiness、external input package、execution plan、core scan rows、reuse search result 和 component candidate 都会拒绝重复逻辑行，execution plan 也有独立重复计划行 contract，host apply checklist 有独立 gate 行契约，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，Creation host generate checklist 也有独立 Ready gate 行契约，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。Redesign package contract 覆盖 outputFolder 只能是 `Assets/` 且不能包含反斜杠或 `..`。CSV 底层契约补充覆盖 quoted 字段跨物理行和引号后夹空格的严格拒绝样本；Markdown section 契约会用 duplicate section 明确报错重复合法标题，并忽略 fenced code block 内的 `## `。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
+替换链路的 manifest、dry-run、pending input、external input package、execution plan、core scan rows、reuse search result、component candidate、host apply checklist 和 host apply result 已串起前置复验；dry-run、pending input、readiness、external input package、execution plan、core scan rows、reuse search result 和 component candidate 都会拒绝重复逻辑行，external input package 有独立重复输出目录/参考输入/输入项 contract，execution plan 也有独立重复计划行 contract，host apply checklist 有独立 gate 行契约，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，Creation host generate checklist 也有独立 Ready gate 行契约，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。Redesign package contract 覆盖 outputFolder 只能是 `Assets/` 且不能包含反斜杠或 `..`。CSV 底层契约补充覆盖 quoted 字段跨物理行和引号后夹空格的严格拒绝样本；Markdown section 契约会用 duplicate section 明确报错重复合法标题，并忽略 fenced code block 内的 `## `。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 
 # Key Files
 - `Editor/Generation/UIReplacementPlanDryRunService.cs`：替换 dry-run 读取、校验和重复检查行 gate。
@@ -31,6 +31,7 @@
 - `ValidateReplacementPlanDryRunContractBatch` -> `Logs/Verify_ReplacementPlanDryRunContract_DuplicateRows.log`，覆盖替换 dry-run 重复检查行复验，return code 0。
 - `ValidateReplacementPendingInputContractsBatch` -> `Logs/Verify_ReplacementPendingInputContracts_DuplicateRows.log`，覆盖待补输入清单和就绪检查重复行复验，return code 0。
 - `ValidateJsonContractBatch` -> `Logs/Verify_JsonContract_ExternalPackageDuplicateItems.log`，覆盖外部输入包 JSON 重复 list item 复验，return code 0。
+- `ValidateReplacementExternalInputPackageContractBatch` -> `Logs/Verify_ReplacementExternalInputPackageContract_DuplicateRows.log`，覆盖外部输入包重复目录、参考输入和输入项复验，return code 0。
 - `ValidateReplacementExecutionPlanContractBatch` -> `Logs/Verify_ReplacementExecutionPlanContract_DuplicateRows.log`，覆盖执行计划重复 plan row 复验，return code 0。
 - `ValidateRedesignPackageContractBatch` -> `Logs/Verify_RedesignPackageContract_OutputFolder.log`，覆盖改版包 outputFolder 边界复验，return code 0。
 - `ValidateHostApplyChecklistContractBatch` -> `Logs/Verify_HostApplyChecklistContract_GateLines.log`，覆盖宿主执行清单 gate 行复验，return code 0。
