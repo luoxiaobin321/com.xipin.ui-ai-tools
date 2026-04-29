@@ -58,6 +58,26 @@ namespace Xipin.UIAITools
                     CsvRow("Preview", "PendingPreview", "Missing", "Assets/Art/UI/AI/Demo/preview.png", "", "", "", "", "-1", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成"),
                     CsvRow("Preview", "PendingPreview", "Missing", "Assets/Art/UI/AI/Demo/preview.png", "", "", "", "", "-1", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成")
                 }, "duplicate readiness row");
+                ExpectRowsFailure(profile, "preview_extension", new[]
+                {
+                    CsvRow("Preview", "PendingPreview", "Missing", "Assets/Art/UI/AI/Demo/preview.jpg", "", "", "", "", "-1", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成")
+                }, "Preview must be .png");
+                ExpectRowsFailure(profile, "target_atlas_extension", new[]
+                {
+                    CsvRow("TargetAtlas", "PendingAtlas", "Missing", "Assets/Art/UI/Demo.png", "", "", "", "", "1", "1", "ConfirmTargetAtlas", "目标图集缺失或待确认")
+                }, "TargetAtlas must be .spriteatlasv2");
+                ExpectRowsFailure(profile, "invalid_count", new[]
+                {
+                    CsvRow("Preview", "PendingPreview", "Missing", "Assets/Art/UI/AI/Demo/preview.png", "", "", "", "", "-1", "0", "ConfirmDraftPreview", "人工确认新版预览图已生成")
+                }, "count must be positive");
+                ExpectRowsFailure(profile, "invalid_item_index", new[]
+                {
+                    CsvRow("Preview", "PendingPreview", "Missing", "Assets/Art/UI/AI/Demo/preview.png", "", "", "", "", "Preview", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成")
+                }, "item index must be an integer");
+                ExpectRowsFailure(profile, "invalid_actual_size", new[]
+                {
+                    CsvRow("Preview", "PendingPreview", "Ready", "Assets/Art/UI/AI/Demo/preview.png", "x", "64", "", "", "-1", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成")
+                }, "actual size must be positive integers");
             }
             finally
             {

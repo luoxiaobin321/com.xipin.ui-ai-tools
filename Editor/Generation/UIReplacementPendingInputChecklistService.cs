@@ -57,6 +57,26 @@ namespace Xipin.UIAITools
                     CsvRow("Preview", "PendingPreview", "Assets/Art/UI/AI/Demo/preview.png", "", "", "-1", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成"),
                     CsvRow("Preview", "PendingPreview", "Assets/Art/UI/AI/Demo/preview.png", "", "", "-1", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成")
                 }, "duplicate pending input row");
+                ExpectRowsFailure(profile, "preview_extension", new[]
+                {
+                    CsvRow("Preview", "PendingPreview", "Assets/Art/UI/AI/Demo/preview.jpg", "", "", "-1", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成")
+                }, "Preview must be .png");
+                ExpectRowsFailure(profile, "new_asset_reference_path", new[]
+                {
+                    CsvRow("NewAsset", "PendingAsset", "Assets/Art/UI/AI/Demo/icon.png", "", "Assets/Art/UI/Demo.spriteatlasv2", "1", "1", "ConfirmNewAsset", "人工确认新图已生成")
+                }, "ReferencePath path is invalid");
+                ExpectRowsFailure(profile, "target_atlas_extension", new[]
+                {
+                    CsvRow("TargetAtlas", "PendingAtlas", "Assets/Art/UI/Demo.png", "", "Assets/Art/UI/Demo.png", "1", "1", "ConfirmTargetAtlas", "目标图集缺失或待确认")
+                }, "TargetAtlas must be .spriteatlasv2");
+                ExpectRowsFailure(profile, "invalid_count", new[]
+                {
+                    CsvRow("Preview", "PendingPreview", "Assets/Art/UI/AI/Demo/preview.png", "", "", "-1", "0", "ConfirmDraftPreview", "人工确认新版预览图已生成")
+                }, "count must be positive");
+                ExpectRowsFailure(profile, "invalid_item_index", new[]
+                {
+                    CsvRow("Preview", "PendingPreview", "Assets/Art/UI/AI/Demo/preview.png", "", "", "Preview", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成")
+                }, "item index must be an integer");
             }
             finally
             {
