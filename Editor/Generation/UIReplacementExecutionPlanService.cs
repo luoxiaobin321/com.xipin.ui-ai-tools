@@ -44,6 +44,7 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement execution plan: plan rows are required");
             foreach (var row in rows)
                 ValidateRow(row);
+            ValidateNoDuplicateRows(rows);
             return rows;
         }
 
@@ -103,6 +104,21 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement execution plan: RequiresManualConfirmation must be true");
             if (string.IsNullOrEmpty(row["Note"]))
                 throw new Exception("Invalid UI replacement execution plan: Note is required");
+        }
+
+        static void ValidateNoDuplicateRows(List<Dictionary<string, string>> rows)
+        {
+            var duplicate = rows.GroupBy(row => new
+            {
+                ItemIndex = row["ItemIndex"],
+                Action = row["Action"],
+                OldAsset = row["OldAsset"],
+                NewAsset = row["NewAsset"],
+                TargetAtlas = row["TargetAtlas"],
+                PrefabRefs = row["PrefabRefs"]
+            }).FirstOrDefault(group => group.Count() > 1);
+            if (duplicate != null)
+                throw new Exception($"Invalid UI replacement execution plan: duplicate plan row for Item {duplicate.Key.ItemIndex} / {duplicate.Key.Action}");
         }
 
         static string Status(List<Dictionary<string, string>> checks, string check, string ok, string missing)

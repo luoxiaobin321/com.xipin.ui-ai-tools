@@ -106,6 +106,7 @@ namespace Xipin.UIAITools
                 UIReplacementHostApplyChecklistService.Generate(profile);
                 ValidateAgainstExecutionPlan(profile);
                 ExpectPlanCoverageFailure(profile, "result row missing for plan Item 0 / MoveNewAsset");
+                ExpectDuplicatePlanFailure(profile, "duplicate plan row");
                 ExpectBlockingPlanFailure(profile, "blocking steps present");
                 ExpectPlanFailure(profile, Row("3", "ApplyPrefabReference", "Skipped", "Assets/Old4.png", "Assets/New4.png", "", "", "", "stale"), "execution plan row missing");
                 ExpectSummaryFailure(profile, "bad_title", "# Bad", "unexpected title");
@@ -456,6 +457,31 @@ namespace Xipin.UIAITools
                 throw new Exception($"Unexpected host apply result blocking plan failure: {exception.Message}");
             }
             throw new Exception("Host apply result blocking plan sample did not fail");
+        }
+
+        static void ExpectDuplicatePlanFailure(UIAIToolsProfile profile, string expectedMessage)
+        {
+            WritePlanCsv(profile, new[]
+            {
+                PlanRow("0", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab"),
+                PlanRow("0", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab")
+            });
+            WriteCsv(profile, new[]
+            {
+                Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab", "QA-1", "updated")
+            });
+            GenerateSummary(profile);
+            try
+            {
+                ValidateAgainstExecutionPlan(profile);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected host apply result duplicate execution plan failure: {exception.Message}");
+            }
+            throw new Exception("Host apply result duplicate execution plan sample did not fail");
         }
     }
 }

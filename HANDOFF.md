@@ -2,15 +2,14 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前优先稳定改版和新 UI 生成链路的 gate 与宿主结果契约。
 
 # Status
-替换链路的 manifest、host apply checklist 和 host apply result 已串起前置复验；host apply result 现在要求执行计划中所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。`RequiresResultAction` 和 `UIReplacementPlanStatus` 已公开给宿主样例复用。Creation host generate result 会复验生成前清单，校验目标 prefab 与当前 dry-run 组件列表，并拒绝同一生成结果行重复上报。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
+替换链路的 manifest、execution plan、host apply checklist 和 host apply result 已串起前置复验；execution plan 读入会拒绝重复逻辑计划行，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。`RequiresResultAction` 和 `UIReplacementPlanStatus` 已公开给宿主样例复用。Creation host generate result 会复验生成前清单、目标 prefab、当前 dry-run 组件列表和重复结果行。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 
 # Key Files
+- `Editor/Generation/UIReplacementExecutionPlanService.cs`：替换执行计划读取、校验和重复计划行 gate。
 - `Editor/Generation/UIReplacementHostApplyResultService.cs`：host apply 结果读回和执行计划覆盖契约。
-- `Editor/Generation/UIReplacementPlanStatus.cs`：执行计划状态排序、阻断判断和摘要 helper。
 - `Editor/Generation/UIReplacementHostApplyChecklistService.cs`：host apply 前置清单 gate。
 - `Editor/Generation/UIRedesignPackageService.cs`：改版包 manifest 生成与校验入口。
 - `Editor/Generation/UICreationHostGenerateResultService.cs`：Creation 宿主生成结果契约。
-- `Editor/Generation/UICreationHostGenerateChecklistService.cs`：Creation 生成前清单 gate。
 - `Editor/Generation/UIReplacementPendingInputReadinessService.cs`：UIVipcard 外部输入就绪检查。
 
 # Next Steps
@@ -19,7 +18,7 @@
 3. 发布前重跑核心 CSV/JSON/Markdown 契约和 UIVipcard 改版包校验。
 
 # Run / Test
-- `ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_DuplicateRows.log`，日志显示 checklist、execution plan 和 result contract validation passed，return code 0。
+- `ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_DuplicatePlanRows.log`，覆盖缺失结果、阻断 plan、重复 plan 行和 result 契约，return code 0。
 - `ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_PlanStatusHelper.log`，日志显示 26 行 skipped 阻断样例通过，return code 0。
 - `ValidateUICreationHostGenerateResultContractBatch` -> `Logs/Verify_UICreationHostGenerateResultContract_DuplicateRows.log`，用于覆盖 Creation 清单目标、组件列表和重复结果行复验，return code 0。
 
