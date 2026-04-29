@@ -119,7 +119,7 @@ namespace Xipin.UIAITools
             Debug.Log("UI replacement host apply result contract validation passed.");
         }
 
-        static List<Dictionary<string, string>> ReadRows(UIAIToolsProfile profile)
+        public static List<Dictionary<string, string>> ReadRows(UIAIToolsProfile profile)
         {
             UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementHostApplyResult, UIReportFiles.ReplacementHostApplyResultHeader);
             var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementHostApplyResult);

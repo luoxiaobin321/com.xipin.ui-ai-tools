@@ -2,12 +2,13 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前优先稳定 AI 改版和新 UI 制作的输入、gate 与宿主结果报告契约。
 
 # Status
-宿主结果报告契约、Creation 生成结果契约、替换 dry-run/执行计划/待补输入读回契约已落地；替换链路报告、Creation layout dry-run、组件候选索引和组件确认表都有 `ReadRows(profile)` 行契约，改版包 manifest、外部输入包和宿主生成样例已复用这些入口。UIVipcard 仍因外部产物缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
+宿主结果报告契约、Creation 生成结果契约、替换 dry-run/执行计划/待补输入读回契约已落地；替换链路报告、host apply 结果、Creation layout dry-run、组件候选索引和组件确认表都有 `ReadRows(profile)` 行契约，改版包 manifest、外部输入包和宿主样例已复用这些入口。UIVipcard 仍因外部产物缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 
 # Key Files
 - `Editor/Generation/UIReplacementExecutionPlanService.cs`：替换执行计划生成与读回契约。
 - `Editor/Generation/UIReplacementPlanDryRunService.cs`：替换 dry-run 与读回契约。
 - `Editor/Generation/UIReplacementPendingInputReadinessService.cs`：待补输入就绪检查与读回契约。
+- `Editor/Generation/UIReplacementHostApplyResultService.cs`：宿主 apply 结果报告读回契约。
 - `Editor/Generation/UIRedesignPackageService.cs`：改版包 manifest 生成与校验入口。
 - `Editor/Generation/UIComponentCandidateIndexService.cs`：组件候选索引和人工确认表读回契约。
 - `Editor/Generation/UICreationLayoutDryRunService.cs`：新 UI 布局 dry-run 与读回契约。
@@ -18,8 +19,8 @@
 3. 发布前重跑核心 CSV/JSON/Markdown 契约和 UIVipcard 改版包校验。
 
 # Run / Test
+- 最近已验证：`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_PublicReadRows.log`，exit code 0。
 - 最近已验证：`ValidateComponentCandidateIndexBatch` -> `Logs/Verify_ComponentCandidateIndex_ReadRows.log`，exit code 0。
-- 最近已验证：`GenerateUICreationHostGenerateChecklistBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json` -> `Logs/Generate_UICreationHostChecklist_ComponentReadRows.log`，exit code 0。
 - 最近已验证：`ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json` -> `Logs/Verify_UICreationHostGenerateResult_ComponentReadRows.log`，exit code 0。
 
 # Constraints
