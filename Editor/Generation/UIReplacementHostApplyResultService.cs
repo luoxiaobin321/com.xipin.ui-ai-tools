@@ -117,6 +117,11 @@ namespace Xipin.UIAITools
                 ExpectFailure(profile, "missing_confirmation", Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "", "bad"), "confirmation is required");
                 ExpectFailure(profile, "missing_skipped_message", Row("0", "ApplyPrefabReference", "Skipped", "Assets/Old.png", "Assets/New.png", "", "", "", ""), "skipped message is required");
                 ExpectFailure(profile, "missing_failed_message", Row("0", "ApplyPrefabReference", "Failed", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", ""), "failed message is required");
+                ExpectRowsFailure(profile, "duplicate_result_row", new[]
+                {
+                    Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "updated"),
+                    Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "updated again")
+                }, "duplicate result row");
             }
             finally
             {
@@ -134,6 +139,7 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement host apply result: result rows are required");
             foreach (var row in rows)
                 ValidateRow(row);
+            ValidateNoDuplicateRows(rows);
             return rows;
         }
 
@@ -153,6 +159,21 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement host apply result: skipped message is required");
             if (row["Status"] == "Failed" && string.IsNullOrEmpty(row["Message"]))
                 throw new Exception("Invalid UI replacement host apply result: failed message is required");
+        }
+
+        static void ValidateNoDuplicateRows(List<Dictionary<string, string>> rows)
+        {
+            var duplicate = rows.GroupBy(row => new
+            {
+                ItemIndex = row["ItemIndex"],
+                Action = row["Action"],
+                OldAsset = row["OldAsset"],
+                NewAsset = row["NewAsset"],
+                TargetAtlas = row["TargetAtlas"],
+                PrefabRefs = row["PrefabRefs"]
+            }).FirstOrDefault(group => group.Count() > 1);
+            if (duplicate != null)
+                throw new Exception($"Invalid UI replacement host apply result: duplicate result row for Item {duplicate.Key.ItemIndex} / {duplicate.Key.Action}");
         }
 
         static bool SamePlanRow(Dictionary<string, string> plan, Dictionary<string, string> row)
@@ -331,7 +352,12 @@ namespace Xipin.UIAITools
 
         static void ExpectFailure(UIAIToolsProfile profile, string name, string row, string expectedMessage)
         {
-            WriteCsv(profile, row == null ? new string[0] : new[] { row });
+            ExpectRowsFailure(profile, name, row == null ? new string[0] : new[] { row }, expectedMessage);
+        }
+
+        static void ExpectRowsFailure(UIAIToolsProfile profile, string name, IEnumerable<string> rows, string expectedMessage)
+        {
+            WriteCsv(profile, rows);
             try
             {
                 Validate(profile);
