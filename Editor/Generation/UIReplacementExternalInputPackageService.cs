@@ -105,7 +105,7 @@ namespace Xipin.UIAITools
 
         static List<ExternalInput> Inputs(UIAIToolsProfile profile)
         {
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness);
+            var rows = UIReplacementPendingInputReadinessService.ReadRows(profile);
             var reuseRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReuseIndex);
             return rows.Select(row => new ExternalInput
             {

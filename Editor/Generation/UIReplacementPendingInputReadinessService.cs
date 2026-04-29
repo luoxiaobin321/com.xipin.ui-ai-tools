@@ -9,28 +9,41 @@ namespace Xipin.UIAITools
 {
     public static class UIReplacementPendingInputReadinessService
     {
+        static readonly HashSet<string> AllowedInputKinds = new HashSet<string> { "Preview", "NewAsset", "TargetAtlas" };
+        static readonly HashSet<string> AllowedPendingStatuses = new HashSet<string> { "PendingPreview", "PendingAsset", "PendingAtlas" };
+        static readonly HashSet<string> AllowedReadiness = new HashSet<string> { "Ready", "Missing", "Invalid" };
+        static readonly HashSet<string> AllowedSourceActions = new HashSet<string> { "ConfirmDraftPreview", "ConfirmNewAsset", "ConfirmTargetAtlas" };
+
         public static string Generate(UIAIToolsProfile profile)
         {
             UIReplacementPendingInputChecklistService.Validate(profile);
-            var rows = ReadinessRows(UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputs));
+            var rows = ReadinessRows(UIReplacementPendingInputChecklistService.ReadRows(profile));
             var columns = UIReportFiles.ReplacementPendingInputReadinessHeader.Split(',');
             var lines = new List<string> { UIReportFiles.ReplacementPendingInputReadinessHeader };
             foreach (var row in rows)
                 lines.Add(string.Join(",", columns.Select(column => Csv(row[column]))));
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness);
             File.WriteAllLines(path, lines, new UTF8Encoding(true));
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPendingInputReadiness, UIReportFiles.ReplacementPendingInputReadinessHeader);
+            ReadRows(profile);
             var summary = GenerateSummary(profile, path, rows);
             Debug.Log($"UI replacement pending input readiness generated: {path}, summary: {summary}, {MissingRows(rows).Count} missing inputs.");
             return path;
         }
 
+        public static List<Dictionary<string, string>> ReadRows(UIAIToolsProfile profile)
+        {
+            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPendingInputReadiness, UIReportFiles.ReplacementPendingInputReadinessHeader);
+            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness);
+            foreach (var row in rows)
+                ValidateRow(row);
+            return rows;
+        }
+
         public static void Validate(UIAIToolsProfile profile)
         {
             UIReplacementPendingInputChecklistService.Validate(profile);
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPendingInputReadiness, UIReportFiles.ReplacementPendingInputReadinessHeader);
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness);
-            var expectedRows = ReadinessRows(UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputs));
+            var rows = ReadRows(profile);
+            var expectedRows = ReadinessRows(UIReplacementPendingInputChecklistService.ReadRows(profile));
             if (rows.Count != expectedRows.Count)
                 throw new Exception($"UI replacement pending input readiness row count mismatch: {rows.Count}->{expectedRows.Count}");
             foreach (var expected in expectedRows)
@@ -42,7 +55,7 @@ namespace Xipin.UIAITools
         public static void ValidateNoMissing(UIAIToolsProfile profile)
         {
             var path = Generate(profile);
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness);
+            var rows = ReadRows(profile);
             var notReady = NotReadyRows(rows);
             if (notReady.Count > 0)
             {
@@ -76,6 +89,49 @@ namespace Xipin.UIAITools
                     { "Note", row["Note"] }
                 };
             }).ToList();
+        }
+
+        static void ValidateRow(Dictionary<string, string> row)
+        {
+            if (!AllowedInputKinds.Contains(row["InputKind"]))
+                throw new Exception("Invalid UI replacement pending input readiness: invalid InputKind " + row["InputKind"]);
+            if (!AllowedPendingStatuses.Contains(row["PendingStatus"]))
+                throw new Exception("Invalid UI replacement pending input readiness: invalid PendingStatus " + row["PendingStatus"]);
+            if (!AllowedReadiness.Contains(row["Readiness"]))
+                throw new Exception("Invalid UI replacement pending input readiness: invalid Readiness " + row["Readiness"]);
+            if (!AllowedSourceActions.Contains(row["SourceAction"]))
+                throw new Exception("Invalid UI replacement pending input readiness: invalid SourceAction " + row["SourceAction"]);
+            RequireAssetPath(row["Path"], row["InputKind"]);
+            if (row["InputKind"] == "Preview" || row["InputKind"] == "NewAsset")
+                RequireExtension(row["Path"], ".png", row["InputKind"]);
+            if (row["InputKind"] == "TargetAtlas")
+                RequireExtension(row["Path"], ".spriteatlasv2", row["InputKind"]);
+            if (row["InputKind"] == "NewAsset")
+            {
+                RequireAssetPath(row["ReferencePath"], "ReferencePath");
+                RequireAssetPath(row["TargetAtlas"], "TargetAtlas");
+                RequireExtension(row["TargetAtlas"], ".spriteatlasv2", "TargetAtlas");
+            }
+            if (!int.TryParse(row["Count"], out var count) || count <= 0)
+                throw new Exception("UI replacement pending input readiness count must be positive: " + row["Path"]);
+            foreach (var itemIndex in row["ItemIndices"].Split(';'))
+            {
+                if (!int.TryParse(itemIndex, out _))
+                    throw new Exception("UI replacement pending input readiness item index must be an integer: " + row["Path"]);
+            }
+            ValidateActualSize(row);
+            if (string.IsNullOrEmpty(row["Note"]))
+                throw new Exception("Invalid UI replacement pending input readiness: Note is required");
+        }
+
+        static void ValidateActualSize(Dictionary<string, string> row)
+        {
+            var hasWidth = !string.IsNullOrEmpty(row["ActualWidth"]);
+            var hasHeight = !string.IsNullOrEmpty(row["ActualHeight"]);
+            if (!hasWidth && !hasHeight)
+                return;
+            if (!hasWidth || !hasHeight || !int.TryParse(row["ActualWidth"], out var width) || !int.TryParse(row["ActualHeight"], out var height) || width <= 0 || height <= 0)
+                throw new Exception("UI replacement pending input readiness actual size must be positive integers: " + row["Path"]);
         }
 
         static string GenerateSummary(UIAIToolsProfile profile, string csvPath, List<Dictionary<string, string>> rows)
@@ -261,6 +317,18 @@ namespace Xipin.UIAITools
         {
             if (!lines.Contains(line))
                 throw new Exception("UI replacement pending input readiness summary is missing: " + line);
+        }
+
+        static void RequireAssetPath(string path, string label)
+        {
+            if (!path.StartsWith("Assets/", StringComparison.Ordinal) || path.Contains("\\") || path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal))
+                throw new Exception($"UI replacement pending input readiness {label} path is invalid: {path}");
+        }
+
+        static void RequireExtension(string path, string extension, string label)
+        {
+            if (!path.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+                throw new Exception($"UI replacement pending input readiness {label} must be {extension}: {path}");
         }
 
         static string RowSummary(Dictionary<string, string> row)

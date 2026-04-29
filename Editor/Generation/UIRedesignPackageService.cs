@@ -77,7 +77,7 @@ namespace Xipin.UIAITools
 
             var dryRunRows = UIReplacementPlanDryRunService.ReadRows(profile);
             var executionRows = UIReplacementExecutionPlanService.ReadRows(profile);
-            var readinessRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness);
+            var readinessRows = UIReplacementPendingInputReadinessService.ReadRows(profile);
             RequireDistribution(lines, dryRunRows, "Severity", UIReplacementPlanStatus.SeverityOrder);
             RequireDistribution(lines, executionRows, "Status", UIReplacementPlanStatus.StatusOrder);
             var dryRunErrors = dryRunRows.Count(r => r["Severity"] == "Error");
@@ -110,7 +110,7 @@ namespace Xipin.UIAITools
             var executionPlanSummary = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementExecutionPlanSummary);
             var rows = UIReplacementPlanDryRunService.ReadRows(profile);
             var executionRows = UIReplacementExecutionPlanService.ReadRows(profile);
-            var readinessRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness);
+            var readinessRows = UIReplacementPendingInputReadinessService.ReadRows(profile);
             var path = UIReportFiles.GetPath(profile.logRoot, $"UIRedesignPackage_{SafeName(request.sourcePrefabPath)}.md");
             var lines = new List<string>
             {
@@ -266,7 +266,7 @@ namespace Xipin.UIAITools
         {
             UIReplacementPlanDryRunService.ReadRows(profile);
             UIReplacementExecutionPlanService.ReadRows(profile);
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPendingInputReadiness, UIReportFiles.ReplacementPendingInputReadinessHeader);
+            UIReplacementPendingInputReadinessService.ReadRows(profile);
         }
 
     }

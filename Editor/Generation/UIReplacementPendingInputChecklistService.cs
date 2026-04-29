@@ -9,6 +9,10 @@ namespace Xipin.UIAITools
 {
     public static class UIReplacementPendingInputChecklistService
     {
+        static readonly HashSet<string> AllowedInputKinds = new HashSet<string> { "Preview", "NewAsset", "TargetAtlas" };
+        static readonly HashSet<string> AllowedStatuses = new HashSet<string> { "PendingPreview", "PendingAsset", "PendingAtlas" };
+        static readonly HashSet<string> AllowedSourceActions = new HashSet<string> { "ConfirmDraftPreview", "ConfirmNewAsset", "ConfirmTargetAtlas" };
+
         public static string Generate(UIAIToolsProfile profile)
         {
             var planRows = UIReplacementExecutionPlanService.ReadRows(profile);
@@ -19,23 +23,29 @@ namespace Xipin.UIAITools
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementPendingInputs);
             Directory.CreateDirectory(profile.logRoot);
             File.WriteAllLines(path, lines, new UTF8Encoding(true));
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPendingInputs, UIReportFiles.ReplacementPendingInputsHeader);
+            ReadRows(profile);
             var summary = GenerateSummary(profile, path, rows);
             Debug.Log($"UI replacement pending input checklist generated: {path}, summary: {summary}, {rows.Count} rows.");
             return path;
         }
 
-        public static void Validate(UIAIToolsProfile profile)
+        public static List<Dictionary<string, string>> ReadRows(UIAIToolsProfile profile)
         {
             UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPendingInputs, UIReportFiles.ReplacementPendingInputsHeader);
             var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputs);
+            foreach (var row in rows)
+                ValidateRow(row);
+            return rows;
+        }
+
+        public static void Validate(UIAIToolsProfile profile)
+        {
+            var rows = ReadRows(profile);
             var expectedRows = PendingRows(UIReplacementExecutionPlanService.ReadRows(profile));
             if (rows.Count != expectedRows.Count)
                 throw new Exception($"UI replacement pending input checklist row count mismatch: {rows.Count}->{expectedRows.Count}");
             foreach (var expected in expectedRows)
                 RequireRow(rows, expected);
-            foreach (var row in rows)
-                ValidatePathContract(row);
             ValidateSummary(profile, rows);
             Debug.Log($"UI replacement pending input checklist validation passed: {rows.Count} rows.");
         }
@@ -168,8 +178,16 @@ namespace Xipin.UIAITools
             return $"- 仅显示前 30 项，共 {count} 项。";
         }
 
-        static void ValidatePathContract(Dictionary<string, string> row)
+        static void ValidateRow(Dictionary<string, string> row)
         {
+            if (!AllowedInputKinds.Contains(row["InputKind"]))
+                throw new Exception("Invalid UI replacement pending input checklist: invalid InputKind " + row["InputKind"]);
+            if (!AllowedStatuses.Contains(row["Status"]))
+                throw new Exception("Invalid UI replacement pending input checklist: invalid Status " + row["Status"]);
+            if (!AllowedSourceActions.Contains(row["SourceAction"]))
+                throw new Exception("Invalid UI replacement pending input checklist: invalid SourceAction " + row["SourceAction"]);
+            if (string.IsNullOrEmpty(row["Note"]))
+                throw new Exception("Invalid UI replacement pending input checklist: Note is required");
             RequireAssetPath(row["Path"], row["InputKind"]);
             if (row["InputKind"] == "Preview")
                 RequireExtension(row["Path"], ".png", row["InputKind"]);
@@ -182,10 +200,13 @@ namespace Xipin.UIAITools
             }
             if (row["InputKind"] == "TargetAtlas")
                 RequireExtension(row["Path"], ".spriteatlasv2", row["InputKind"]);
-            if (int.Parse(row["Count"]) <= 0)
+            if (!int.TryParse(row["Count"], out var count) || count <= 0)
                 throw new Exception("UI replacement pending input checklist count must be positive: " + row["Path"]);
             foreach (var itemIndex in row["ItemIndices"].Split(';'))
-                int.Parse(itemIndex);
+            {
+                if (!int.TryParse(itemIndex, out _))
+                    throw new Exception("UI replacement pending input checklist item index must be an integer: " + row["Path"]);
+            }
         }
 
         static void RequireAssetPath(string path, string label)
