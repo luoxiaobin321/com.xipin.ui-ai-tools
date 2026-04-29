@@ -32,6 +32,11 @@ namespace Xipin.UIAITools
                 WriteCsv(profile, UIReportFiles.AssetTriageReport, UIReportFiles.AssetTriageReportHeader, new[] { row });
                 ReadAssetTriage(profile);
                 ExpectFailure(profile, "duplicate_asset_triage_row", UIReportFiles.AssetTriageReport, UIReportFiles.AssetTriageReportHeader, new[] { row, row }, () => ReadAssetTriage(profile), "duplicate asset triage row");
+
+                row = TextureSizeRow("Assets/Art/UI/Icon.png");
+                WriteCsv(profile, UIReportFiles.TextureSizeReport, UIReportFiles.TextureSizeReportHeader, new[] { row });
+                ReadTextureSizes(profile);
+                ExpectFailure(profile, "duplicate_texture_size_row", UIReportFiles.TextureSizeReport, UIReportFiles.TextureSizeReportHeader, new[] { row, row }, () => ReadTextureSizes(profile), "duplicate texture size row");
             }
             finally
             {
@@ -112,7 +117,7 @@ namespace Xipin.UIAITools
 
         static void ValidateNoDuplicateRows(string report, List<Dictionary<string, string>> rows)
         {
-            if (report != UIReportFiles.ReuseIndex && report != UIReportFiles.AssetTriageReport)
+            if (report != UIReportFiles.ReuseIndex && report != UIReportFiles.AssetTriageReport && report != UIReportFiles.TextureSizeReport)
                 return;
             var duplicate = rows.GroupBy(row => row["Path"]).FirstOrDefault(group => group.Count() > 1);
             if (duplicate != null)
@@ -121,7 +126,9 @@ namespace Xipin.UIAITools
 
         static string DuplicateRowName(string report)
         {
-            return report == UIReportFiles.ReuseIndex ? "reuse index row" : "asset triage row";
+            if (report == UIReportFiles.ReuseIndex)
+                return "reuse index row";
+            return report == UIReportFiles.TextureSizeReport ? "texture size row" : "asset triage row";
         }
 
         static void ValidateRow(string report, Dictionary<string, string> row)
@@ -286,6 +293,26 @@ namespace Xipin.UIAITools
                 Csv("hash"),
                 Csv("Review"),
                 Csv("same")
+            });
+        }
+
+        static string TextureSizeRow(string path)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(path),
+                Csv("Icon"),
+                Csv("guid"),
+                "64",
+                "64",
+                "4096",
+                "1024",
+                "2048",
+                "1",
+                Csv(""),
+                Csv("hash"),
+                Csv("Small"),
+                Csv("Review")
             });
         }
 
