@@ -40,6 +40,8 @@ namespace Xipin.UIAITools
             RequireAssetsFolder(brief.targetFolder, "targetFolder");
             if (brief.referenceImagePaths == null || brief.requiredInteractions == null || brief.dataBindings == null || brief.constraints == null)
                 throw new Exception("Invalid UI creation brief: list fields are required");
+            foreach (var path in brief.referenceImagePaths)
+                RequireImageAssetPath(path, "referenceImagePaths");
         }
 
         public static void ValidateContract()
@@ -59,6 +61,18 @@ namespace Xipin.UIAITools
                 parentTarget.targetFolder = "Assets/Art/UI/../Demo";
                 ExpectBriefFailure(root, "parent_target_folder", parentTarget, "targetFolder cannot contain ..");
 
+                var relativeReference = SampleBrief();
+                relativeReference.referenceImagePaths.Add("Art/UI/Reference.png");
+                ExpectBriefFailure(root, "relative_reference_image", relativeReference, "referenceImagePaths must be an Assets/ path");
+
+                var parentReference = SampleBrief();
+                parentReference.referenceImagePaths.Add("Assets/Art/UI/../Reference.png");
+                ExpectBriefFailure(root, "parent_reference_image", parentReference, "referenceImagePaths cannot contain ..");
+
+                var badReferenceExtension = SampleBrief();
+                badReferenceExtension.referenceImagePaths.Add("Assets/Art/UI/Reference.prefab");
+                ExpectBriefFailure(root, "bad_reference_image_extension", badReferenceExtension, "referenceImagePaths must be an image path");
+
                 ExpectRawBriefFailure(root, "reference_item_type", JsonWithReferenceItem("1"), "referenceImagePaths item must be a string");
             }
             finally
@@ -77,11 +91,33 @@ namespace Xipin.UIAITools
 
         internal static void RequireAssetsFolder(string value, string field)
         {
+            RequireAssetsPath(value, field);
+        }
+
+        static void RequireAssetsPath(string value, string field)
+        {
             RequireValue(value, field);
             if (value.Contains("\\") || !value.StartsWith("Assets/", StringComparison.Ordinal))
                 throw new Exception($"Invalid UI creation brief: {field} must be an Assets/ path");
             if (value.Contains("/../") || value.EndsWith("/..", StringComparison.Ordinal))
                 throw new Exception($"Invalid UI creation brief: {field} cannot contain .. path segments");
+        }
+
+        static void RequireImageAssetPath(string value, string field)
+        {
+            RequireAssetsPath(value, field);
+            if (!IsImageAssetPath(value))
+                throw new Exception($"Invalid UI creation brief: {field} must be an image path");
+        }
+
+        static bool IsImageAssetPath(string value)
+        {
+            return value.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+                || value.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                || value.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                || value.EndsWith(".tga", StringComparison.OrdinalIgnoreCase)
+                || value.EndsWith(".psd", StringComparison.OrdinalIgnoreCase)
+                || value.EndsWith(".psb", StringComparison.OrdinalIgnoreCase);
         }
 
         static void ValidateBriefJson(string json)

@@ -20,7 +20,7 @@
 
 1. 固化 `Documentation~/modules/ui-creation.md` 中的输入和输出契约。
 2. 先用 `UIComponentCandidateIndexService` 从 `UIPrefabBatchSequence.csv`、`UIControlCatalog` 和明确节点命名 token 推导组件候选索引；滚动容器只从自身节点或直接 `Viewport` 行推导；汇总里把 Button 候选按跨 prefab 和单 prefab 或低复用拆成复核队列，并输出 `UIComponentCandidateReview.csv` 给宿主填写确认结果，重新生成时按 `ComponentId` 保留人工填写列，`ComponentPrefabPath`/`PreviewPath` 和样例 prefab 路径在读取时复验，稳定后再由宿主人工维护组件 prefab 和预览图。
-3. 用 `UICreationBriefTemplateService` 生成只读需求 Brief JSON 模板，写盘时保留必需空数组字段并立即读回，读取时校验根对象、Brief 字符串根字段及其字面量结束、字符串转义、数组字段值结束、重复契约字段、可选布尔 `requiresConfirmation`、字符串数组项和尾随内容。
+3. 用 `UICreationBriefTemplateService` 生成只读需求 Brief JSON 模板，写盘时保留必需空数组字段并立即读回，读取时校验根对象、Brief 字符串根字段及其字面量结束、字符串转义、参考图路径、数组字段值结束、重复契约字段、可选布尔 `requiresConfirmation`、字符串数组项和尾随内容。
 4. 用 `UILayoutDraftTemplateService` 生成只读 `UILayoutDraft` 示例和资源需求清单初稿，写盘时保留必需空数组字段并立即读回，读取时校验根对象、`root` 对象与内部字符串字段及其字面量结束、字符串转义、对象/数组字段值结束、重复契约字段、字符串数组项、`nodes`/`assets` 数组项关键字符串字段、布尔 `requiresConfirmation` 和尾随内容。
 5. 用 `UICreationLayoutDryRunService` 实现 prefab 生成前 dry-run，检查目标目录、目标 prefab、参考分辨率、`requiresConfirmation`、组件候选 ID、组件角色、节点树、文本来源、锚点/位置格式、组件状态和角色兼容性、尺寸格式、节点数据绑定声明、数据绑定覆盖率、节点资源路径、资源需求 ID 唯一性、资源需求 kind/status、资源需求路径、资源需求 Ready 状态、Error gate 和汇总 Markdown 标题结构；验证入口先复验 dry-run CSV 精确表头、行结构和 OK/Exists 路径证据。
 6. 用 `UICreationHostGenerateChecklistService` 输出宿主生成前确认清单，读取当前 dry-run 前先复验 `UICreationLayoutDryRun.csv` 精确表头和行结构，并确认当前 dry-run 的 `TargetPrefab` 和组件列表与本次布局草稿一致，布局引用的组件候选已在 `UIComponentCandidateReview.csv` 中 `Approved`；验证入口必须看到 `Gate：Passed`，并重新检查 Markdown 标题结构、当前 dry-run 目标、清单组件列表和当前组件确认状态才放行。

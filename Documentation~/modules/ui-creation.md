@@ -18,7 +18,7 @@
 | `uiType` | 页面、弹窗、列表项、页签、浮层等类型。 |
 | `targetFolder` | 建议输出目录，必须是 `Assets/...`。 |
 | `stylePrompt` | 风格、情绪、尺寸和主题描述。 |
-| `referenceImagePaths` | 参考图路径。 |
+| `referenceImagePaths` | 参考图路径，必须是 `Assets/...` 下的图片源文件。 |
 | `requiredInteractions` | 必要交互，例如按钮、关闭、分页、列表滚动。 |
 | `dataBindings` | 文本、图标、货币、头像、进度条等数据位。 |
 | `constraints` | 安全区、分辨率、语言长度、性能或动效约束。 |
@@ -29,7 +29,7 @@
 UICreationBriefTemplateService.Generate(profile, brief);
 ```
 
-模板入口会先验证组件候选索引存在且非空，再保存 `UICreationBriefTemplate_<Feature>.json`。写盘会保留空数组字段并立即读回；读取 Brief JSON 时会检查根对象、必填字符串根字段及其字面量结束、字符串转义、数组字段值结束、重复契约字段和尾随内容。它只写输入 JSON，不创建 prefab。
+模板入口会先验证组件候选索引存在且非空，再保存 `UICreationBriefTemplate_<Feature>.json`。写盘会保留空数组字段并立即读回；读取 Brief JSON 时会检查根对象、必填字符串根字段及其字面量结束、字符串转义、参考图路径、数组字段值结束、重复契约字段和尾随内容。它只写输入 JSON，不创建 prefab。
 
 ### 组件库索引
 
@@ -76,7 +76,7 @@ UIComponentCandidateIndexService.Validate(profile);
 UILayoutDraftTemplateService.Generate(profile, briefJsonPath);
 ```
 
-该入口会读取并校验 `UICreationBrief`，再输出 `UILayoutDraftTemplate_<Feature>.json`。写盘会保留空数组字段并立即读回；读取 Brief 和布局草稿 JSON 时会检查根对象、Brief 可选布尔 `requiresConfirmation`、字符串数组项、字符串转义、`root` 对象及其字符串字段字面量结束、对象/数组字段值结束、重复契约字段、`nodes`/`assets` 数组项关键字符串字段、布尔 `requiresConfirmation` 字段和尾随内容。首版模板只填 root、交互、由数据位推导的资源需求和风险提示，布局节点仍由 AI 或人工补齐。
+该入口会读取并校验 `UICreationBrief`，再输出 `UILayoutDraftTemplate_<Feature>.json`。写盘会保留空数组字段并立即读回；读取 Brief 和布局草稿 JSON 时会检查根对象、Brief 可选布尔 `requiresConfirmation`、参考图路径、字符串数组项、字符串转义、`root` 对象及其字符串字段字面量结束、对象/数组字段值结束、重复契约字段、`nodes`/`assets` 数组项关键字符串字段、布尔 `requiresConfirmation` 字段和尾随内容。首版模板只填 root、交互、由数据位推导的资源需求和风险提示，布局节点仍由 AI 或人工补齐。
 
 ## 资源需求清单
 
