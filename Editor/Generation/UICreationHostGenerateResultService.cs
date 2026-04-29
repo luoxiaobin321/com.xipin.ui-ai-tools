@@ -23,6 +23,7 @@ namespace Xipin.UIAITools
             foreach (var row in rows)
                 ValidateRow(row);
             TargetPrefab(rows);
+            ValidateNoDuplicateRows(rows);
             return rows;
         }
 
@@ -187,6 +188,11 @@ namespace Xipin.UIAITools
                 ExpectFailure(profile, "missing_confirmation", Row("0", "CreatePrefab", "Applied", "", "", "Assets/Demo.prefab", "", "", "", "bad"), "confirmation is required");
                 ExpectFailure(profile, "missing_skipped_message", Row("0", "ApplyText", "Skipped", "Title", "builtin:Text", "Assets/Demo.prefab", "", "", "", ""), "skipped message is required");
                 ExpectFailure(profile, "missing_failed_message", Row("0", "CreatePrefab", "Failed", "", "", "Assets/Demo.prefab", "", "", "QA-1", ""), "failed message is required");
+                ExpectRowsFailure(profile, "duplicate_result_row", new[]
+                {
+                    Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("1", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Demo.prefab", "", "", "QA-1", "layout again")
+                }, "duplicate result row");
             }
             finally
             {
@@ -227,6 +233,21 @@ namespace Xipin.UIAITools
             if (rows.Any(r => r["TargetPrefab"] != targetPrefab))
                 throw new Exception("Invalid UI creation host generate result: TargetPrefab must be consistent");
             return targetPrefab;
+        }
+
+        static void ValidateNoDuplicateRows(List<Dictionary<string, string>> rows)
+        {
+            var duplicate = rows.GroupBy(row => new
+            {
+                Action = row["Action"],
+                NodeId = row["NodeId"],
+                ComponentId = row["ComponentId"],
+                TargetPrefab = row["TargetPrefab"],
+                AssetPath = row["AssetPath"],
+                Binding = row["Binding"]
+            }).FirstOrDefault(group => group.Count() > 1);
+            if (duplicate != null)
+                throw new Exception($"Invalid UI creation host generate result: duplicate result row for {duplicate.Key.Action} / {duplicate.Key.NodeId}");
         }
 
         static string TargetPrefabPath(UILayoutDraft draft)
