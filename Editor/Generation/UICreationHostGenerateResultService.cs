@@ -9,6 +9,7 @@ namespace Xipin.UIAITools
 {
     public static class UICreationHostGenerateResultService
     {
+        static readonly HashSet<string> AllowedActions = new HashSet<string> { "CreatePrefab", "CreateTemplateNode", "InstantiateComponent", "ApplyLayout", "ApplyText", "ApplyAssetReference", "ApplyBindingPlaceholder", "VerifyAfterGenerate" };
         static readonly HashSet<string> AllowedStatuses = new HashSet<string> { "Applied", "Skipped", "Failed", "Verified" };
 
         public static List<Dictionary<string, string>> ReadRows(UIAIToolsProfile profile)
@@ -155,6 +156,7 @@ namespace Xipin.UIAITools
                 ExpectFailure(profile, "empty_rows", null, "result rows are required");
                 ExpectFailure(profile, "bad_item_index", Row("x", "CreatePrefab", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "ItemIndex must be an integer");
                 ExpectFailure(profile, "missing_action", Row("0", "", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "Action is required");
+                ExpectFailure(profile, "unknown_action", Row("0", "ApplyTypo", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "invalid action");
                 ExpectFailure(profile, "bad_status", Row("0", "CreatePrefab", "Done", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "invalid status");
                 ExpectFailure(profile, "missing_target_prefab", Row("0", "CreatePrefab", "Applied", "", "", "", "", "", "QA-1", "bad"), "TargetPrefab is required");
                 ExpectRowsFailure(profile, "inconsistent_target_prefab", new[]
@@ -180,6 +182,8 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI creation host generate result: ItemIndex must be an integer");
             if (string.IsNullOrEmpty(row["Action"]))
                 throw new Exception("Invalid UI creation host generate result: Action is required");
+            if (!AllowedActions.Contains(row["Action"]))
+                throw new Exception("Invalid UI creation host generate result: invalid action " + row["Action"]);
             if (!AllowedStatuses.Contains(row["Status"]))
                 throw new Exception("Invalid UI creation host generate result: invalid status " + row["Status"]);
             if (string.IsNullOrEmpty(row["TargetPrefab"]))

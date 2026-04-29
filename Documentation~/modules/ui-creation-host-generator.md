@@ -67,7 +67,7 @@ UIAssetTriageScanner.ValidateUICreationHostGenerateResultContractBatch
 | 字段 | 含义 |
 | --- | --- |
 | `ItemIndex` | 执行项序号。 |
-| `Action` | 宿主执行动作，例如 `CreatePrefab`、`InstantiateComponent`、`ApplyLayout`、`ApplyText`、`ApplyAssetReference`、`ApplyBindingPlaceholder`、`VerifyAfterGenerate`。 |
+| `Action` | 宿主执行动作，只允许 `CreatePrefab`、`CreateTemplateNode`、`InstantiateComponent`、`ApplyLayout`、`ApplyText`、`ApplyAssetReference`、`ApplyBindingPlaceholder`、`VerifyAfterGenerate`。 |
 | `Status` | `Applied`、`Skipped`、`Failed` 或 `Verified`。 |
 | `NodeId` | 对应 `UILayoutDraft.nodes` 的节点 ID。 |
 | `ComponentId` | 对应 `UIComponentCandidateIndex.csv` 的稳定组件候选 ID。 |
