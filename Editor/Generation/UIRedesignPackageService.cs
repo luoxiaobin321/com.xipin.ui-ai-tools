@@ -120,6 +120,10 @@ namespace Xipin.UIAITools
                 WritePrefabOptimizationTargets(profile, "Assets/Bundle/Prefab/Valid.prefab");
                 UIRedesignRequestValidation.ValidateSourcePrefab(profile, "Assets/Bundle/Prefab/Valid.prefab", "contract");
                 ExpectFailure("source_prefab_missing", "Missing source prefab path", () => UIRedesignRequestValidation.ValidateSourcePrefab(profile, "", "contract"));
+                ExpectFailure("source_prefab_relative", "Assets/ prefab path", () => UIRedesignRequestValidation.ValidateSourcePrefab(profile, "Bundle/Prefab/Valid.prefab", "contract"));
+                ExpectFailure("source_prefab_backslash", "Assets/ prefab path", () => UIRedesignRequestValidation.ValidateSourcePrefab(profile, "Assets\\Bundle\\Prefab\\Valid.prefab", "contract"));
+                ExpectFailure("source_prefab_extension", "Assets/ prefab path", () => UIRedesignRequestValidation.ValidateSourcePrefab(profile, "Assets/Bundle/Prefab/Valid.png", "contract"));
+                ExpectFailure("source_prefab_parent_segment", "cannot contain ..", () => UIRedesignRequestValidation.ValidateSourcePrefab(profile, "Assets/Bundle/../Prefab/Valid.prefab", "contract"));
                 ExpectFailure("source_prefab_not_scanned", "not present in scan reports", () => UIRedesignRequestValidation.ValidateSourcePrefab(profile, "Assets/Bundle/Prefab/Missing.prefab", "contract"));
             }
             finally

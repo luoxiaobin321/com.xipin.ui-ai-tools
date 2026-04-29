@@ -9,6 +9,10 @@ namespace Xipin.UIAITools
         {
             if (string.IsNullOrEmpty(sourcePrefabPath))
                 throw new Exception($"Missing source prefab path for UI redesign {context}.");
+            if (sourcePrefabPath.Contains("\\") || !sourcePrefabPath.StartsWith("Assets/", StringComparison.Ordinal) || !sourcePrefabPath.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase))
+                throw new Exception("UI redesign sourcePrefabPath must be an Assets/ prefab path.");
+            if (sourcePrefabPath.Contains("/../") || sourcePrefabPath.EndsWith("/..", StringComparison.Ordinal))
+                throw new Exception("UI redesign sourcePrefabPath cannot contain .. path segments.");
             var targets = UIScanReportRows.ReadPrefabOptimizationTargets(profile);
             if (!targets.Any(r => r["Prefab"] == sourcePrefabPath))
                 throw new Exception("UI prefab is not present in scan reports: " + sourcePrefabPath);
