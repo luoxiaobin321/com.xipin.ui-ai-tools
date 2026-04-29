@@ -40,6 +40,19 @@ namespace Xipin.UIAITools
             Debug.Log($"UI creation host generate result target validation passed: {expectedTargetPrefab}, {rows.Count} rows.");
         }
 
+        public static void ValidateAgainstLayoutDraft(UIAIToolsProfile profile, string layoutDraftJsonPath)
+        {
+            var draft = UILayoutDraftTemplateService.LoadDraft(layoutDraftJsonPath);
+            var rows = ReadRows(profile);
+            ValidateSummary(profile, rows);
+            var expectedTargetPrefab = TargetPrefabPath(draft);
+            var actualTargetPrefab = TargetPrefab(rows);
+            if (actualTargetPrefab != expectedTargetPrefab)
+                throw new Exception($"Invalid UI creation host generate result: TargetPrefab mismatch {actualTargetPrefab}->{expectedTargetPrefab}");
+            ValidateDraftNodeRows(rows, draft);
+            Debug.Log($"UI creation host generate result layout draft validation passed: {expectedTargetPrefab}, {draft.nodes.Count} nodes, {rows.Count} rows.");
+        }
+
         public static string GenerateSummary(UIAIToolsProfile profile)
         {
             return GenerateSummary(profile, "", -1);
@@ -98,7 +111,19 @@ namespace Xipin.UIAITools
                 GenerateSummary(profile, "Demo", 2);
                 Validate(profile);
                 ValidateTargetPrefab(profile, "Assets/Art/UI/AI/Demo/Demo.prefab");
+                var draftJsonPath = WriteDraftJson(profile, "Demo", "Assets/Art/UI/AI/Demo");
+                ValidateAgainstLayoutDraft(profile, draftJsonPath);
                 ExpectTargetFailure(profile, "Assets/Art/UI/AI/Other/Other.prefab", "TargetPrefab mismatch");
+                ExpectDraftFailure(profile, WriteDraftJson(profile, "Other", "Assets/Art/UI/AI/Other"), "TargetPrefab mismatch");
+                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "MissingNode", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
+                GenerateSummary(profile, "Demo", 1);
+                ExpectDraftFailure(profile, draftJsonPath, "unknown NodeId");
+                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "Root", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
+                GenerateSummary(profile, "Demo", 1);
+                ExpectDraftFailure(profile, draftJsonPath, "ComponentId mismatch");
+                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
+                GenerateSummary(profile, "Demo", 1);
+                ExpectDraftFailure(profile, draftJsonPath, "missing NodeId");
                 ExpectSummaryFailure(profile, "bad_title", "# Bad", "unexpected title");
                 ExpectFailure(profile, "empty_rows", null, "result rows are required");
                 ExpectFailure(profile, "bad_item_index", Row("x", "CreatePrefab", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "ItemIndex must be an integer");
@@ -145,6 +170,29 @@ namespace Xipin.UIAITools
             return targetPrefab;
         }
 
+        static string TargetPrefabPath(UILayoutDraft draft)
+        {
+            return (draft.root.targetFolder.TrimEnd('/', '\\') + "/" + draft.root.name + ".prefab").Replace('\\', '/');
+        }
+
+        static void ValidateDraftNodeRows(List<Dictionary<string, string>> rows, UILayoutDraft draft)
+        {
+            var nodes = draft.nodes.ToDictionary(n => n.nodeId);
+            foreach (var row in rows.Where(r => !string.IsNullOrEmpty(r["NodeId"])))
+            {
+                if (!nodes.TryGetValue(row["NodeId"], out var node))
+                    throw new Exception("Invalid UI creation host generate result: unknown NodeId " + row["NodeId"]);
+                if (row["ComponentId"] != node.componentId)
+                    throw new Exception($"Invalid UI creation host generate result: ComponentId mismatch {row["NodeId"]} {row["ComponentId"]}->{node.componentId}");
+            }
+            var resultNodeIds = rows.Where(r => !string.IsNullOrEmpty(r["NodeId"])).Select(r => r["NodeId"]).ToHashSet();
+            foreach (var node in draft.nodes)
+            {
+                if (!resultNodeIds.Contains(node.nodeId))
+                    throw new Exception("Invalid UI creation host generate result: missing NodeId " + node.nodeId);
+            }
+        }
+
         static void ValidateSummary(UIAIToolsProfile profile, List<Dictionary<string, string>> rows)
         {
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationHostGenerateResultSummary);
@@ -176,6 +224,14 @@ namespace Xipin.UIAITools
         {
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationHostGenerateResult);
             File.WriteAllLines(path, new[] { UIReportFiles.CreationHostGenerateResultHeader }.Concat(rows), new UTF8Encoding(true));
+        }
+
+        static string WriteDraftJson(UIAIToolsProfile profile, string name, string targetFolder)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, "UICreationHostGenerateResultContractDraft_" + name + ".json");
+            var json = "{\"root\":{\"name\":\"" + name + "\",\"uiType\":\"Dialog\",\"targetFolder\":\"" + targetFolder + "\",\"referenceResolution\":\"1080x1920\",\"safeAreaPolicy\":\"\"},\"nodes\":[{\"nodeId\":\"Root\",\"parentId\":\"\",\"name\":\"Root\",\"componentRole\":\"Panel\",\"componentId\":\"builtin:Panel\",\"anchor\":\"stretch_full\",\"position\":\"0,0\",\"size\":\"1080x1920\"},{\"nodeId\":\"Title\",\"parentId\":\"Root\",\"name\":\"Title\",\"componentRole\":\"Text\",\"componentId\":\"builtin:Text\",\"anchor\":\"top_center\",\"position\":\"0,-80\",\"size\":\"520x80\"}],\"assets\":[],\"interactions\":[],\"risks\":[],\"requiresConfirmation\":true}";
+            File.WriteAllText(path, json, new UTF8Encoding(true));
+            return path;
         }
 
         static string Row(string itemIndex, string action, string status, string nodeId, string componentId, string targetPrefab, string assetPath, string binding, string confirmation, string message)
@@ -222,6 +278,21 @@ namespace Xipin.UIAITools
                 throw new Exception($"Unexpected UI creation host generate result target contract failure: {exception.Message}");
             }
             throw new Exception("UI creation host generate result target contract sample did not fail");
+        }
+
+        static void ExpectDraftFailure(UIAIToolsProfile profile, string draftJsonPath, string expectedMessage)
+        {
+            try
+            {
+                ValidateAgainstLayoutDraft(profile, draftJsonPath);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI creation host generate result layout draft contract failure: {exception.Message}");
+            }
+            throw new Exception("UI creation host generate result layout draft contract sample did not fail");
         }
 
         static void ExpectSummaryFailure(UIAIToolsProfile profile, string name, string title, string expectedMessage)
