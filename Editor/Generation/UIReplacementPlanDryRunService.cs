@@ -61,6 +61,18 @@ namespace Xipin.UIAITools
                     Row("0", "OldAssetExists", "Info", "OK", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "通过", "Assets/Old.png"),
                     Row("0", "OldAssetExists", "Info", "OK", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "通过", "Assets/Old.png")
                 }, "duplicate dry-run row");
+                ExpectRowsFailure(profile, "old_asset_path", new[]
+                {
+                    Row("0", "OldAssetExists", "Info", "OK", "Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "通过", "Old.png")
+                }, "OldAsset path is invalid");
+                ExpectRowsFailure(profile, "new_asset_extension", new[]
+                {
+                    Row("0", "NewAssetExists", "Warning", "Missing", "Assets/Old.png", "Assets/New.jpg", "Assets/Atlas.spriteatlasv2", "新资源当前还不存在或未导入", "Assets/New.jpg")
+                }, "NewAsset must be .png");
+                ExpectRowsFailure(profile, "target_atlas_extension", new[]
+                {
+                    Row("0", "TargetAtlasExists", "Warning", "Missing", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.png", "目标图集当前不存在", "Assets/Atlas.png")
+                }, "TargetAtlas must be .spriteatlasv2");
             }
             finally
             {
@@ -130,8 +142,19 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement plan dry-run: invalid status " + row["Status"]);
             if (string.IsNullOrEmpty(row["OldAsset"]) || string.IsNullOrEmpty(row["NewAsset"]) || string.IsNullOrEmpty(row["TargetAtlas"]))
                 throw new Exception("Invalid UI replacement plan dry-run: asset paths are required");
+            RequirePath(row["OldAsset"], "OldAsset", ".png");
+            RequirePath(row["NewAsset"], "NewAsset", ".png");
+            RequirePath(row["TargetAtlas"], "TargetAtlas", ".spriteatlasv2");
             if (string.IsNullOrEmpty(row["Message"]))
                 throw new Exception("Invalid UI replacement plan dry-run: Message is required");
+        }
+
+        static void RequirePath(string path, string label, string extension)
+        {
+            if (!path.StartsWith("Assets/", StringComparison.Ordinal) || path.Contains("\\") || path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal))
+                throw new Exception($"Invalid UI replacement plan dry-run: {label} path is invalid");
+            if (!path.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+                throw new Exception($"Invalid UI replacement plan dry-run: {label} must be {extension}");
         }
 
         static void ValidateNoDuplicateRows(List<Dictionary<string, string>> rows)

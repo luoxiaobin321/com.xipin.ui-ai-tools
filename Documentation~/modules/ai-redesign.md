@@ -7,7 +7,7 @@ AI 改版模块只定义协议、报告和 gate，不内置具体 AI provider，
 1. `UIRedesignBriefService.GenerateBrief` 整理旧 prefab、旧版预览、扫描结论、风险和输出约束。
 2. `UIRedesignDraftTemplateService.Generate` 生成可编辑草稿 JSON 模板。
 3. AI provider 或人工返回 `UIRedesignDraft`，再由 `UIRedesignDraftService.SaveDraft` 或 `LoadDraft` 校验并强制人工确认。
-4. `UIReplacementPlanDryRunService.Run` 输出替换计划 dry-run，只报告旧资源、新资源、目标图集、复用归属和按名加载风险。
+4. `UIReplacementPlanDryRunService.Run` 输出替换计划 dry-run，只报告旧资源、新资源、目标图集、复用归属和按名加载风险；读回时会校验旧图、新图和目标图集路径后缀。
 5. `UIReplacementExecutionPlanService.Generate` 把 dry-run 结果展开成待确认执行计划。
 6. `UIReplacementPendingInputChecklistService` 和 `UIReplacementPendingInputReadinessService` 导出并检查新版预览、新图和目标图集是否落位。
 7. `UIReplacementExternalInputPackageService` 生成外部生成工具可消费的 JSON、Prompt 和引用素材清单。
