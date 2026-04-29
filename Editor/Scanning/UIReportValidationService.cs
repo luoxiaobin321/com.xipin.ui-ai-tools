@@ -11,6 +11,7 @@ namespace Xipin.UIAITools
         {
             foreach (var report in UIReportFiles.CoreReports)
                 ValidateReport(profile, report, UIReportFiles.CoreReportHeaders[report]);
+            UIScanReportRows.Validate(profile);
             Debug.Log($"UI AI Tools report validation passed: {UIReportFiles.CoreReports.Length} reports.");
         }
 

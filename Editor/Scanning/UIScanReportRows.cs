@@ -5,6 +5,12 @@ namespace Xipin.UIAITools
 {
     public static class UIScanReportRows
     {
+        public static void Validate(UIAIToolsProfile profile)
+        {
+            foreach (var report in UIReportFiles.CoreReports)
+                ReadCore(profile, report);
+        }
+
         public static List<Dictionary<string, string>> ReadAssetTriage(UIAIToolsProfile profile)
         {
             return ReadCore(profile, UIReportFiles.AssetTriageReport);

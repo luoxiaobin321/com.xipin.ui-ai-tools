@@ -35,6 +35,7 @@
 - 最近已验证：`GeneratePanelFocus` -> `Logs/Generate_PanelFocus_CoreRowValidation.log`，exit code 0。
 - 最近已验证：`GenerateComponentCandidateIndexBatch` -> `Logs/Generate_ComponentCandidateIndex_CoreRowValidation.log`，exit code 0。
 - 最近已验证：`GenerateRedesignBriefBatch -uiPrefabPath Assets/Bundle/Prefab/UIVipcard/UIVipcard.prefab -uiPreviewPath Logs/UIPrefabBaseline_Bundle_Prefab_UIVipcard_UIVipcard.png` -> `Logs/Generate_RedesignBrief_CoreRowValidation.log`，exit code 0。
+- 最近已验证：`ValidateReports` -> `Logs/Verify_Reports_CoreRowValidation.log`，exit code 0。
 
 # Constraints
 - 包不得编译引用 `GameApp`、`MotionFramework`、`com.xipin.lframework` 或 YooAsset。
