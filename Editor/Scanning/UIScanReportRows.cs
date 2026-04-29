@@ -47,6 +47,26 @@ namespace Xipin.UIAITools
                 WriteCsv(profile, UIReportFiles.LooseTextureCandidates, UIReportFiles.LooseTextureCandidatesHeader, new[] { row });
                 ReadLooseTextureCandidates(profile);
                 ExpectFailure(profile, "duplicate_loose_texture_candidate_row", UIReportFiles.LooseTextureCandidates, UIReportFiles.LooseTextureCandidatesHeader, new[] { row, row }, () => ReadLooseTextureCandidates(profile), "duplicate loose texture candidate row");
+
+                row = PrefabAtlasStatsRow("Assets/Prefab/A.prefab");
+                WriteCsv(profile, UIReportFiles.PrefabAtlasStats, UIReportFiles.PrefabAtlasStatsHeader, new[] { row });
+                ReadCore(profile, UIReportFiles.PrefabAtlasStats);
+                ExpectFailure(profile, "duplicate_prefab_atlas_stats_row", UIReportFiles.PrefabAtlasStats, UIReportFiles.PrefabAtlasStatsHeader, new[] { row, row }, () => ReadCore(profile, UIReportFiles.PrefabAtlasStats), "duplicate prefab atlas stats row");
+
+                row = PrefabDrawCallRiskRow("Assets/Prefab/A.prefab");
+                WriteCsv(profile, UIReportFiles.PrefabDrawCallRisk, UIReportFiles.PrefabDrawCallRiskHeader, new[] { row });
+                ReadPrefabDrawCallRisk(profile);
+                ExpectFailure(profile, "duplicate_prefab_draw_call_risk_row", UIReportFiles.PrefabDrawCallRisk, UIReportFiles.PrefabDrawCallRiskHeader, new[] { row, row }, () => ReadPrefabDrawCallRisk(profile), "duplicate prefab draw call risk row");
+
+                row = PrefabBatchBreakSummaryRow("Assets/Prefab/A.prefab");
+                WriteCsv(profile, UIReportFiles.PrefabBatchBreakSummary, UIReportFiles.PrefabBatchBreakSummaryHeader, new[] { row });
+                ReadPrefabBatchBreakSummary(profile);
+                ExpectFailure(profile, "duplicate_prefab_batch_break_summary_row", UIReportFiles.PrefabBatchBreakSummary, UIReportFiles.PrefabBatchBreakSummaryHeader, new[] { row, row }, () => ReadPrefabBatchBreakSummary(profile), "duplicate prefab batch break summary row");
+
+                row = PrefabOptimizationTargetsRow("Assets/Prefab/A.prefab");
+                WriteCsv(profile, UIReportFiles.PrefabOptimizationTargets, UIReportFiles.PrefabOptimizationTargetsHeader, new[] { row });
+                ReadPrefabOptimizationTargets(profile);
+                ExpectFailure(profile, "duplicate_prefab_optimization_target_row", UIReportFiles.PrefabOptimizationTargets, UIReportFiles.PrefabOptimizationTargetsHeader, new[] { row, row }, () => ReadPrefabOptimizationTargets(profile), "duplicate prefab optimization target row");
             }
             finally
             {
@@ -127,15 +147,28 @@ namespace Xipin.UIAITools
 
         static void ValidateNoDuplicateRows(string report, List<Dictionary<string, string>> rows)
         {
-            if (report != UIReportFiles.ReuseIndex &&
-                report != UIReportFiles.AssetTriageReport &&
-                report != UIReportFiles.TextureSizeReport &&
-                report != UIReportFiles.ACommonUsage &&
-                report != UIReportFiles.LooseTextureCandidates)
+            var field = DuplicateRowField(report);
+            if (field == "")
                 return;
-            var duplicate = rows.GroupBy(row => row["Path"]).FirstOrDefault(group => group.Count() > 1);
+            var duplicate = rows.GroupBy(row => row[field]).FirstOrDefault(group => group.Count() > 1);
             if (duplicate != null)
                 throw new Exception($"Invalid {report}: duplicate {DuplicateRowName(report)} for {duplicate.Key}");
+        }
+
+        static string DuplicateRowField(string report)
+        {
+            if (report == UIReportFiles.ReuseIndex ||
+                report == UIReportFiles.AssetTriageReport ||
+                report == UIReportFiles.TextureSizeReport ||
+                report == UIReportFiles.ACommonUsage ||
+                report == UIReportFiles.LooseTextureCandidates)
+                return "Path";
+            if (report == UIReportFiles.PrefabAtlasStats ||
+                report == UIReportFiles.PrefabDrawCallRisk ||
+                report == UIReportFiles.PrefabBatchBreakSummary ||
+                report == UIReportFiles.PrefabOptimizationTargets)
+                return "Prefab";
+            return "";
         }
 
         static string DuplicateRowName(string report)
@@ -148,6 +181,14 @@ namespace Xipin.UIAITools
                 return "ACommon usage row";
             if (report == UIReportFiles.LooseTextureCandidates)
                 return "loose texture candidate row";
+            if (report == UIReportFiles.PrefabAtlasStats)
+                return "prefab atlas stats row";
+            if (report == UIReportFiles.PrefabDrawCallRisk)
+                return "prefab draw call risk row";
+            if (report == UIReportFiles.PrefabBatchBreakSummary)
+                return "prefab batch break summary row";
+            if (report == UIReportFiles.PrefabOptimizationTargets)
+                return "prefab optimization target row";
             return "asset triage row";
         }
 
@@ -376,6 +417,95 @@ namespace Xipin.UIAITools
                 Csv("Review"),
                 Csv("same"),
                 Csv("Assets/Art/UI/Target/Icon.png")
+            });
+        }
+
+        static string PrefabAtlasStatsRow(string prefab)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(prefab),
+                Csv("Owner"),
+                "1",
+                "1",
+                "0",
+                "2",
+                Csv("Assets/Art/UI/UI.spriteatlasv2"),
+                Csv("Assets/Art/UI/Icon.png")
+            });
+        }
+
+        static string PrefabDrawCallRiskRow(string prefab)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(prefab),
+                Csv("Owner"),
+                "1",
+                "1",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1",
+                "0",
+                "1",
+                "0",
+                "1",
+                "1",
+                "1",
+                "1",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                Csv("Atlas:UI"),
+                Csv("Atlas:UI")
+            });
+        }
+
+        static string PrefabBatchBreakSummaryRow(string prefab)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(prefab),
+                Csv("Owner"),
+                "1",
+                "1",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                Csv("Review"),
+                Csv("Atlas:UI"),
+                Csv("Atlas:A=>Atlas:B"),
+                Csv("1:Root/A->Root/B:Review")
+            });
+        }
+
+        static string PrefabOptimizationTargetsRow(string prefab)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(prefab),
+                Csv("Owner"),
+                "1",
+                Csv("TextureSwitch"),
+                Csv("Review"),
+                "1",
+                "1",
+                "1",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1",
+                "1",
+                "0"
             });
         }
 
