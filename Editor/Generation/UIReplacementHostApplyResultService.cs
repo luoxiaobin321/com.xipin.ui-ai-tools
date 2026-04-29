@@ -59,6 +59,7 @@ namespace Xipin.UIAITools
             var rows = ReadRows(profile);
             ValidateSummary(profile, rows);
             var planRows = UIReplacementExecutionPlanService.ReadRows(profile);
+            UIReplacementHostApplyChecklistService.Validate(profile);
             foreach (var row in rows)
             {
                 if (!planRows.Any(plan => SamePlanRow(plan, row)))
@@ -97,6 +98,7 @@ namespace Xipin.UIAITools
                     PlanRow("1", "UpdateAddress", "PendingConfirmation", "Assets/Old2.png", "Assets/New2.png", "Assets/Atlas.spriteatlasv2", ""),
                     PlanRow("2", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old3.png", "Assets/New3.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab")
                 });
+                UIReplacementHostApplyChecklistService.Generate(profile);
                 ValidateAgainstExecutionPlan(profile);
                 ExpectPlanCoverageFailure(profile, "result row missing for plan Item 0 / VerifyAfterApply");
                 ExpectBlockingPlanFailure(profile, "blocking steps present");
@@ -405,6 +407,7 @@ namespace Xipin.UIAITools
                 PlanRow("0", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab"),
                 PlanRow("0", "VerifyAfterApply", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab")
             });
+            UIReplacementHostApplyChecklistService.Generate(profile);
             WriteCsv(profile, new[]
             {
                 Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab", "QA-1", "updated"),
