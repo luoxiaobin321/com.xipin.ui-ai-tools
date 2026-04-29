@@ -26,7 +26,12 @@ namespace Xipin.UIAITools
                 var row = ReuseIndexRow("Assets/Art/UI/Icon.png");
                 WriteCsv(profile, UIReportFiles.ReuseIndex, UIReportFiles.ReuseIndexHeader, new[] { row });
                 ReadReuseIndex(profile);
-                ExpectFailure(profile, "duplicate_reuse_index_row", new[] { row, row }, "duplicate reuse index row");
+                ExpectFailure(profile, "duplicate_reuse_index_row", UIReportFiles.ReuseIndex, UIReportFiles.ReuseIndexHeader, new[] { row, row }, () => ReadReuseIndex(profile), "duplicate reuse index row");
+
+                row = AssetTriageRow("Assets/Art/UI/Icon.png");
+                WriteCsv(profile, UIReportFiles.AssetTriageReport, UIReportFiles.AssetTriageReportHeader, new[] { row });
+                ReadAssetTriage(profile);
+                ExpectFailure(profile, "duplicate_asset_triage_row", UIReportFiles.AssetTriageReport, UIReportFiles.AssetTriageReportHeader, new[] { row, row }, () => ReadAssetTriage(profile), "duplicate asset triage row");
             }
             finally
             {
@@ -107,11 +112,16 @@ namespace Xipin.UIAITools
 
         static void ValidateNoDuplicateRows(string report, List<Dictionary<string, string>> rows)
         {
-            if (report != UIReportFiles.ReuseIndex)
+            if (report != UIReportFiles.ReuseIndex && report != UIReportFiles.AssetTriageReport)
                 return;
             var duplicate = rows.GroupBy(row => row["Path"]).FirstOrDefault(group => group.Count() > 1);
             if (duplicate != null)
-                throw new Exception("Invalid UIReuseIndex.csv: duplicate reuse index row for " + duplicate.Key);
+                throw new Exception($"Invalid {report}: duplicate {DuplicateRowName(report)} for {duplicate.Key}");
+        }
+
+        static string DuplicateRowName(string report)
+        {
+            return report == UIReportFiles.ReuseIndex ? "reuse index row" : "asset triage row";
         }
 
         static void ValidateRow(string report, Dictionary<string, string> row)
@@ -257,12 +267,34 @@ namespace Xipin.UIAITools
             });
         }
 
-        static void ExpectFailure(UIAIToolsProfile profile, string name, IEnumerable<string> rows, string expectedMessage)
+        static string AssetTriageRow(string path)
         {
-            WriteCsv(profile, UIReportFiles.ReuseIndex, UIReportFiles.ReuseIndexHeader, rows);
+            return string.Join(",", new[]
+            {
+                Csv(path),
+                Csv("Icon"),
+                Csv("guid"),
+                "64",
+                "64",
+                "1024",
+                "2048",
+                Csv("TextureImporter"),
+                Csv("Assets/Art/UI/UI.spriteatlasv2"),
+                Csv("Assets/Prefab/A.prefab"),
+                Csv(""),
+                "1",
+                Csv("hash"),
+                Csv("Review"),
+                Csv("same")
+            });
+        }
+
+        static void ExpectFailure(UIAIToolsProfile profile, string name, string report, string header, IEnumerable<string> rows, Action readRows, string expectedMessage)
+        {
+            WriteCsv(profile, report, header, rows);
             try
             {
-                ReadReuseIndex(profile);
+                readRows();
             }
             catch (Exception exception)
             {
