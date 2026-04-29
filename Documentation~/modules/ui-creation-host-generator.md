@@ -41,7 +41,7 @@ UIAssetTriageScanner.ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJso
 UIAssetTriageScanner.ValidateUICreationHostGenerateResultContractBatch
 ```
 
-生成入口会先跑上述 gate，再创建目标 prefab 草稿并输出 `UICreationHostGenerateResult.csv` 和 `UICreationHostGenerateResult.md`；目标 prefab 已存在时直接拒绝，不覆盖。当前宿主样例中，`Image` 和 `Text` 节点使用宿主模板节点生成，避免把整屏旧 prefab 当作组件塞入新 UI；`Button` 等复用组件继续实例化确认后的组件 prefab。验证入口会检查生成的 prefab 草稿存在，草稿节点父子层级、锚点、位置、尺寸、静态文本、静态图片和绑定占位与布局草稿一致，结果报告包含生成后验证行。预览入口会把生成后的 prefab 草稿渲染到 `Logs/UICreationHostGeneratePreview_*.png`，检查不是空白图，并把尺寸、可见像素、覆盖率和包围盒写入结果报告。结果验证入口会先复用包内 `UICreationHostGenerateResultService` 检查 CSV 精确表头、非空结果行、`ItemIndex`、`Action`、状态、目标 prefab 一致性、确认记录、失败说明、Markdown 顶层标题、目标 prefab 和状态分布，再只读检查每个草稿节点的结果行及行内布局说明/资源路径/绑定值/消息、生成后验证行和预览检查行是否齐全，并按现有 PNG 复算预览统计。
+生成入口会先跑上述 gate，再创建目标 prefab 草稿并输出 `UICreationHostGenerateResult.csv` 和 `UICreationHostGenerateResult.md`；目标 prefab 已存在时直接拒绝，不覆盖。当前宿主样例中，`Image` 和 `Text` 节点使用宿主模板节点生成，避免把整屏旧 prefab 当作组件塞入新 UI；`Button` 等复用组件继续实例化确认后的组件 prefab。验证入口会检查生成的 prefab 草稿存在，草稿节点父子层级、锚点、位置、尺寸、静态文本、静态图片和绑定占位与布局草稿一致，结果报告包含生成后验证行。预览入口会把生成后的 prefab 草稿渲染到 `Logs/UICreationHostGeneratePreview_*.png`，检查不是空白图，并把尺寸、可见像素、覆盖率和包围盒写入结果报告。结果验证入口会先复用包内 `UICreationHostGenerateResultService.ValidateTargetPrefab` 检查 CSV 精确表头、非空结果行、`ItemIndex`、`Action`、状态、目标 prefab 一致性、当前草稿目标、确认记录、失败说明、Markdown 顶层标题、目标 prefab 和状态分布，再只读检查每个草稿节点的结果行及行内布局说明/资源路径/绑定值/消息、生成后验证行和预览检查行是否齐全，并按现有 PNG 复算预览统计。
 
 这些 gate 只说明阻断输入已经补齐，不代表所有非布局人工复核都已完成。宿主生成器必须拒绝没有人工确认记录的人工复核项。
 `UICreationHostGenerateChecklistService` 还会确认本次布局草稿目标 prefab 和组件列表与当前 `UICreationLayoutDryRun.csv` 一致；不一致代表 dry-run 已过期或来自另一份草稿，宿主生成器不得运行。

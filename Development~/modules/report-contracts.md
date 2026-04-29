@@ -8,6 +8,7 @@ CSV、JSON 和 Markdown 报告是包与宿主流程之间的契约。改文件�
 - `UIReportValidationService` 负责核心 CSV batch 验证。
 - 写出 CSV 后优先立即复验表头和行结构。
 - 宿主执行结果和宿主生成结果报告必须至少包含一行结果。
+- 宿主执行结果报告应能和当前 `UIReplacementExecutionPlan.csv` 按 `ItemIndex`、`Action`、资源路径、图集和 prefab 引用匹配。
 - 宿主生成结果报告必须指向同一个目标 prefab；基础 Markdown 汇总可从结果 CSV 生成。
 - 写出固定结构 Markdown 后立即校验顶层 `##` 标题顺序。
 - JSON 入口在系统边界校验根对象、必需字段、字符串转义、字段分隔、重复字段和尾随内容。

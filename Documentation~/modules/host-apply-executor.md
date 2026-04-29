@@ -42,7 +42,7 @@ UIReplacementHostApplyChecklistService.ValidateNoBlockingSteps(profile);
 
 ## 输出
 
-建议宿主输出独立报告：`UIReplacementHostApplyResult.csv` 和 `UIReplacementHostApplyResult.md`。包侧提供只读校验和 Markdown 汇总生成入口；它只校验报告，不执行资源改动。CSV 字段为：
+建议宿主输出独立报告：`UIReplacementHostApplyResult.csv` 和 `UIReplacementHostApplyResult.md`。包侧提供只读校验、当前执行计划比对和 Markdown 汇总生成入口；它只校验报告，不执行资源改动。CSV 字段为：
 
 | 字段 | 含义 |
 | --- | --- |

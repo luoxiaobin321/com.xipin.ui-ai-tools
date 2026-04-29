@@ -30,6 +30,16 @@ namespace Xipin.UIAITools
             Debug.Log($"UI creation host generate result validation passed: {rows.Count} rows.");
         }
 
+        public static void ValidateTargetPrefab(UIAIToolsProfile profile, string expectedTargetPrefab)
+        {
+            var rows = ReadRows(profile);
+            ValidateSummary(profile, rows);
+            var actualTargetPrefab = TargetPrefab(rows);
+            if (actualTargetPrefab != expectedTargetPrefab)
+                throw new Exception($"Invalid UI creation host generate result: TargetPrefab mismatch {actualTargetPrefab}->{expectedTargetPrefab}");
+            Debug.Log($"UI creation host generate result target validation passed: {expectedTargetPrefab}, {rows.Count} rows.");
+        }
+
         public static string GenerateSummary(UIAIToolsProfile profile)
         {
             return GenerateSummary(profile, "", -1);
@@ -87,6 +97,8 @@ namespace Xipin.UIAITools
                 });
                 GenerateSummary(profile, "Demo", 2);
                 Validate(profile);
+                ValidateTargetPrefab(profile, "Assets/Art/UI/AI/Demo/Demo.prefab");
+                ExpectTargetFailure(profile, "Assets/Art/UI/AI/Other/Other.prefab", "TargetPrefab mismatch");
                 ExpectSummaryFailure(profile, "bad_title", "# Bad", "unexpected title");
                 ExpectFailure(profile, "empty_rows", null, "result rows are required");
                 ExpectFailure(profile, "bad_item_index", Row("x", "CreatePrefab", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "ItemIndex must be an integer");
@@ -195,6 +207,21 @@ namespace Xipin.UIAITools
                 throw new Exception($"Unexpected UI creation host generate result contract failure for {name}: {exception.Message}");
             }
             throw new Exception("UI creation host generate result contract sample did not fail: " + name);
+        }
+
+        static void ExpectTargetFailure(UIAIToolsProfile profile, string targetPrefab, string expectedMessage)
+        {
+            try
+            {
+                ValidateTargetPrefab(profile, targetPrefab);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI creation host generate result target contract failure: {exception.Message}");
+            }
+            throw new Exception("UI creation host generate result target contract sample did not fail");
         }
 
         static void ExpectSummaryFailure(UIAIToolsProfile profile, string name, string title, string expectedMessage)

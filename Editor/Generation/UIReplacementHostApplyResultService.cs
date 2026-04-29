@@ -53,6 +53,20 @@ namespace Xipin.UIAITools
             Debug.Log($"UI replacement host apply result validation passed: {rows.Count} rows.");
         }
 
+        public static void ValidateAgainstExecutionPlan(UIAIToolsProfile profile)
+        {
+            var rows = ReadRows(profile);
+            ValidateSummary(profile, rows);
+            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementExecutionPlan, UIReportFiles.ReplacementExecutionPlanHeader);
+            var planRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            foreach (var row in rows)
+            {
+                if (!planRows.Any(plan => SamePlanRow(plan, row)))
+                    throw new Exception($"Invalid UI replacement host apply result: execution plan row missing for Item {row["ItemIndex"]} / {row["Action"]}");
+            }
+            Debug.Log($"UI replacement host apply result execution plan validation passed: {rows.Count} rows.");
+        }
+
         public static void ValidateContract()
         {
             var root = Path.Combine(Path.GetTempPath(), "UIAIToolsHostApplyResultContract_" + Guid.NewGuid().ToString("N"));
@@ -70,6 +84,15 @@ namespace Xipin.UIAITools
                 });
                 GenerateSummary(profile);
                 Validate(profile);
+                WritePlanCsv(profile, new[]
+                {
+                    PlanRow("0", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab"),
+                    PlanRow("0", "VerifyAfterApply", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab"),
+                    PlanRow("1", "UpdateAtlas", "PendingConfirmation", "Assets/Old2.png", "Assets/New2.png", "Assets/Atlas.spriteatlasv2", ""),
+                    PlanRow("2", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old3.png", "Assets/New3.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab")
+                });
+                ValidateAgainstExecutionPlan(profile);
+                ExpectPlanFailure(profile, Row("3", "ApplyPrefabReference", "Skipped", "Assets/Old4.png", "Assets/New4.png", "", "", "", "stale"), "execution plan row missing");
                 ExpectSummaryFailure(profile, "bad_title", "# Bad", "unexpected title");
                 ExpectFailure(profile, "empty_rows", null, "result rows are required");
                 ExpectFailure(profile, "bad_item_index", Row("x", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "bad"), "ItemIndex must be an integer");
@@ -109,6 +132,16 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement host apply result: confirmation is required");
             if (row["Status"] == "Failed" && string.IsNullOrEmpty(row["Message"]))
                 throw new Exception("Invalid UI replacement host apply result: failed message is required");
+        }
+
+        static bool SamePlanRow(Dictionary<string, string> plan, Dictionary<string, string> row)
+        {
+            return plan["ItemIndex"] == row["ItemIndex"]
+                && plan["Action"] == row["Action"]
+                && plan["OldAsset"] == row["OldAsset"]
+                && plan["NewAsset"] == row["NewAsset"]
+                && plan["TargetAtlas"] == row["TargetAtlas"]
+                && plan["PrefabRefs"] == row["PrefabRefs"];
         }
 
         static void AddStatusSummary(List<string> lines, List<Dictionary<string, string>> rows)
@@ -231,9 +264,20 @@ namespace Xipin.UIAITools
             File.WriteAllLines(path, new[] { UIReportFiles.ReplacementHostApplyResultHeader }.Concat(rows), new UTF8Encoding(true));
         }
 
+        static void WritePlanCsv(UIAIToolsProfile profile, IEnumerable<string> rows)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            File.WriteAllLines(path, new[] { UIReportFiles.ReplacementExecutionPlanHeader }.Concat(rows), new UTF8Encoding(true));
+        }
+
         static string Row(string itemIndex, string action, string status, string oldAsset, string newAsset, string targetAtlas, string prefabRefs, string confirmation, string message)
         {
             return string.Join(",", new[] { itemIndex, action, status, oldAsset, newAsset, targetAtlas, prefabRefs, confirmation, message }.Select(Csv));
+        }
+
+        static string PlanRow(string itemIndex, string action, string status, string oldAsset, string newAsset, string targetAtlas, string prefabRefs)
+        {
+            return string.Join(",", new[] { itemIndex, action, status, oldAsset, newAsset, targetAtlas, prefabRefs, "true", "manual", "" }.Select(Csv));
         }
 
         static string Csv(string value)
@@ -277,6 +321,23 @@ namespace Xipin.UIAITools
             }
             File.WriteAllLines(path, original, new UTF8Encoding(true));
             throw new Exception("Host apply result summary contract sample did not fail: " + name);
+        }
+
+        static void ExpectPlanFailure(UIAIToolsProfile profile, string row, string expectedMessage)
+        {
+            WriteCsv(profile, new[] { row });
+            GenerateSummary(profile);
+            try
+            {
+                ValidateAgainstExecutionPlan(profile);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected host apply result execution plan failure: {exception.Message}");
+            }
+            throw new Exception("Host apply result execution plan sample did not fail");
         }
     }
 }
