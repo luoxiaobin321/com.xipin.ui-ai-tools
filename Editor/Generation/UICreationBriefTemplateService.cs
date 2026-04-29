@@ -42,6 +42,33 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI creation brief: list fields are required");
         }
 
+        public static void ValidateContract()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsCreationBriefContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                WriteContractBrief(root, "valid", SampleBrief());
+                LoadBrief(ContractPath(root, "valid"));
+
+                var relativeTarget = SampleBrief();
+                relativeTarget.targetFolder = "Art/UI/AI/Demo";
+                ExpectBriefFailure(root, "relative_target_folder", relativeTarget, "targetFolder must be an Assets/ path");
+
+                var parentTarget = SampleBrief();
+                parentTarget.targetFolder = "Assets/Art/UI/../Demo";
+                ExpectBriefFailure(root, "parent_target_folder", parentTarget, "targetFolder cannot contain ..");
+
+                ExpectRawBriefFailure(root, "reference_item_type", JsonWithReferenceItem("1"), "referenceImagePaths item must be a string");
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
+            Debug.Log("UI creation brief contract validation passed.");
+        }
+
         internal static void RequireValue(string value, string field)
         {
             if (string.IsNullOrEmpty(value))
@@ -584,6 +611,73 @@ namespace Xipin.UIAITools
             foreach (var c in Path.GetInvalidFileNameChars())
                 name = name.Replace(c, '_');
             return name;
+        }
+
+        static UICreationBrief SampleBrief()
+        {
+            return new UICreationBrief
+            {
+                featureName = "DemoPanel",
+                uiType = "Panel",
+                targetFolder = "Assets/Art/UI/AI/DemoPanel",
+                stylePrompt = "clean",
+                requiresConfirmation = true
+            };
+        }
+
+        static void WriteContractBrief(string root, string name, UICreationBrief brief)
+        {
+            File.WriteAllText(ContractPath(root, name), ToJsonWithRootArrays(brief, "referenceImagePaths", "requiredInteractions", "dataBindings", "constraints"));
+        }
+
+        static string ContractPath(string root, string name)
+        {
+            return Path.Combine(root, name + ".json");
+        }
+
+        static void ExpectBriefFailure(string root, string name, UICreationBrief brief, string expectedMessage)
+        {
+            WriteContractBrief(root, name, brief);
+            ExpectLoadFailure(ContractPath(root, name), name, expectedMessage);
+        }
+
+        static void ExpectRawBriefFailure(string root, string name, string json, string expectedMessage)
+        {
+            File.WriteAllText(ContractPath(root, name), json);
+            ExpectLoadFailure(ContractPath(root, name), name, expectedMessage);
+        }
+
+        static void ExpectLoadFailure(string path, string name, string expectedMessage)
+        {
+            try
+            {
+                LoadBrief(path);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI creation brief contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI creation brief contract sample did not fail: " + name);
+        }
+
+        static string JsonWithReferenceItem(string item)
+        {
+            return string.Join("\n", new[]
+            {
+                "{",
+                "    \"featureName\": \"DemoPanel\",",
+                "    \"uiType\": \"Panel\",",
+                "    \"targetFolder\": \"Assets/Art/UI/AI/DemoPanel\",",
+                "    \"stylePrompt\": \"clean\",",
+                "    \"referenceImagePaths\": [" + item + "],",
+                "    \"requiredInteractions\": [],",
+                "    \"dataBindings\": [],",
+                "    \"constraints\": [],",
+                "    \"requiresConfirmation\": true",
+                "}"
+            });
         }
     }
 }
