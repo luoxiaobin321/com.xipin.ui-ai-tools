@@ -2,7 +2,7 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前先稳定 AI 改版和新 UI 制作的输入、gate 与宿主结果报告契约。
 
 # Status
-总纲进度约 69%；“宿主结果报告契约回归”已完成，当前本地 `main` 领先 `origin/main`，推送暂被 GitHub HTTPS `Empty reply from server` 阻塞。包侧已提供 `UIReplacementHostApplyResult.csv/md` 与 `UICreationHostGenerateResult.csv/md` 只读契约，host apply checklist 增强为内容级校验；新 UI 生成结果可通过 `ValidateAgainstLayoutDraft` 校验当前草稿目标、NodeId/ComponentId 归属、Action 白名单、每个草稿节点至少一条结果行、每个节点的 `Applied ApplyLayout` 行、目标 prefab 的 `Applied CreatePrefab` 行和 `Verified VerifyAfterGenerate` 行，宿主替换结果可通过 `ValidateAgainstExecutionPlan` 匹配当前执行计划，要求计划内 `ApplyPrefabReference` / `VerifyAfterApply` 都有结果行覆盖，并在当前执行计划仍有阻断步骤时只允许 `Skipped` 结果。测试宿主已有阻断结果样例，可从 UIVipcard 执行计划生成 26 行 `Skipped` 并读回校验。UIVipcard 仍缺新版预览、13 张新图和目标图集，host apply gate 预期阻断。
+总纲进度约 69%；“宿主结果报告契约回归”已推送到 `origin/main`（最新功能提交 `c047afc`）。包侧已提供 `UIReplacementHostApplyResult.csv/md` 与 `UICreationHostGenerateResult.csv/md` 只读契约，host apply checklist 增强为内容级校验；新 UI 生成结果可通过 `ValidateAgainstLayoutDraft` 校验当前草稿目标、NodeId/ComponentId 归属、Action 白名单、每个草稿节点至少一条结果行、每个节点的 `Applied ApplyLayout` 行、目标 prefab 的 `Applied CreatePrefab` 行和 `Verified VerifyAfterGenerate` 行，宿主替换结果可通过 `ValidateAgainstExecutionPlan` 匹配当前执行计划，要求计划内 `ApplyPrefabReference` / `VerifyAfterApply` 都有结果行覆盖，并在当前执行计划仍有阻断步骤时只允许 `Skipped` 结果。测试宿主已有阻断结果样例，可从 UIVipcard 执行计划生成 26 行 `Skipped` 并读回校验。UIVipcard 仍缺新版预览、13 张新图和目标图集，host apply gate 预期阻断。
 
 # Key Files
 - `Editor/Generation/UIReplacementHostApplyResultService.cs`：AI 改版宿主执行结果报告契约，包含当前执行计划反查、apply/verify 覆盖校验、阻断计划只允许跳过结果和 Skipped/Failed 说明必填校验。
@@ -18,7 +18,7 @@
 
 # Run / Test
 - `UIAssetTriageScanner.ValidateHostApplyResultContractBatch`；`UIAssetTriageScanner.ValidateUICreationHostGenerateResultContractBatch`
-- 最近推送：`910ed70 Validate host apply result coverage`；`aa534a3 Validate creation result coverage`。
+- 最近推送：`be95ecb Require skipped host apply messages`；`b8ee2b0 Require skipped creation result messages`；`c047afc Validate creation result actions`。
 - 最近已跑：`ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_Coverage.log`；`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_Coverage.log`；`ValidateUICreationHostGenerateResultContractBatch` -> `Logs/Verify_UICreationHostGenerateResultContract_CreatePrefabCoverage.log`；`ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json` -> `Logs/Verify_UICreationHostGenerateResult_CreatePrefabCoverage.log`；均 exit code 0。
 - 覆盖收紧后已跑：`ValidateMarkdownSectionContractBatch` -> `Logs/Verify_MarkdownSectionContract_AfterCoverageTightening.log`；`ValidateCsvContractBatch` -> `Logs/Verify_CsvContract_AfterCoverageTightening.log`；`ValidateJsonContractBatch` -> `Logs/Verify_JsonContract_AfterCoverageTightening.log`；均 exit code 0。
 - 阻断计划结果规则已跑：`ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_BlockingPlan.log`；`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_BlockingPlan.log`；均 exit code 0。
