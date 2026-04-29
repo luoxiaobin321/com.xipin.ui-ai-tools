@@ -140,7 +140,7 @@ namespace Xipin.UIAITools
             lines.Add("- `draftPreviewPath`、`generatedImageFolder` 和替换项路径必须使用 `Assets/...`，不得包含 `..` 路径段，新图必须位于 `generatedImageFolder` 下。");
             lines.Add("- `draftPreviewPath` 和 `newAssetPath` 必须是 `.png`。");
             lines.Add("- `replacementPlan.items` 必须存在，可为空数组。");
-            lines.Add("- `oldAssetPath` 不允许重复，`targetAtlasPath` 必须是 `.spriteatlasv2`。");
+            lines.Add("- `oldAssetPath` 和 `newAssetPath` 不允许重复，`targetAtlasPath` 必须是 `.spriteatlasv2`。");
             lines.Add("- `risks` 必须存在，可为空数组。");
             lines.Add("- 每个 `UIReplacementItem` 都必须保持 `requiresConfirmation = true`。");
             lines.Add("- 草稿 JSON 返回后先保存安全快照，再运行替换计划 dry-run，查看 `Logs/UIReplacementPlanDryRun.csv` 和 `Logs/UIReplacementPlanDryRunSummary.md`。");

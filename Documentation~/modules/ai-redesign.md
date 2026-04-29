@@ -53,7 +53,7 @@ UIRedesignPackageService.ValidateManifest(profile, request);
 - `requiresConfirmation`：必须保持人工确认。
 - `risks`：风险说明数组，可为空但必须存在。
 
-`UIReplacementItem` 包含 `oldAssetPath`、`newAssetPath`、`targetAtlasPath`、`preserveGuid`、`requiresConfirmation` 和 `reason`。路径必须是 `Assets/...`，新图必须在 `generatedImageFolder` 下，目标图集必须是 `.spriteatlasv2`，旧资源不能重复。
+`UIReplacementItem` 包含 `oldAssetPath`、`newAssetPath`、`targetAtlasPath`、`preserveGuid`、`requiresConfirmation` 和 `reason`。路径必须是 `Assets/...`，新图必须在 `generatedImageFolder` 下，目标图集必须是 `.spriteatlasv2`，旧资源和新资源路径不能重复。
 
 ## 生成产物
 

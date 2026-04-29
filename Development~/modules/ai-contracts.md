@@ -43,7 +43,7 @@ provider 返回实际 `UIRedesignDraft` 后，`UIRedesignDraftService.SaveDraft`
 ## 确认窗口
 
 `UIRedesignDraftWindow` 只读展示 `UIRedesignDraft`，用于人工确认新版预览、生成目录、风险项和 `UIReplacementPlan`。窗口不移动资源、不覆盖 prefab、不修改图集。
-`UIRedesignDraftService.SaveDraft` 和 `UIRedesignDraftService.LoadDraft` 复用同一套草稿校验。`LoadDraft` 会先检查原始 JSON 根对象后没有尾随内容，`draftPreviewPath`、`generatedImageFolder` 必须是完整字符串字面量且转义合法，`requiresConfirmation` 如果存在必须是完整布尔字面量，`risks` 必须是字符串数组，`replacementPlan` 对象内的 `items` 必须是数组，草稿契约字段不允许重复，替换项的 `oldAssetPath`、`newAssetPath`、`targetAtlasPath` 必须是完整字符串字面量且转义合法，`preserveGuid` 和 `requiresConfirmation` 如果存在必须是完整布尔字面量，`reason` 如果存在必须是字符串，再校验替换项必填 `Assets/...` 路径、不得包含 `..` 路径段、预览和新图为 `.png`、新图位于生成目录下、`.spriteatlasv2` 目标图集和重复旧资源，最后强制保持人工确认。
+`UIRedesignDraftService.SaveDraft` 和 `UIRedesignDraftService.LoadDraft` 复用同一套草稿校验。`LoadDraft` 会先检查原始 JSON 根对象后没有尾随内容，`draftPreviewPath`、`generatedImageFolder` 必须是完整字符串字面量且转义合法，`requiresConfirmation` 如果存在必须是完整布尔字面量，`risks` 必须是字符串数组，`replacementPlan` 对象内的 `items` 必须是数组，草稿契约字段不允许重复，替换项的 `oldAssetPath`、`newAssetPath`、`targetAtlasPath` 必须是完整字符串字面量且转义合法，`preserveGuid` 和 `requiresConfirmation` 如果存在必须是完整布尔字面量，`reason` 如果存在必须是字符串，再校验替换项必填 `Assets/...` 路径、不得包含 `..` 路径段、预览和新图为 `.png`、新图位于生成目录下、`.spriteatlasv2` 目标图集以及重复旧资源或新资源路径，最后强制保持人工确认。
 `UIReplacementPlanDryRunService` 用于读取草稿 JSON 并输出检查报告，不执行替换。
 `UIReplacementPlanDryRunService.ValidateNoErrors` 会先复验 dry-run CSV 精确表头和汇总标题结构，再只把 Error 作为 batch 阻断，Warning 和 Review 保留给人工确认。
 `UIReplacementExecutionPlanService` 用于把草稿和当前 dry-run 结果展开成待确认执行计划；读取 dry-run 前会先复验 dry-run CSV 精确表头，生成汇总读取 `UIReuseIndex.csv` 前会先复验复用索引表头和行结构。它只输出 CSV 和 Markdown 汇总，不执行资源迁移、prefab 覆盖、图集修改或 YooAsset 配置修改。
