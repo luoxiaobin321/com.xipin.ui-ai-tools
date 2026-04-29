@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Xipin.UIAITools
@@ -26,6 +27,34 @@ namespace Xipin.UIAITools
                 throw new Exception("UI redesign outputFolder must be an Assets/ path.");
             if (outputFolder.Contains("/../") || outputFolder.EndsWith("/..", StringComparison.Ordinal))
                 throw new Exception("UI redesign outputFolder cannot contain .. path segments.");
+        }
+
+        public static void ValidateReferenceImagePaths(List<string> referenceImagePaths)
+        {
+            if (referenceImagePaths == null)
+                throw new Exception("UI redesign referenceImagePaths is required.");
+            foreach (var path in referenceImagePaths)
+                ValidateImagePath(path, "referenceImagePaths");
+        }
+
+        static void ValidateImagePath(string path, string field)
+        {
+            if (string.IsNullOrEmpty(path) || path.Contains("\\") || !path.StartsWith("Assets/", StringComparison.Ordinal))
+                throw new Exception($"UI redesign {field} must be an Assets/ image path.");
+            if (path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal))
+                throw new Exception($"UI redesign {field} cannot contain .. path segments.");
+            if (!IsImagePath(path))
+                throw new Exception($"UI redesign {field} must be an image path.");
+        }
+
+        static bool IsImagePath(string path)
+        {
+            return path.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith(".tga", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith(".psd", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith(".psb", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

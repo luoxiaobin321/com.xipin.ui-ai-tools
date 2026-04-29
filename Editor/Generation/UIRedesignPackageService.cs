@@ -111,6 +111,11 @@ namespace Xipin.UIAITools
             ExpectFailure("output_folder_backslash", "Assets/ path", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets\\Art\\UI"));
             ExpectFailure("output_folder_parent_segment", "cannot contain ..", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets/Art/../UI"));
             ExpectFailure("output_folder_trailing_parent", "cannot contain ..", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets/Art/UI/.."));
+            UIRedesignRequestValidation.ValidateReferenceImagePaths(new List<string>());
+            UIRedesignRequestValidation.ValidateReferenceImagePaths(new List<string> { "Assets/Art/UI/Reference.psd" });
+            ExpectFailure("reference_image_relative", "Assets/ image path", () => UIRedesignRequestValidation.ValidateReferenceImagePaths(new List<string> { "Art/UI/Reference.png" }));
+            ExpectFailure("reference_image_parent_segment", "cannot contain ..", () => UIRedesignRequestValidation.ValidateReferenceImagePaths(new List<string> { "Assets/Art/UI/../Reference.png" }));
+            ExpectFailure("reference_image_extension", "must be an image path", () => UIRedesignRequestValidation.ValidateReferenceImagePaths(new List<string> { "Assets/Art/UI/Reference.prefab" }));
             var root = Path.Combine(Path.GetTempPath(), "UIAIToolsRedesignRequestContract_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
             try

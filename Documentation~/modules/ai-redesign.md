@@ -39,7 +39,7 @@ UIRedesignPackageService.ValidateManifest(profile, request);
 - `inputImageFolder`：新切图输入目录。
 - `reuseCandidateReportPath`：复用候选报告。
 - `outputFolder`：草稿输出目录，非空时必须是 `Assets/...`。
-- `referenceImagePaths`：参考图列表。
+- `referenceImagePaths`：参考图列表，必须是 `Assets/...` 下的图片源文件。
 
 宿主 batch 包装通常把 `-uiPrefabPath`、`-uiPreviewPath`、`-uiStylePrompt`、`-uiInputImageFolder`、`-uiOutputFolder` 和 `-uiReferenceImages` 映射到这组字段。
 
