@@ -92,6 +92,26 @@ namespace Xipin.UIAITools
                 WriteCsv(profile, UIReportFiles.PrefabNullSpriteImages, UIReportFiles.PrefabNullSpriteImagesHeader, new[] { row });
                 ReadPrefabNullSpriteImages(profile);
                 ExpectFailure(profile, "duplicate_prefab_null_sprite_image_row", UIReportFiles.PrefabNullSpriteImages, UIReportFiles.PrefabNullSpriteImagesHeader, new[] { row, row }, () => ReadPrefabNullSpriteImages(profile), "duplicate prefab null sprite image row");
+
+                row = AssetTriagePlanRow("Assets/Art/UI/Icon.png");
+                WriteCsv(profile, UIReportFiles.AssetTriagePlan, UIReportFiles.AssetTriagePlanHeader, new[] { row });
+                ReadCore(profile, UIReportFiles.AssetTriagePlan);
+                ExpectFailure(profile, "duplicate_asset_triage_plan_row", UIReportFiles.AssetTriagePlan, UIReportFiles.AssetTriagePlanHeader, new[] { row, row }, () => ReadCore(profile, UIReportFiles.AssetTriagePlan), "duplicate asset triage plan row");
+
+                row = DuplicateImageReportRow("hash");
+                WriteCsv(profile, UIReportFiles.DuplicateImageReport, UIReportFiles.DuplicateImageReportHeader, new[] { row });
+                ReadCore(profile, UIReportFiles.DuplicateImageReport);
+                ExpectFailure(profile, "duplicate_duplicate_image_row", UIReportFiles.DuplicateImageReport, UIReportFiles.DuplicateImageReportHeader, new[] { row, row }, () => ReadCore(profile, UIReportFiles.DuplicateImageReport), "duplicate duplicate image row");
+
+                row = PrefabTextureSwitchPairRow("Assets/Prefab/A.prefab");
+                WriteCsv(profile, UIReportFiles.PrefabTextureSwitchPairs, UIReportFiles.PrefabTextureSwitchPairsHeader, new[] { row });
+                ReadCore(profile, UIReportFiles.PrefabTextureSwitchPairs);
+                ExpectFailure(profile, "duplicate_prefab_texture_switch_pair_row", UIReportFiles.PrefabTextureSwitchPairs, UIReportFiles.PrefabTextureSwitchPairsHeader, new[] { row, row }, () => ReadCore(profile, UIReportFiles.PrefabTextureSwitchPairs), "duplicate prefab texture switch pair row");
+
+                row = PrefabWhiteTextureBreakRow("Assets/Prefab/A.prefab");
+                WriteCsv(profile, UIReportFiles.PrefabWhiteTextureBreaks, UIReportFiles.PrefabWhiteTextureBreaksHeader, new[] { row });
+                ReadCore(profile, UIReportFiles.PrefabWhiteTextureBreaks);
+                ExpectFailure(profile, "duplicate_prefab_white_texture_break_row", UIReportFiles.PrefabWhiteTextureBreaks, UIReportFiles.PrefabWhiteTextureBreaksHeader, new[] { row, row }, () => ReadCore(profile, UIReportFiles.PrefabWhiteTextureBreaks), "duplicate prefab white texture break row");
             }
             finally
             {
@@ -200,6 +220,14 @@ namespace Xipin.UIAITools
                 return row["Prefab"] + " " + row["Index"];
             if (report == UIReportFiles.PrefabNullSpriteImages)
                 return row["Prefab"] + " " + row["Path"];
+            if (report == UIReportFiles.AssetTriagePlan)
+                return row["Action"] + " " + row["Source"] + " " + row["Target"];
+            if (report == UIReportFiles.DuplicateImageReport)
+                return row["Hash"];
+            if (report == UIReportFiles.PrefabTextureSwitchPairs)
+                return row["Prefab"] + " " + row["Advice"] + " " + row["Reason"] + " " + row["PrevTexture"] + " " + row["Texture"];
+            if (report == UIReportFiles.PrefabWhiteTextureBreaks)
+                return row["Prefab"] + " " + row["WhiteSide"] + " " + row["WhiteKind"] + " " + row["OtherKind"] + " " + row["Reason"] + " " + row["Advice"];
             return "";
         }
 
@@ -231,6 +259,14 @@ namespace Xipin.UIAITools
                 return "prefab batch break row";
             if (report == UIReportFiles.PrefabNullSpriteImages)
                 return "prefab null sprite image row";
+            if (report == UIReportFiles.AssetTriagePlan)
+                return "asset triage plan row";
+            if (report == UIReportFiles.DuplicateImageReport)
+                return "duplicate image row";
+            if (report == UIReportFiles.PrefabTextureSwitchPairs)
+                return "prefab texture switch pair row";
+            if (report == UIReportFiles.PrefabWhiteTextureBreaks)
+                return "prefab white texture break row";
             return "asset triage row";
         }
 
@@ -650,6 +686,75 @@ namespace Xipin.UIAITools
                 Csv("Transform"),
                 Csv("Review"),
                 Csv("same")
+            });
+        }
+
+        static string AssetTriagePlanRow(string source)
+        {
+            return string.Join(",", new[]
+            {
+                Csv("MoveToExistingAtlasCandidate"),
+                Csv("Low"),
+                Csv(source),
+                Csv("Assets/Art/UI/UI.spriteatlasv2"),
+                Csv("UI"),
+                "64",
+                "64",
+                "1",
+                Csv("Review"),
+                Csv("same"),
+                Csv("Assets/Prefab/A.prefab")
+            });
+        }
+
+        static string DuplicateImageReportRow(string hash)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(hash),
+                "2",
+                "64",
+                "64",
+                "2048",
+                Csv("Assets/Art/UI/A.png;Assets/Art/UI/B.png"),
+                Csv("guidA;guidB"),
+                Csv("Assets/Art/UI/UI.spriteatlasv2"),
+                Csv("Assets/Prefab/A.prefab"),
+                Csv(""),
+                Csv("Review")
+            });
+        }
+
+        static string PrefabTextureSwitchPairRow(string prefab)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(prefab),
+                Csv("Owner"),
+                Csv("Review"),
+                Csv("Texture"),
+                Csv("Atlas:A"),
+                Csv("Atlas:B"),
+                "1",
+                "1",
+                Csv("1:Root/A->Root/B")
+            });
+        }
+
+        static string PrefabWhiteTextureBreakRow(string prefab)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(prefab),
+                Csv("Owner"),
+                Csv("Prev"),
+                Csv("WhiteTexture"),
+                Csv("AtlasImage"),
+                Csv("Texture"),
+                Csv("Review"),
+                "1",
+                "1",
+                Csv("1:Root/A->Root/B")
             });
         }
 
