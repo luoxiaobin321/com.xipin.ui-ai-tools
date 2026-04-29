@@ -58,8 +58,7 @@ namespace Xipin.UIAITools
         {
             var rows = ReadRows(profile);
             ValidateSummary(profile, rows);
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementExecutionPlan, UIReportFiles.ReplacementExecutionPlanHeader);
-            var planRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            var planRows = UIReplacementExecutionPlanService.ReadRows(profile);
             foreach (var row in rows)
             {
                 if (!planRows.Any(plan => SamePlanRow(plan, row)))

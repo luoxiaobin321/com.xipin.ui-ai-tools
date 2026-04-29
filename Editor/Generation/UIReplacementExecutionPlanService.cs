@@ -9,6 +9,9 @@ namespace Xipin.UIAITools
 {
     public static class UIReplacementExecutionPlanService
     {
+        static readonly HashSet<string> AllowedActions = new HashSet<string> { "ConfirmDraftPreview", "ConfirmNewAsset", "ConfirmTargetAtlas", "ConfirmRiskChecks", "MoveNewAsset", "ApplyPrefabReference", "UpdateAtlas", "UpdateAddress", "VerifyAfterApply" };
+        static readonly HashSet<string> AllowedStatuses = new HashSet<string> { "Blocked", "PendingPreview", "PendingAsset", "PendingAtlas", "NeedsReview", "PendingConfirmation" };
+
         public static string Generate(UIAIToolsProfile profile, string draftJsonPath)
         {
             UIReplacementPlanDryRunService.Run(profile, draftJsonPath);
@@ -34,11 +37,21 @@ namespace Xipin.UIAITools
             return path;
         }
 
-        public static void ValidateNoBlockingStatuses(UIAIToolsProfile profile)
+        public static List<Dictionary<string, string>> ReadRows(UIAIToolsProfile profile)
         {
             UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementExecutionPlan, UIReportFiles.ReplacementExecutionPlanHeader);
-            ValidateSummary(profile);
             var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            if (rows.Count == 0)
+                throw new Exception("Invalid UI replacement execution plan: plan rows are required");
+            foreach (var row in rows)
+                ValidateRow(row);
+            return rows;
+        }
+
+        public static void ValidateNoBlockingStatuses(UIAIToolsProfile profile)
+        {
+            var rows = ReadRows(profile);
+            ValidateSummary(profile);
             var blocking = rows.Where(IsBlocking).ToList();
             if (blocking.Count > 0)
                 throw new Exception($"UI replacement execution plan has {blocking.Count} blocking steps ({UIReplacementPlanStatus.Summary(blocking)}). See {UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementExecutionPlanSummary)}");
@@ -75,6 +88,22 @@ namespace Xipin.UIAITools
         static bool IsBlocking(Dictionary<string, string> row)
         {
             return UIReplacementPlanStatus.IsBlocking(row["Status"]);
+        }
+
+        static void ValidateRow(Dictionary<string, string> row)
+        {
+            if (!int.TryParse(row["ItemIndex"], out _))
+                throw new Exception("Invalid UI replacement execution plan: ItemIndex must be an integer");
+            if (string.IsNullOrEmpty(row["Action"]))
+                throw new Exception("Invalid UI replacement execution plan: Action is required");
+            if (!AllowedActions.Contains(row["Action"]))
+                throw new Exception("Invalid UI replacement execution plan: invalid action " + row["Action"]);
+            if (!AllowedStatuses.Contains(row["Status"]))
+                throw new Exception("Invalid UI replacement execution plan: invalid status " + row["Status"]);
+            if (row["RequiresManualConfirmation"] != "true")
+                throw new Exception("Invalid UI replacement execution plan: RequiresManualConfirmation must be true");
+            if (string.IsNullOrEmpty(row["Note"]))
+                throw new Exception("Invalid UI replacement execution plan: Note is required");
         }
 
         static string Status(List<Dictionary<string, string>> checks, string check, string ok, string missing)
@@ -139,7 +168,7 @@ namespace Xipin.UIAITools
         {
             UIReportValidationService.ValidateReport(profile, UIReportFiles.ReuseIndex, UIReportFiles.ReuseIndexHeader);
             var dryRunRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPlanDryRun);
-            var planRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            var planRows = ReadRows(profile);
             var reuseRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReuseIndex);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementExecutionPlanSummary);
             var lines = new List<string>

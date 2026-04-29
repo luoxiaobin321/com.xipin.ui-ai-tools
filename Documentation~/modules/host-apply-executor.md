@@ -26,7 +26,7 @@ UIReplacementPendingInputReadinessService.ValidateNoMissing(profile);
 UIReplacementHostApplyChecklistService.ValidateNoBlockingSteps(profile);
 ```
 
-这些 gate 只说明 dry-run、执行计划、外部待补输入和宿主清单的阻断项已经补齐，不代表 `NeedsReview` 已经被批准。宿主执行器必须拒绝没有人工确认记录的 `NeedsReview` 和 `PendingConfirmation` 步骤。
+这些 gate 只说明 dry-run、执行计划、外部待补输入和宿主清单的阻断项已经补齐，不代表 `NeedsReview` 已经被批准。执行计划 gate 会校验步骤 Action、状态、人工确认要求和说明字段；宿主执行器必须拒绝没有人工确认记录的 `NeedsReview` 和 `PendingConfirmation` 步骤。
 
 ## 允许动作
 

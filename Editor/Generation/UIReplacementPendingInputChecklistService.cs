@@ -11,8 +11,7 @@ namespace Xipin.UIAITools
     {
         public static string Generate(UIAIToolsProfile profile)
         {
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementExecutionPlan, UIReportFiles.ReplacementExecutionPlanHeader);
-            var planRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            var planRows = UIReplacementExecutionPlanService.ReadRows(profile);
             var rows = PendingRows(planRows);
             var lines = new List<string> { UIReportFiles.ReplacementPendingInputsHeader };
             foreach (var row in rows)
@@ -28,10 +27,9 @@ namespace Xipin.UIAITools
 
         public static void Validate(UIAIToolsProfile profile)
         {
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementExecutionPlan, UIReportFiles.ReplacementExecutionPlanHeader);
             UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPendingInputs, UIReportFiles.ReplacementPendingInputsHeader);
             var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputs);
-            var expectedRows = PendingRows(UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementExecutionPlan));
+            var expectedRows = PendingRows(UIReplacementExecutionPlanService.ReadRows(profile));
             if (rows.Count != expectedRows.Count)
                 throw new Exception($"UI replacement pending input checklist row count mismatch: {rows.Count}->{expectedRows.Count}");
             foreach (var expected in expectedRows)

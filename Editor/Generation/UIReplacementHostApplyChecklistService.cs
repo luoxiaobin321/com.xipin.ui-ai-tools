@@ -11,8 +11,7 @@ namespace Xipin.UIAITools
     {
         public static string Generate(UIAIToolsProfile profile)
         {
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementExecutionPlan, UIReportFiles.ReplacementExecutionPlanHeader);
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            var rows = UIReplacementExecutionPlanService.ReadRows(profile);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementHostApplyChecklist);
             var blockers = rows.Where(IsBlocking).ToList();
             var applyRows = rows.Where(r => r["Action"] == "ApplyPrefabReference").ToList();
@@ -52,11 +51,10 @@ namespace Xipin.UIAITools
 
         public static void Validate(UIAIToolsProfile profile)
         {
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementExecutionPlan, UIReportFiles.ReplacementExecutionPlanHeader);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementHostApplyChecklist);
             if (!File.Exists(path))
                 throw new Exception("Missing UI replacement host apply checklist: " + path);
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            var rows = UIReplacementExecutionPlanService.ReadRows(profile);
             var blockers = rows.Where(IsBlocking).ToList();
             var applyRows = rows.Where(r => r["Action"] == "ApplyPrefabReference").ToList();
             var reviewRows = rows.Where(r => r["Status"] == "NeedsReview").ToList();
@@ -82,7 +80,7 @@ namespace Xipin.UIAITools
         public static void ValidateNoBlockingSteps(UIAIToolsProfile profile)
         {
             var path = Generate(profile);
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            var rows = UIReplacementExecutionPlanService.ReadRows(profile);
             var blockers = rows.Where(IsBlocking).ToList();
             if (blockers.Count > 0)
                 throw new Exception($"UI replacement host apply checklist has {blockers.Count} blocking steps ({UIReplacementPlanStatus.Summary(blockers)}). See {path}");

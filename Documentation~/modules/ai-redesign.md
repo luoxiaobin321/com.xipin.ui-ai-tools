@@ -76,7 +76,7 @@ UIRedesignPackageService.ValidateManifest(profile, request);
 ## Gate 规则
 
 - dry-run gate 只阻断 `Error`。
-- 执行计划 gate 阻断 `Blocked`、`PendingPreview`、`PendingAsset` 和 `PendingAtlas`。
+- 执行计划 gate 会先校验 CSV 精确表头、非空步骤、`ItemIndex`、`Action` 白名单、状态白名单、`RequiresManualConfirmation=true` 和非空说明，再阻断 `Blocked`、`PendingPreview`、`PendingAsset` 和 `PendingAtlas`。
 - 待补输入 ready gate 阻断 `Missing` 和 `Invalid`。
 - 宿主执行清单 gate 只检查阻断步骤是否清零。
 - 宿主执行结果 gate 校验宿主已输出的状态、确认记录、Skipped/Failed 说明、复验清单，并确认结果行覆盖当前执行计划内的 prefab 替换和执行后验证步骤；当前执行计划仍有阻断步骤时，结果只能是 `Skipped`。
