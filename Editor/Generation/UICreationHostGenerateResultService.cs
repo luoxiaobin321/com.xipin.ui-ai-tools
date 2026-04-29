@@ -131,6 +131,7 @@ namespace Xipin.UIAITools
                 UICreationLayoutDryRunService.Run(profile, draftJsonPath);
                 UICreationHostGenerateChecklistService.Generate(profile, draftJsonPath);
                 ValidateAgainstLayoutDraft(profile, draftJsonPath);
+                ExpectChecklistLineFailure(profile, draftJsonPath);
                 ExpectTargetFailure(profile, "Assets/Art/UI/AI/Other/Other.prefab", "TargetPrefab mismatch");
                 ExpectChecklistTargetFailure(profile, draftJsonPath, WriteDraftJson(profile, "Other", "Assets/Art/UI/AI/Other"));
                 UICreationLayoutDryRunService.Run(profile, draftJsonPath);
@@ -505,6 +506,22 @@ namespace Xipin.UIAITools
             UICreationLayoutDryRunService.Run(profile, staleDraftJsonPath);
             UICreationHostGenerateChecklistService.Generate(profile, staleDraftJsonPath);
             ExpectDraftFailure(profile, draftJsonPath, "checklist component mismatch");
+        }
+
+        static void ExpectChecklistLineFailure(UIAIToolsProfile profile, string draftJsonPath)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationHostGenerateChecklist);
+            var original = File.ReadAllLines(path);
+            var changed = original.Select(line => line == "- 资源需求全部为 `Ready`。" ? "- 资源需求未全部 `Ready`，需先补齐。" : line).ToArray();
+            File.WriteAllLines(path, changed, new UTF8Encoding(true));
+            try
+            {
+                ExpectDraftFailure(profile, draftJsonPath, "checklist gate line missing");
+            }
+            finally
+            {
+                File.WriteAllLines(path, original, new UTF8Encoding(true));
+            }
         }
 
         static void ExpectSummaryFailure(UIAIToolsProfile profile, string name, string title, string expectedMessage)

@@ -113,7 +113,24 @@ namespace Xipin.UIAITools
             var componentIds = CurrentDryRunComponentIds(rows);
             ValidateChecklistComponents(checklist, componentIds);
             ValidateCurrentComponentReviews(profile, componentIds);
+            ValidateReadyGateLines(checklist);
             Debug.Log("UI creation host generate checklist validation passed.");
+        }
+
+        static void ValidateReadyGateLines(string checklist)
+        {
+            RequireChecklistLine(checklist, "- 布局 dry-run gate 已通过。");
+            RequireChecklistLine(checklist, "- 当前 dry-run 目标与本次草稿一致。");
+            RequireChecklistLine(checklist, "- 当前 dry-run 组件列表与本次草稿一致。");
+            RequireChecklistLine(checklist, "- 布局引用的组件候选均已 `Approved`。");
+            RequireChecklistLine(checklist, "- 资源需求全部为 `Ready`。");
+            RequireChecklistLine(checklist, "- 目标 prefab 路径不会覆盖现有资源。");
+        }
+
+        static void RequireChecklistLine(string checklist, string line)
+        {
+            if (!checklist.Contains(line))
+                throw new Exception("UI creation host generate checklist gate line missing: " + line);
         }
 
         static void ValidateCurrentTarget(List<Dictionary<string, string>> dryRunRows, string checklist)
