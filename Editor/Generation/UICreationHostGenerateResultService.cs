@@ -50,6 +50,8 @@ namespace Xipin.UIAITools
             if (actualTargetPrefab != expectedTargetPrefab)
                 throw new Exception($"Invalid UI creation host generate result: TargetPrefab mismatch {actualTargetPrefab}->{expectedTargetPrefab}");
             ValidateDraftNodeRows(rows, draft);
+            ValidateDraftLayoutRows(rows, draft);
+            ValidateGenerateVerification(rows, expectedTargetPrefab);
             Debug.Log($"UI creation host generate result layout draft validation passed: {expectedTargetPrefab}, {draft.nodes.Count} nodes, {rows.Count} rows.");
         }
 
@@ -105,8 +107,9 @@ namespace Xipin.UIAITools
                 {
                     Row("0", "CreatePrefab", "Applied", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "created"),
                     Row("1", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("2", "ApplyText", "Skipped", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "", "empty"),
-                    Row("3", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
+                    Row("2", "ApplyLayout", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("3", "ApplyText", "Skipped", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "", "empty"),
+                    Row("4", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
                 });
                 GenerateSummary(profile, "Demo", 2);
                 Validate(profile);
@@ -124,6 +127,21 @@ namespace Xipin.UIAITools
                 WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
                 GenerateSummary(profile, "Demo", 1);
                 ExpectDraftFailure(profile, draftJsonPath, "missing NodeId");
+                WriteCsv(profile, new[]
+                {
+                    Row("0", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("1", "ApplyText", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "title"),
+                    Row("2", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
+                });
+                GenerateSummary(profile, "Demo", 2);
+                ExpectDraftFailure(profile, draftJsonPath, "missing ApplyLayout Title");
+                WriteCsv(profile, new[]
+                {
+                    Row("0", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("1", "ApplyLayout", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout")
+                });
+                GenerateSummary(profile, "Demo", 2);
+                ExpectDraftFailure(profile, draftJsonPath, "missing VerifyAfterGenerate");
                 ExpectSummaryFailure(profile, "bad_title", "# Bad", "unexpected title");
                 ExpectFailure(profile, "empty_rows", null, "result rows are required");
                 ExpectFailure(profile, "bad_item_index", Row("x", "CreatePrefab", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "ItemIndex must be an integer");
@@ -191,6 +209,23 @@ namespace Xipin.UIAITools
                 if (!resultNodeIds.Contains(node.nodeId))
                     throw new Exception("Invalid UI creation host generate result: missing NodeId " + node.nodeId);
             }
+        }
+
+        static void ValidateDraftLayoutRows(List<Dictionary<string, string>> rows, UILayoutDraft draft)
+        {
+            foreach (var node in draft.nodes)
+            {
+                var hasLayout = rows.Any(r => r["Action"] == "ApplyLayout" && r["Status"] == "Applied" && r["NodeId"] == node.nodeId && r["ComponentId"] == node.componentId);
+                if (!hasLayout)
+                    throw new Exception("Invalid UI creation host generate result: missing ApplyLayout " + node.nodeId);
+            }
+        }
+
+        static void ValidateGenerateVerification(List<Dictionary<string, string>> rows, string targetPrefab)
+        {
+            var verified = rows.Any(r => r["Action"] == "VerifyAfterGenerate" && r["Status"] == "Verified" && r["TargetPrefab"] == targetPrefab);
+            if (!verified)
+                throw new Exception("Invalid UI creation host generate result: missing VerifyAfterGenerate");
         }
 
         static void ValidateSummary(UIAIToolsProfile profile, List<Dictionary<string, string>> rows)
