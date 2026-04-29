@@ -163,6 +163,8 @@ namespace Xipin.UIAITools
                 ExpectFailure(profile, "unknown_action", Row("0", "ApplyTypo", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "invalid action");
                 ExpectFailure(profile, "bad_status", Row("0", "CreatePrefab", "Done", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "invalid status");
                 ExpectFailure(profile, "missing_target_prefab", Row("0", "CreatePrefab", "Applied", "", "", "", "", "", "QA-1", "bad"), "TargetPrefab is required");
+                ExpectFailure(profile, "missing_node_reference", Row("0", "ApplyText", "Skipped", "", "", "Assets/Demo.prefab", "", "", "", "empty"), "node action requires NodeId and ComponentId");
+                ExpectFailure(profile, "target_action_with_node", Row("0", "VerifyAfterGenerate", "Verified", "Title", "builtin:Text", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "target action must not reference NodeId or ComponentId");
                 ExpectRowsFailure(profile, "inconsistent_target_prefab", new[]
                 {
                     Row("0", "CreatePrefab", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "created"),
@@ -192,6 +194,11 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI creation host generate result: invalid status " + row["Status"]);
             if (string.IsNullOrEmpty(row["TargetPrefab"]))
                 throw new Exception("Invalid UI creation host generate result: TargetPrefab is required");
+            var nodeAction = row["Action"] != "CreatePrefab" && row["Action"] != "VerifyAfterGenerate";
+            if (nodeAction && (string.IsNullOrEmpty(row["NodeId"]) || string.IsNullOrEmpty(row["ComponentId"])))
+                throw new Exception("Invalid UI creation host generate result: node action requires NodeId and ComponentId");
+            if (!nodeAction && (!string.IsNullOrEmpty(row["NodeId"]) || !string.IsNullOrEmpty(row["ComponentId"])))
+                throw new Exception("Invalid UI creation host generate result: target action must not reference NodeId or ComponentId");
             if ((row["Status"] == "Applied" || row["Status"] == "Verified") && string.IsNullOrEmpty(row["Confirmation"]))
                 throw new Exception("Invalid UI creation host generate result: confirmation is required");
             if (row["Status"] == "Skipped" && string.IsNullOrEmpty(row["Message"]))
