@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -252,6 +253,21 @@ namespace Xipin.UIAITools
             Debug.Log("UI AI Tools JSON contract validation passed.");
         }
 
+        public static void ValidateReportFilesContract()
+        {
+            var duplicateReport = UIReportFiles.CoreReports.GroupBy(report => report).FirstOrDefault(group => group.Count() > 1);
+            if (duplicateReport != null)
+                throw new Exception("Duplicate UI AI Tools core report: " + duplicateReport.Key);
+
+            foreach (var report in UIReportFiles.CoreReports)
+            {
+                if (!UIReportFiles.CoreReportHeaders.ContainsKey(report))
+                    throw new Exception("Missing UI AI Tools core report header: " + report);
+                ValidateHeaderContract(report, UIReportFiles.CoreReportHeaders[report]);
+            }
+            Debug.Log("UI AI Tools report file contract validation passed.");
+        }
+
         static void ValidateReport(string path, string expectedHeader)
         {
             if (!File.Exists(path))
@@ -265,6 +281,17 @@ namespace Xipin.UIAITools
                     throw new Exception($"Unexpected UI AI Tools report header: {path}");
             }
             UIReportCsv.ReadRows(path);
+        }
+
+        static void ValidateHeaderContract(string report, string header)
+        {
+            var columns = header.Split(',');
+            var emptyColumn = columns.FirstOrDefault(string.IsNullOrEmpty);
+            if (emptyColumn != null)
+                throw new Exception("Invalid UI AI Tools report header empty column: " + report);
+            var duplicateColumn = columns.GroupBy(column => column).FirstOrDefault(group => group.Count() > 1);
+            if (duplicateColumn != null)
+                throw new Exception($"Duplicate UI AI Tools report header column: {report} {duplicateColumn.Key}");
         }
 
         static void ExpectCsvFailure(string root, string fileName, string[] lines, string expectedMessage)
