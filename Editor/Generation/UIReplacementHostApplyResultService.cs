@@ -103,6 +103,7 @@ namespace Xipin.UIAITools
                 ExpectFailure(profile, "missing_action", Row("0", "", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "bad"), "Action is required");
                 ExpectFailure(profile, "bad_status", Row("0", "ApplyPrefabReference", "Done", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "bad"), "invalid status");
                 ExpectFailure(profile, "missing_confirmation", Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "", "bad"), "confirmation is required");
+                ExpectFailure(profile, "missing_skipped_message", Row("0", "ApplyPrefabReference", "Skipped", "Assets/Old.png", "Assets/New.png", "", "", "", ""), "skipped message is required");
                 ExpectFailure(profile, "missing_failed_message", Row("0", "ApplyPrefabReference", "Failed", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", ""), "failed message is required");
             }
             finally
@@ -134,6 +135,8 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement host apply result: invalid status " + row["Status"]);
             if ((row["Status"] == "Applied" || row["Status"] == "Verified") && string.IsNullOrEmpty(row["Confirmation"]))
                 throw new Exception("Invalid UI replacement host apply result: confirmation is required");
+            if (row["Status"] == "Skipped" && string.IsNullOrEmpty(row["Message"]))
+                throw new Exception("Invalid UI replacement host apply result: skipped message is required");
             if (row["Status"] == "Failed" && string.IsNullOrEmpty(row["Message"]))
                 throw new Exception("Invalid UI replacement host apply result: failed message is required");
         }

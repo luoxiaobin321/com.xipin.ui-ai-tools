@@ -5,7 +5,7 @@
 总纲进度约 68%；“宿主结果报告契约回归”已完成并推送到 `origin/main`。包侧已提供 `UIReplacementHostApplyResult.csv/md` 与 `UICreationHostGenerateResult.csv/md` 只读契约，host apply checklist 增强为内容级校验；新 UI 生成结果可通过 `ValidateAgainstLayoutDraft` 校验当前草稿目标、NodeId/ComponentId 归属、每个草稿节点至少一条结果行、每个节点的 `Applied ApplyLayout` 行、目标 prefab 的 `Applied CreatePrefab` 行和 `Verified VerifyAfterGenerate` 行，宿主替换结果可通过 `ValidateAgainstExecutionPlan` 匹配当前执行计划，要求计划内 `ApplyPrefabReference` / `VerifyAfterApply` 都有结果行覆盖，并在当前执行计划仍有阻断步骤时只允许 `Skipped` 结果。测试宿主已有阻断结果样例，可从 UIVipcard 执行计划生成 26 行 `Skipped` 并读回校验。UIVipcard 仍缺新版预览、13 张新图和目标图集，host apply gate 预期阻断。
 
 # Key Files
-- `Editor/Generation/UIReplacementHostApplyResultService.cs`：AI 改版宿主执行结果报告契约，包含当前执行计划反查、apply/verify 覆盖校验和阻断计划只允许跳过结果的校验。
+- `Editor/Generation/UIReplacementHostApplyResultService.cs`：AI 改版宿主执行结果报告契约，包含当前执行计划反查、apply/verify 覆盖校验、阻断计划只允许跳过结果和 Skipped/Failed 说明必填校验。
 - `Editor/Generation/UICreationHostGenerateResultService.cs`：新 UI 宿主生成结果报告契约和基础汇总生成，包含 prefab 创建、草稿节点布局行和生成后复验覆盖校验。
 - `Editor/Generation/UIReplacementHostApplyChecklistService.cs`：宿主替换前清单和 gate。
 - `Editor/Scanning/UIReportFiles.cs`：核心文件名和 CSV 表头常量。
@@ -22,6 +22,7 @@
 - 最近已跑：`ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_Coverage.log`；`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_Coverage.log`；`ValidateUICreationHostGenerateResultContractBatch` -> `Logs/Verify_UICreationHostGenerateResultContract_CreatePrefabCoverage.log`；`ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json` -> `Logs/Verify_UICreationHostGenerateResult_CreatePrefabCoverage.log`；均 exit code 0。
 - 覆盖收紧后已跑：`ValidateMarkdownSectionContractBatch` -> `Logs/Verify_MarkdownSectionContract_AfterCoverageTightening.log`；`ValidateCsvContractBatch` -> `Logs/Verify_CsvContract_AfterCoverageTightening.log`；`ValidateJsonContractBatch` -> `Logs/Verify_JsonContract_AfterCoverageTightening.log`；均 exit code 0。
 - 阻断计划结果规则已跑：`ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_BlockingPlan.log`；`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_BlockingPlan.log`；均 exit code 0。
+- Skipped 说明规则已跑：`ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_SkippedMessage.log`；`ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_SkippedMessage.log`；均 exit code 0。
 - 预期阻断已确认：`ValidateHostApplyChecklistBatch` -> `Logs/Verify_HostApplyChecklist_ExpectedBlocked_AfterBlockingResultRule.log`；Unity exit code 1，命中 `PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 - `UIAssetTriageScanner.ValidateCsvContractBatch`；`UIAssetTriageScanner.ValidateJsonContractBatch`；`UIAssetTriageScanner.ValidateMarkdownSectionContractBatch`
 - `UIAssetTriageScanner.ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath Logs/UILayoutDraftReadySample_ShopDialogTemplate.json`

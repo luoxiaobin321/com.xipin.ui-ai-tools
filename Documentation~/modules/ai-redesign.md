@@ -79,7 +79,7 @@ UIRedesignPackageService.ValidateManifest(profile, request);
 - 执行计划 gate 阻断 `Blocked`、`PendingPreview`、`PendingAsset` 和 `PendingAtlas`。
 - 待补输入 ready gate 阻断 `Missing` 和 `Invalid`。
 - 宿主执行清单 gate 只检查阻断步骤是否清零。
-- 宿主执行结果 gate 校验宿主已输出的状态、确认记录、失败说明、复验清单，并确认结果行覆盖当前执行计划内的 prefab 替换和执行后验证步骤；当前执行计划仍有阻断步骤时，结果只能是 `Skipped`。
+- 宿主执行结果 gate 校验宿主已输出的状态、确认记录、Skipped/Failed 说明、复验清单，并确认结果行覆盖当前执行计划内的 prefab 替换和执行后验证步骤；当前执行计划仍有阻断步骤时，结果只能是 `Skipped`。
 - `NeedsReview` 始终留给人工确认，不会被自动视为通过。
 
 ## 外部输入包
