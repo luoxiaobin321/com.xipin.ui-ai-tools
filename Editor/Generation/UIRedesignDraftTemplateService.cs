@@ -26,8 +26,9 @@ namespace Xipin.UIAITools
                 requiresConfirmation = true
             };
 
+            var newAssetPaths = new HashSet<string>();
             foreach (var row in details.Where(IsReplacementCandidate).Take(30))
-                draft.replacementPlan.items.Add(ReplacementItem(profile, prefab, outputFolder, row));
+                draft.replacementPlan.items.Add(ReplacementItem(profile, prefab, outputFolder, row, newAssetPaths));
             foreach (var row in details.Where(IsRiskOnly).Take(30))
                 draft.risks.Add($"跨功能大图或散图：{row["Image"]}，{row["Kind"]}，{row["SizeClass"]}");
             foreach (var row in details.Where(r => r["Match"] == "DynamicRisk").Take(20))
@@ -46,13 +47,23 @@ namespace Xipin.UIAITools
             return path;
         }
 
-        static UIReplacementItem ReplacementItem(UIAIToolsProfile profile, string prefab, string outputFolder, Dictionary<string, string> row)
+        public static void ValidateContract()
+        {
+            var newAssetPaths = new HashSet<string>();
+            var first = UniqueNewAssetPath("Assets/Art/UI/AI/Demo", "Assets/Bundle/UIAtlas/A/icon.png", newAssetPaths);
+            var second = UniqueNewAssetPath("Assets/Art/UI/AI/Demo", "Assets/Bundle/UIAtlas/B/icon.png", newAssetPaths);
+            Require(first == "Assets/Art/UI/AI/Demo/Images/icon.png", "first duplicate-name path");
+            Require(second == "Assets/Art/UI/AI/Demo/Images/icon_2.png", "second duplicate-name path");
+            Debug.Log("UI redesign draft template contract validation passed.");
+        }
+
+        static UIReplacementItem ReplacementItem(UIAIToolsProfile profile, string prefab, string outputFolder, Dictionary<string, string> row, HashSet<string> newAssetPaths)
         {
             var oldPath = row["Image"];
             return new UIReplacementItem
             {
                 oldAssetPath = oldPath,
-                newAssetPath = $"{outputFolder}/Images/{Path.GetFileName(oldPath)}",
+                newAssetPath = UniqueNewAssetPath(outputFolder, oldPath, newAssetPaths),
                 targetAtlasPath = TargetAtlas(profile, prefab),
                 preserveGuid = false,
                 requiresConfirmation = true,
@@ -88,6 +99,23 @@ namespace Xipin.UIAITools
             return string.IsNullOrEmpty(request.outputFolder) ? "Assets/Art/UI/AI/" + SafeName(prefab) : Root(request.outputFolder);
         }
 
+        static string UniqueNewAssetPath(string outputFolder, string oldPath, HashSet<string> newAssetPaths)
+        {
+            var fileName = Path.GetFileName(oldPath);
+            var path = $"{outputFolder}/Images/{fileName}";
+            if (newAssetPaths.Add(path))
+                return path;
+
+            var name = Path.GetFileNameWithoutExtension(fileName);
+            var extension = Path.GetExtension(fileName);
+            for (var i = 2; ; i++)
+            {
+                path = $"{outputFolder}/Images/{name}_{i}{extension}";
+                if (newAssetPaths.Add(path))
+                    return path;
+            }
+        }
+
         static string Owner(UIAIToolsProfile profile, string prefab)
         {
             var path = Root(prefab);
@@ -108,6 +136,12 @@ namespace Xipin.UIAITools
         static string Root(string path)
         {
             return (path ?? "").Replace('\\', '/').TrimEnd('/');
+        }
+
+        static void Require(bool condition, string label)
+        {
+            if (!condition)
+                throw new Exception("Invalid UI redesign draft template contract: " + label);
         }
     }
 }
