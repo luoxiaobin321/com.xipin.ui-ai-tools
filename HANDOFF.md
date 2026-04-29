@@ -2,10 +2,12 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前优先稳定改版和新 UI 生成链路的 gate 与宿主结果契约。
 
 # Status
-替换链路的 manifest、dry-run、execution plan、host apply checklist 和 host apply result 已串起前置复验；dry-run 和 execution plan 读入都会拒绝重复逻辑行，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
+替换链路的 manifest、dry-run、pending input、execution plan、host apply checklist 和 host apply result 已串起前置复验；dry-run、pending input、readiness 和 execution plan 读入都会拒绝重复逻辑行，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 
 # Key Files
 - `Editor/Generation/UIReplacementPlanDryRunService.cs`：替换 dry-run 读取、校验和重复检查行 gate。
+- `Editor/Generation/UIReplacementPendingInputChecklistService.cs`：待补输入清单读取、校验和重复行 gate。
+- `Editor/Generation/UIReplacementPendingInputReadinessService.cs`：待补输入就绪检查读取、校验和重复行 gate。
 - `Editor/Generation/UIReplacementExecutionPlanService.cs`：替换执行计划读取、校验和重复计划行 gate。
 - `Editor/Generation/UIReplacementHostApplyResultService.cs`：host apply 结果读回和执行计划覆盖契约。
 - `Editor/Generation/UIReplacementHostApplyChecklistService.cs`：host apply 前置清单 gate。
@@ -21,6 +23,7 @@
 
 # Run / Test
 - `ValidateReplacementPlanDryRunContractBatch` -> `Logs/Verify_ReplacementPlanDryRunContract_DuplicateRows.log`，覆盖替换 dry-run 重复检查行复验，return code 0。
+- `ValidateReplacementPendingInputContractsBatch` -> `Logs/Verify_ReplacementPendingInputContracts_DuplicateRows.log`，覆盖待补输入清单和就绪检查重复行复验，return code 0。
 - `ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_DuplicatePlanRows.log`，覆盖缺失结果、阻断 plan、重复 plan 行和 result 契约，return code 0。
 - `ValidateUICreationLayoutDryRunContractBatch` -> `Logs/Verify_UICreationLayoutDryRunContract_DuplicateRows.log`，覆盖 Creation layout dry-run 重复检查行复验，return code 0。
 - `ValidateHostApplyBlockedResultSampleBatch` -> `Logs/Verify_HostApplyBlockedResultSample_PlanStatusHelper.log`，日志显示 26 行 skipped 阻断样例通过，return code 0。

@@ -36,7 +36,35 @@ namespace Xipin.UIAITools
             var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness);
             foreach (var row in rows)
                 ValidateRow(row);
+            ValidateNoDuplicateRows(rows);
             return rows;
+        }
+
+        public static void ValidateContract()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsReplacementPendingInputReadinessContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                var profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+                profile.logRoot = root;
+                WriteCsv(profile, new[]
+                {
+                    CsvRow("Preview", "PendingPreview", "Missing", "Assets/Art/UI/AI/Demo/preview.png", "", "", "", "", "-1", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成")
+                });
+                ReadRows(profile);
+                ExpectRowsFailure(profile, "duplicate_readiness_row", new[]
+                {
+                    CsvRow("Preview", "PendingPreview", "Missing", "Assets/Art/UI/AI/Demo/preview.png", "", "", "", "", "-1", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成"),
+                    CsvRow("Preview", "PendingPreview", "Missing", "Assets/Art/UI/AI/Demo/preview.png", "", "", "", "", "-1", "1", "ConfirmDraftPreview", "人工确认新版预览图已生成")
+                }, "duplicate readiness row");
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
+            Debug.Log("UI replacement pending input readiness contract validation passed.");
         }
 
         public static void Validate(UIAIToolsProfile profile)
@@ -122,6 +150,21 @@ namespace Xipin.UIAITools
             ValidateActualSize(row);
             if (string.IsNullOrEmpty(row["Note"]))
                 throw new Exception("Invalid UI replacement pending input readiness: Note is required");
+        }
+
+        static void ValidateNoDuplicateRows(List<Dictionary<string, string>> rows)
+        {
+            var duplicate = rows.GroupBy(row => new
+            {
+                InputKind = row["InputKind"],
+                Path = row["Path"],
+                ReferencePath = row["ReferencePath"],
+                TargetAtlas = row["TargetAtlas"],
+                ItemIndices = row["ItemIndices"],
+                SourceAction = row["SourceAction"]
+            }).FirstOrDefault(group => group.Count() > 1);
+            if (duplicate != null)
+                throw new Exception($"Invalid UI replacement pending input readiness: duplicate readiness row for {duplicate.Key.InputKind} {duplicate.Key.Path}");
         }
 
         static void ValidateActualSize(Dictionary<string, string> row)
@@ -340,6 +383,33 @@ namespace Xipin.UIAITools
         static string Csv(string value)
         {
             return "\"" + (value ?? "").Replace("\"", "\"\"") + "\"";
+        }
+
+        static void WriteCsv(UIAIToolsProfile profile, IEnumerable<string> rows)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness);
+            File.WriteAllLines(path, new[] { UIReportFiles.ReplacementPendingInputReadinessHeader }.Concat(rows), new UTF8Encoding(true));
+        }
+
+        static string CsvRow(string kind, string pendingStatus, string readiness, string path, string actualWidth, string actualHeight, string referencePath, string targetAtlas, string itemIndices, string count, string action, string note)
+        {
+            return string.Join(",", new[] { kind, pendingStatus, readiness, path, actualWidth, actualHeight, referencePath, targetAtlas, itemIndices, count, action, note }.Select(Csv));
+        }
+
+        static void ExpectRowsFailure(UIAIToolsProfile profile, string name, IEnumerable<string> rows, string expectedMessage)
+        {
+            WriteCsv(profile, rows);
+            try
+            {
+                ReadRows(profile);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI replacement pending input readiness contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI replacement pending input readiness contract sample did not fail: " + name);
         }
     }
 }
