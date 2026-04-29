@@ -1,0 +1,29 @@
+# 自动化界面工具
+
+`com.xipin.ui-ai-tools` 是独立 Unity Editor UPM 包，GitHub 仓库为 `https://github.com/luoxiaobin321/com.xipin.ui-ai-tools.git`。它用于 UI 图片归类、图集审计、复用图片反查、prefab 静态 DrawCall 风险分析、AI 改版输入链路和新 UI 生成前验证。
+
+继续开发本包时，先读 `HANDOFF.md`。当前 `E:\Work\UIAIToolsClient` 只是测试宿主，提供真实 prefab、图集、图片、profile、catalog 和 batch wrapper；宿主根目录不作为包仓库提交。
+
+## 包边界
+
+- 只包含 Unity Editor 工具，不包含运行时代码。
+- 不编译引用 `GameApp`、`MotionFramework`、`com.xipin.lframework` 或 YooAsset。
+- 项目差异通过 `UIAIToolsProfile`、`UIControlCatalog` 和宿主薄包装接入。
+- 包内默认只生成 CSV、Markdown、JSON、Prompt、manifest 和 gate 报告，不直接修改 prefab、图片、SpriteAtlas 或 YooAsset 配置。
+
+## 能力范围
+
+- 资源治理：图片归类、图集审计、复用反查、prefab 依赖和 DrawCall 静态风险报告。
+- 自动换皮输入链路：旧 prefab 基准图、Brief、草稿 JSON、dry-run、执行计划、待补输入、外部生成输入包、Prompt Pack、引用素材清单、宿主执行清单和 manifest。
+- 自动制作 UI 输入链路：需求 Brief、组件候选索引、布局草稿、资源需求清单、prefab 生成前 dry-run 和宿主确认清单。
+
+## 文档入口
+
+- `Documentation~/README.md`：接入者入口和能力地图。
+- `Development~/README.md`：开发维护入口。
+- `Development~/modules/package-boundary.md`：独立包边界。
+- `Documentation~/modules/project-adapter.md`：宿主包装方式。
+
+## Codex Skill
+
+包内提供 `Skills~/ui-ai-tools`，用于让 Codex 按模块读取本包文档并辅助处理扫描、复用反查、AI 改版和包代码维护。需要启用时，把该目录安装或复制到当前 Codex 的 skills 目录。
