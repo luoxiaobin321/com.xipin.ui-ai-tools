@@ -80,12 +80,44 @@ namespace Xipin.UIAITools
             RequireDraftUnityPath(draft.generatedImageFolder, "generatedImageFolder");
 
             var oldAssets = new HashSet<string>();
+            var newAssets = new HashSet<string>();
             var generatedImageFolder = Root(draft.generatedImageFolder);
             for (int i = 0; i < draft.replacementPlan.items.Count; i++)
             {
                 ValidateItem(draft.replacementPlan.items[i], i, generatedImageFolder);
                 RequireUniqueOldAsset(draft.replacementPlan.items[i].oldAssetPath, oldAssets, i);
+                RequireUniqueNewAsset(draft.replacementPlan.items[i].newAssetPath, newAssets, i);
             }
+        }
+
+        public static void ValidateContract()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsRedesignDraftContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                var valid = SampleDraft();
+                WriteContractDraft(root, "valid", valid);
+                LoadDraft(ContractPath(root, "valid"));
+
+                var duplicateOld = SampleDraft();
+                duplicateOld.replacementPlan.items.Add(SampleItem(duplicateOld.replacementPlan.items.Count, "old_1", "new_2"));
+                ExpectLoadFailure(root, "duplicate_old_asset", duplicateOld, "oldAssetPath duplicates");
+
+                var duplicateNew = SampleDraft();
+                duplicateNew.replacementPlan.items.Add(SampleItem(duplicateNew.replacementPlan.items.Count, "old_2", "new_1"));
+                ExpectLoadFailure(root, "duplicate_new_asset", duplicateNew, "newAssetPath duplicates");
+
+                var externalNewAsset = SampleDraft();
+                externalNewAsset.replacementPlan.items[0].newAssetPath = "Assets/Art/UI/AI/Other/Images/new_1.png";
+                ExpectLoadFailure(root, "new_asset_outside_generated_folder", externalNewAsset, "newAssetPath must be under generatedImageFolder");
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
+            Debug.Log("UI redesign draft contract validation passed.");
         }
 
         static void ValidateItem(UIReplacementItem item, int index, string generatedImageFolder)
@@ -136,6 +168,12 @@ namespace Xipin.UIAITools
         {
             if (!oldAssets.Add(oldAssetPath))
                 throw new Exception($"Invalid UI redesign draft JSON: replacementPlan.items[{index}].oldAssetPath duplicates {oldAssetPath}");
+        }
+
+        static void RequireUniqueNewAsset(string newAssetPath, HashSet<string> newAssets, int index)
+        {
+            if (!newAssets.Add(newAssetPath))
+                throw new Exception($"Invalid UI redesign draft JSON: replacementPlan.items[{index}].newAssetPath duplicates {newAssetPath}");
         }
 
         static void RequireNoTraversal(string value, string field)
@@ -483,6 +521,58 @@ namespace Xipin.UIAITools
         internal static string ToJsonWithRequiredArrays(UIRedesignDraft draft)
         {
             return WithReplacementPlanItems(UICreationBriefTemplateService.ToJsonWithRootArrays(draft, "risks"));
+        }
+
+        static UIRedesignDraft SampleDraft()
+        {
+            var draft = new UIRedesignDraft
+            {
+                draftPreviewPath = "Assets/Art/UI/AI/Demo/preview.png",
+                generatedImageFolder = "Assets/Art/UI/AI/Demo/Images",
+                requiresConfirmation = true
+            };
+            draft.replacementPlan.items.Add(SampleItem(0, "old_1", "new_1"));
+            draft.risks.Add("contract risk sample");
+            return draft;
+        }
+
+        static UIReplacementItem SampleItem(int index, string oldName, string newName)
+        {
+            return new UIReplacementItem
+            {
+                oldAssetPath = $"Assets/Bundle/UIAtlas/Old/{oldName}.png",
+                newAssetPath = $"Assets/Art/UI/AI/Demo/Images/{newName}.png",
+                targetAtlasPath = "Assets/Bundle/UIAtlas/Demo/atlas_demo.spriteatlasv2",
+                preserveGuid = false,
+                requiresConfirmation = true,
+                reason = "contract item " + index
+            };
+        }
+
+        static void WriteContractDraft(string root, string name, UIRedesignDraft draft)
+        {
+            File.WriteAllText(ContractPath(root, name), ToJsonWithRequiredArrays(draft));
+        }
+
+        static string ContractPath(string root, string name)
+        {
+            return Path.Combine(root, name + ".json");
+        }
+
+        static void ExpectLoadFailure(string root, string name, UIRedesignDraft draft, string expectedMessage)
+        {
+            WriteContractDraft(root, name, draft);
+            try
+            {
+                LoadDraft(ContractPath(root, name));
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI redesign draft contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI redesign draft contract sample did not fail: " + name);
         }
 
         static string WithReplacementPlanItems(string json)
