@@ -13,6 +13,7 @@ namespace Xipin.UIAITools
         public static void ValidateExactSectionOrder()
         {
             UIReportMarkdown.RequireExactSectionOrder("markdown contract self-test", new[] { "# Report", "", "## A", "- ok", "## B" }, "## A", "## B");
+            UIReportMarkdown.RequireExactSectionOrder("markdown fenced heading self-test", new[] { "# Report", "```json", "## Ignored", "```", "## A", "## B" }, "## A", "## B");
             UIReportMarkdown.RequireExactSectionOrder("host apply result contract self-test", new[]
             {
                 "# UI 替换宿主执行结果",

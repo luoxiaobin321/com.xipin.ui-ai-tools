@@ -60,9 +60,7 @@ namespace Xipin.UIAITools
 
         public static void RequireExactSectionOrder(string report, string[] lines, params string[] sections)
         {
-            var reportSections = lines.Select((line, index) => new { line, lineNumber = index + 1 })
-                .Where(section => section.line.StartsWith("## ", StringComparison.Ordinal))
-                .ToList();
+            var reportSections = ReportSections(lines);
             var duplicate = reportSections.GroupBy(section => section.line).FirstOrDefault(group => sections.Contains(group.Key) && group.Count() > 1);
             if (duplicate != null)
             {
@@ -86,10 +84,34 @@ namespace Xipin.UIAITools
                 throw new Exception($"{report} has unexpected section at line {reportSections[sections.Length].lineNumber}: {reportSections[sections.Length].line}");
         }
 
+        static List<MarkdownSection> ReportSections(string[] lines)
+        {
+            var sections = new List<MarkdownSection>();
+            var fenced = false;
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                if (line.StartsWith("```", StringComparison.Ordinal))
+                {
+                    fenced = !fenced;
+                    continue;
+                }
+                if (!fenced && line.StartsWith("## ", StringComparison.Ordinal))
+                    sections.Add(new MarkdownSection { line = line, lineNumber = i + 1 });
+            }
+            return sections;
+        }
+
         static string NotePrefix(string note)
         {
             var index = note.IndexOf('：');
             return index > 0 ? note.Substring(0, index) : note;
+        }
+
+        struct MarkdownSection
+        {
+            public string line;
+            public int lineNumber;
         }
     }
 }
