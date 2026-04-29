@@ -258,6 +258,9 @@ namespace Xipin.UIAITools
             var duplicateReport = UIReportFiles.CoreReports.GroupBy(report => report).FirstOrDefault(group => group.Count() > 1);
             if (duplicateReport != null)
                 throw new Exception("Duplicate UI AI Tools core report: " + duplicateReport.Key);
+            var staleHeader = UIReportFiles.CoreReportHeaders.Keys.Except(UIReportFiles.CoreReports).FirstOrDefault();
+            if (staleHeader != null)
+                throw new Exception("Stale UI AI Tools core report header: " + staleHeader);
 
             foreach (var report in UIReportFiles.CoreReports)
             {
@@ -265,6 +268,8 @@ namespace Xipin.UIAITools
                     throw new Exception("Missing UI AI Tools core report header: " + report);
                 ValidateHeaderContract(report, UIReportFiles.CoreReportHeaders[report]);
             }
+            if (UIReportFiles.GetPath("Logs/", "Report.csv") != "Logs/Report.csv" || UIReportFiles.GetPath("Logs\\", "Report.csv") != "Logs/Report.csv")
+                throw new Exception("UI AI Tools report path contract failed.");
             Debug.Log("UI AI Tools report file contract validation passed.");
         }
 
