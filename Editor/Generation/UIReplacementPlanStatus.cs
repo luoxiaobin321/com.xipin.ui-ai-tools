@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Xipin.UIAITools
 {
-    static class UIReplacementPlanStatus
+    public static class UIReplacementPlanStatus
     {
         public static bool IsBlocking(string status)
         {
