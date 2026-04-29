@@ -100,7 +100,7 @@ namespace Xipin.UIAITools
                 });
                 UIReplacementHostApplyChecklistService.Generate(profile);
                 ValidateAgainstExecutionPlan(profile);
-                ExpectPlanCoverageFailure(profile, "result row missing for plan Item 0 / VerifyAfterApply");
+                ExpectPlanCoverageFailure(profile, "result row missing for plan Item 0 / MoveNewAsset");
                 ExpectBlockingPlanFailure(profile, "blocking steps present");
                 ExpectPlanFailure(profile, Row("3", "ApplyPrefabReference", "Skipped", "Assets/Old4.png", "Assets/New4.png", "", "", "", "stale"), "execution plan row missing");
                 ExpectSummaryFailure(profile, "bad_title", "# Bad", "unexpected title");
@@ -171,7 +171,7 @@ namespace Xipin.UIAITools
 
         static bool RequiresResultRow(Dictionary<string, string> plan)
         {
-            return plan["Action"] == "ApplyPrefabReference" || plan["Action"] == "VerifyAfterApply";
+            return AllowedActions.Contains(plan["Action"]);
         }
 
         static void ValidateBlockingPlanDidNotExecute(List<Dictionary<string, string>> planRows, List<Dictionary<string, string>> rows)
