@@ -33,6 +33,7 @@ UIAssetScanService.Run(profile, catalog);
 ## UIControlCatalog
 
 通过 `Create > Xipin > UI AI Tools > Control Catalog` 创建。它按类型名识别控件角色，不要求包编译引用业务控件。扫描服务会用它识别动态图片组件、按钮热区和功能性空 Image。
+默认角色映射可用 `ValidateControlCatalogContractBatch` 复验，覆盖大小写不敏感匹配和基础负例。
 
 | 角色 | 默认类型名 |
 | --- | --- |

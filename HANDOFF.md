@@ -2,7 +2,7 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前优先稳定改版和新 UI 生成链路的 gate 与宿主结果契约。
 
 # Status
-替换链路的 manifest、dry-run、pending input、external input package、execution plan、plan status、core scan rows、scan summary、reuse search result、component candidate、host apply checklist 和 host apply result 已串起前置复验；dry-run、pending input、readiness、external input package、execution plan、core scan rows、reuse search result 和 component candidate 都会拒绝重复逻辑行，plan status 有独立阻断状态、汇总顺序和 severity 顺序 contract，scan summary 和 panel focus 有独立 Markdown section 顺序 contract，external input package 有独立重复输出目录/参考输入/输入项 contract，execution plan 也有独立重复计划行 contract，host apply checklist 有独立 gate 行契约，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。核心报告注册表 contract 覆盖 CoreReports 不重复、表头字典无陈旧项、每个核心 CSV 都有表头、表头列不为空且不重复，并锁定 `UIReportFiles.GetPath` 的 `/` 输出。Redesign brief contract 覆盖 Markdown section 顺序和 duplicate old/new asset 输出约束；Redesign draft template 会给同名旧图生成唯一 newAssetPath，并覆盖 `_2` 后缀碰撞；Redesign draft contract 覆盖重复旧图、重复新图和 newAssetPath 越过 generatedImageFolder；Redesign package contract 覆盖 outputFolder 只能是 `Assets/` 且不能包含反斜杠或 `..`。Creation brief contract 覆盖 targetFolder 路径和数组项类型；Layout draft contract 覆盖必需节点字段和交互数组项类型；Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，Creation host generate checklist 也有独立 Ready gate 行契约，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。CSV 底层契约补充覆盖 quoted 字段跨物理行和引号后夹空格的严格拒绝样本；JSON 底层契约补充覆盖改版草稿重复 newAssetPath；Markdown section 契约会用 duplicate section 明确报错重复合法标题，并忽略 fenced code block 内的 `## `。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
+替换链路的 manifest、dry-run、pending input、external input package、execution plan、plan status、core scan rows、scan summary、reuse search result、component candidate、host apply checklist 和 host apply result 已串起前置复验；dry-run、pending input、readiness、external input package、execution plan、core scan rows、reuse search result 和 component candidate 都会拒绝重复逻辑行，plan status 有独立阻断状态、汇总顺序和 severity 顺序 contract，scan summary 和 panel focus 有独立 Markdown section 顺序 contract，external input package 有独立重复输出目录/参考输入/输入项 contract，execution plan 也有独立重复计划行 contract，host apply checklist 有独立 gate 行契约，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。Control catalog contract 覆盖默认角色映射、大小写不敏感匹配和基础负例。核心报告注册表 contract 覆盖 CoreReports 不重复、表头字典无陈旧项、每个核心 CSV 都有表头、表头列不为空且不重复，并锁定 `UIReportFiles.GetPath` 的 `/` 输出。Redesign brief contract 覆盖 Markdown section 顺序和 duplicate old/new asset 输出约束；Redesign draft template 会给同名旧图生成唯一 newAssetPath，并覆盖 `_2` 后缀碰撞；Redesign draft contract 覆盖重复旧图、重复新图和 newAssetPath 越过 generatedImageFolder；Redesign package contract 覆盖 outputFolder 只能是 `Assets/` 且不能包含反斜杠或 `..`。Creation brief contract 覆盖 targetFolder 路径和数组项类型；Layout draft contract 覆盖必需节点字段和交互数组项类型；Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，Creation host generate checklist 也有独立 Ready gate 行契约，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。CSV 底层契约补充覆盖 quoted 字段跨物理行和引号后夹空格的严格拒绝样本；JSON 底层契约补充覆盖改版草稿重复 newAssetPath；Markdown section 契约会用 duplicate section 明确报错重复合法标题，并忽略 fenced code block 内的 `## `。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 
 # Key Files
 - `Editor/Generation/UIReplacementPlanDryRunService.cs`：替换 dry-run 读取、校验和重复检查行 gate。
@@ -28,6 +28,7 @@
 - `Editor/Generation/UICreationHostGenerateChecklistService.cs`：Creation 生成前清单 gate 和 Ready 文案复验。
 - `Editor/Generation/UICreationHostGenerateResultService.cs`：Creation 宿主生成结果契约。
 - `Editor/Generation/UIReportMarkdownContractService.cs`：Markdown section 顺序契约 batch 入口。
+- `Editor/Config/UIControlCatalog.cs`：项目控件角色配置和默认角色映射契约。
 
 # Next Steps
 1. 不依赖外部图片时，继续补真实宿主执行器或生成器回归样例。
@@ -52,6 +53,7 @@
 - `ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_DuplicatePlanRows.log`，覆盖缺失结果、阻断 plan、重复 plan 行和 result 契约，return code 0。
 - `ValidateScanReportRowsContractBatch` -> `Logs/Verify_ScanReportRowsContract_DuplicateAllCoreRows.log`，覆盖全部 CoreReports 重复逻辑行复验，return code 0。
 - `ValidateScanSummaryContractBatch` -> `Logs/Verify_ScanSummaryContract_Sections.log`，覆盖扫描摘要和面板实测聚焦清单 Markdown section 顺序复验，return code 0。
+- `ValidateControlCatalogContractBatch` -> `Logs/Verify_ControlCatalogContract_DefaultRoles.log`，覆盖默认控件角色映射和大小写不敏感匹配复验，return code 0。
 - `ValidateReportFilesContractBatch` -> `Logs/Verify_ReportFilesContract_HeaderRegistryAndPaths.log`，覆盖核心 CSV 注册表、表头列和路径规范化契约复验，return code 0。
 - `ValidateCsvContractBatch` -> `Logs/Verify_CsvContract_MultilineAndStrictQuotes.log`，覆盖 CSV multiline quoted value 和 quote 后夹空格严格拒绝复验，return code 0。
 - `ValidateMarkdownSectionContractBatch` -> `Logs/Verify_MarkdownSectionContract_FencedHeadings.log`，覆盖重复合法 Markdown section 的 duplicate section 报错和 fenced code block 内标题忽略复验，return code 0。

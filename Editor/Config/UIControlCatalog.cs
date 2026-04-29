@@ -14,6 +14,20 @@ namespace Xipin.UIAITools
         public List<string> panelComponents = new List<string> { "UIPanel", "CanvasPanelBase", "CanvasPanelItemBase" };
         public List<string> functionalEmptyImageComponents = new List<string> { "BackgroundPlus", "GuideMask", "HighlightStencil", "SpriteAtlasAnimator", "Mask", "CanvasGroup" };
 
+        public static void ValidateContract()
+        {
+            var catalog = CreateInstance<UIControlCatalog>();
+            ExpectRole(catalog, "ImagePlus", UIControlRole.DynamicImage);
+            ExpectRole(catalog, "tmp_text", UIControlRole.Text);
+            ExpectRole(catalog, "buttonplus", UIControlRole.Button);
+            ExpectRole(catalog, "ScrollRectPlus", UIControlRole.Scroll);
+            ExpectRole(catalog, "CanvasPanelBase", UIControlRole.Panel);
+            ExpectRole(catalog, "SpriteAtlasAnimator", UIControlRole.FunctionalEmptyImage);
+            if (catalog.HasRole("ImagePlus", UIControlRole.Button))
+                throw new Exception("UI control catalog role contract failed: ImagePlus/Button");
+            Debug.Log("UI control catalog contract validation passed.");
+        }
+
         public bool HasRole(string typeName, UIControlRole role)
         {
             var list = role == UIControlRole.DynamicImage ? dynamicImageComponents :
@@ -23,6 +37,12 @@ namespace Xipin.UIAITools
                 role == UIControlRole.Panel ? panelComponents :
                 functionalEmptyImageComponents;
             return list.Exists(x => string.Equals(x, typeName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        static void ExpectRole(UIControlCatalog catalog, string typeName, UIControlRole role)
+        {
+            if (!catalog.HasRole(typeName, role))
+                throw new Exception($"UI control catalog role contract failed: {typeName}/{role}");
         }
     }
 
