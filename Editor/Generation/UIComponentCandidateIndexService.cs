@@ -74,11 +74,36 @@ namespace Xipin.UIAITools
                 WriteIndexCsv(profile, new[] { indexRow });
                 ReadIndexRows(profile);
                 ExpectFailure("duplicate_index_row", "Duplicate UI component candidate id", () => WriteIndexCsv(profile, new[] { indexRow, indexRow }), () => ReadIndexRows(profile));
+                ExpectFailure("bad_index_sample_prefab_path", "SamplePrefabs path is invalid", () => WriteIndexCsv(profile, new[]
+                {
+                    IndexRow("Component00000001", "Assets/Prefab/A.prefab;Prefab.prefab", "Assets/Prefab/A.prefab#Root/Button")
+                }), () => ReadIndexRows(profile));
+                ExpectFailure("bad_index_sample_node_path", "SampleNodes path is invalid", () => WriteIndexCsv(profile, new[]
+                {
+                    IndexRow("Component00000001", "Assets/Prefab/A.prefab", "Assets/Prefab/A.prefab#Root/Button;Prefab.prefab#Root/Button")
+                }), () => ReadIndexRows(profile));
 
                 var reviewRow = ReviewRow("Component00000001");
                 WriteReviewCsv(profile, new[] { reviewRow });
                 ReadReviewRows(profile);
                 ExpectFailure("duplicate_review_row", "Duplicate UI component candidate review id", () => WriteReviewCsv(profile, new[] { reviewRow, reviewRow }), () => ReadReviewRows(profile));
+                WriteReviewCsv(profile, new[]
+                {
+                    ReviewRow("Component00000001", "Approved", "Assets/Components/Button.prefab", "Assets/Previews/Button.png", "Assets/Prefab/A.prefab;...", "Assets/Prefab/A.prefab#Root/Button;...")
+                });
+                ReadReviewRows(profile);
+                ExpectFailure("bad_review_component_prefab_path", "ComponentPrefabPath path is invalid", () => WriteReviewCsv(profile, new[]
+                {
+                    ReviewRow("Component00000001", "Approved", "Components/Button.prefab", "", "Assets/Prefab/A.prefab", "Assets/Prefab/A.prefab#Root/Button")
+                }), () => ReadReviewRows(profile));
+                ExpectFailure("bad_review_preview_extension", "PreviewPath must be .png", () => WriteReviewCsv(profile, new[]
+                {
+                    ReviewRow("Component00000001", "NeedsReview", "", "Assets/Previews/Button.jpg", "Assets/Prefab/A.prefab", "Assets/Prefab/A.prefab#Root/Button")
+                }), () => ReadReviewRows(profile));
+                ExpectFailure("bad_review_sample_node_path", "SampleNodes path is invalid", () => WriteReviewCsv(profile, new[]
+                {
+                    ReviewRow("Component00000001", "NeedsReview", "", "", "Assets/Prefab/A.prefab", "Assets/Prefab/A.prefab#Root/Button;Prefab.prefab#Root/Button")
+                }), () => ReadReviewRows(profile));
             }
             finally
             {
@@ -226,6 +251,8 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI component candidate row count: " + row["ComponentId"]);
             if (string.IsNullOrEmpty(row["SamplePrefabs"]) || string.IsNullOrEmpty(row["SampleNodes"]))
                 throw new Exception("Invalid UI component candidate row samples: " + row["ComponentId"]);
+            RequirePathList(row["SamplePrefabs"], "SamplePrefabs", ".prefab", "UI component candidate row");
+            RequireSampleNodeList(row["SampleNodes"], "UI component candidate row");
         }
 
         static void ValidateReviewRow(Dictionary<string, string> row)
@@ -240,8 +267,44 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI component candidate review row count: " + row["ComponentId"]);
             if (row["SuggestedDecision"] == "Approved" && string.IsNullOrEmpty(row["ComponentPrefabPath"]))
                 throw new Exception($"Approved UI component candidate requires ComponentPrefabPath: {row["ComponentId"]}");
+            RequirePathList(row["SamplePrefabs"], "SamplePrefabs", ".prefab", "UI component candidate review row");
+            RequireSampleNodeList(row["SampleNodes"], "UI component candidate review row");
+            if (!string.IsNullOrEmpty(row["ComponentPrefabPath"]))
+                RequirePath(row["ComponentPrefabPath"], "ComponentPrefabPath", ".prefab", "UI component candidate review row");
+            if (!string.IsNullOrEmpty(row["PreviewPath"]))
+                RequirePath(row["PreviewPath"], "PreviewPath", ".png", "UI component candidate review row");
             if (string.IsNullOrEmpty(row["States"]))
                 throw new Exception("Invalid UI component candidate review row: States is required " + row["ComponentId"]);
+        }
+
+        static void RequirePathList(string value, string label, string extension, string context)
+        {
+            foreach (var path in value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (path != "...")
+                    RequirePath(path, label, extension, context);
+            }
+        }
+
+        static void RequireSampleNodeList(string value, string context)
+        {
+            foreach (var node in value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (node == "...")
+                    continue;
+                var split = node.IndexOf('#');
+                if (split <= 0 || split == node.Length - 1)
+                    throw new Exception($"Invalid {context}: SampleNodes path is invalid");
+                RequirePath(node.Substring(0, split), "SampleNodes", ".prefab", context);
+            }
+        }
+
+        static void RequirePath(string path, string label, string extension, string context)
+        {
+            if (!path.StartsWith("Assets/", StringComparison.Ordinal) || path.Contains("\\") || path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal))
+                throw new Exception($"Invalid {context}: {label} path is invalid");
+            if (!path.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+                throw new Exception($"Invalid {context}: {label} must be {extension}");
         }
 
         static void AddButtonReviewSections(List<string> lines, List<Dictionary<string, string>> rows)
@@ -492,7 +555,7 @@ namespace Xipin.UIAITools
             File.WriteAllLines(path, new[] { header }.Concat(rows), new UTF8Encoding(true));
         }
 
-        static string IndexRow(string componentId)
+        static string IndexRow(string componentId, string samplePrefabs = "Assets/Prefab/A.prefab;Assets/Prefab/B.prefab;...", string sampleNodes = "Assets/Prefab/A.prefab#Root/Button;...")
         {
             return string.Join(",", new[]
             {
@@ -505,28 +568,28 @@ namespace Xipin.UIAITools
                 Csv("Assets/Art/UI/UI.spriteatlasv2"),
                 "3",
                 "2",
-                Csv("Assets/Prefab/A.prefab;Assets/Prefab/B.prefab"),
-                Csv("Assets/Prefab/A.prefab#Root/Button"),
+                Csv(samplePrefabs),
+                Csv(sampleNodes),
                 Csv("candidate")
             });
         }
 
-        static string ReviewRow(string componentId)
+        static string ReviewRow(string componentId, string decision = "NeedsReview", string componentPrefabPath = "", string previewPath = "", string samplePrefabs = "Assets/Prefab/A.prefab;Assets/Prefab/B.prefab;...", string sampleNodes = "Assets/Prefab/A.prefab#Root/Button;...")
         {
             return string.Join(",", new[]
             {
                 Csv(componentId),
                 Csv("Button"),
                 Csv("HighReuseButton"),
-                Csv("NeedsReview"),
+                Csv(decision),
                 "3",
                 "2",
                 Csv("Assets/Art/UI/Button.png"),
                 Csv("Assets/Art/UI/UI.spriteatlasv2"),
-                Csv("Assets/Prefab/A.prefab;Assets/Prefab/B.prefab"),
-                Csv("Assets/Prefab/A.prefab#Root/Button"),
-                Csv(""),
-                Csv(""),
+                Csv(samplePrefabs),
+                Csv(sampleNodes),
+                Csv(componentPrefabPath),
+                Csv(previewPath),
                 Csv("normal;disabled;selected;pressed"),
                 Csv(""),
                 Csv(""),

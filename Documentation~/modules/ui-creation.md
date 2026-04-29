@@ -57,7 +57,7 @@ UIComponentCandidateIndexService.Generate(profile, catalog);
 UIComponentCandidateIndexService.Validate(profile);
 ```
 
-该入口输出 `UIComponentCandidateIndex.csv`、`UIComponentCandidateIndexSummary.md` 和 `UIComponentCandidateReview.csv`，写出后会立即复用验证入口。汇总会列出 Button 复核队列，把跨 prefab 的候选和单 prefab 或低复用候选分开；确认清单给宿主填写 `ComponentPrefabPath`、`PreviewPath`、`States`、`UsageNotes`、`Reviewer` 和 `ReviewNotes`，`SuggestedDecision` 默认是 `NeedsReview`，允许 `NeedsReview`、`Approved` 或 `Rejected`，`Approved` 必须填写 `ComponentPrefabPath`。重新生成确认清单时，会按 `ComponentId` 保留 `SuggestedDecision`、`ComponentPrefabPath`、`PreviewPath`、`States`、`UsageNotes`、`Reviewer` 和 `ReviewNotes`，并刷新角色、分层、引用次数、样例节点等扫描派生字段。验证入口检查候选索引表头、候选数量、`ComponentId` 格式与唯一性、汇总文件和 Markdown 标题结构、确认清单表头、确认清单行数、ID、扫描派生列、复核分层和决策值。它只汇总已有扫描报告，不创建组件 prefab。
+该入口输出 `UIComponentCandidateIndex.csv`、`UIComponentCandidateIndexSummary.md` 和 `UIComponentCandidateReview.csv`，写出后会立即复用验证入口。汇总会列出 Button 复核队列，把跨 prefab 的候选和单 prefab 或低复用候选分开；确认清单给宿主填写 `ComponentPrefabPath`、`PreviewPath`、`States`、`UsageNotes`、`Reviewer` 和 `ReviewNotes`，`SuggestedDecision` 默认是 `NeedsReview`，允许 `NeedsReview`、`Approved` 或 `Rejected`，`Approved` 必须填写 `ComponentPrefabPath`。`ComponentPrefabPath` 必须是 `Assets/*.prefab`，`PreviewPath` 如填写必须是 `Assets/*.png`；`SamplePrefabs` 和 `SampleNodes` 会校验 prefab 路径，允许末尾截断标记 `...`。重新生成确认清单时，会按 `ComponentId` 保留 `SuggestedDecision`、`ComponentPrefabPath`、`PreviewPath`、`States`、`UsageNotes`、`Reviewer` 和 `ReviewNotes`，并刷新角色、分层、引用次数、样例节点等扫描派生字段。验证入口检查候选索引表头、候选数量、`ComponentId` 格式与唯一性、汇总文件和 Markdown 标题结构、确认清单表头、确认清单行数、ID、扫描派生列、复核分层、路径和决策值。它只汇总已有扫描报告，不创建组件 prefab。
 
 ### 布局草稿 JSON
 
