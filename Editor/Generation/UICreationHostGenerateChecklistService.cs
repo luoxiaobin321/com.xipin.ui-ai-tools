@@ -194,7 +194,7 @@ namespace Xipin.UIAITools
 
         static void ValidateCurrentComponentReviews(UIAIToolsProfile profile, List<string> componentIds)
         {
-            var reviews = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ComponentCandidateReview).ToDictionary(r => r["ComponentId"]);
+            var reviews = UIComponentCandidateIndexService.ReadReviewRows(profile).ToDictionary(r => r["ComponentId"]);
             var unapproved = new List<string>();
             foreach (var id in componentIds)
             {
@@ -208,7 +208,7 @@ namespace Xipin.UIAITools
 
         static List<Dictionary<string, string>> ComponentReviewRows(UIAIToolsProfile profile, UILayoutDraft draft)
         {
-            var reviews = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ComponentCandidateReview).ToDictionary(r => r["ComponentId"]);
+            var reviews = UIComponentCandidateIndexService.ReadReviewRows(profile).ToDictionary(r => r["ComponentId"]);
             var rows = new List<Dictionary<string, string>>();
             foreach (var group in draft.nodes.Where(n => !string.IsNullOrEmpty(n.componentId)).GroupBy(n => n.componentId))
             {

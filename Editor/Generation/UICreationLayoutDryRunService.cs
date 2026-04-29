@@ -68,7 +68,7 @@ namespace Xipin.UIAITools
         {
             UIComponentCandidateIndexService.Validate(profile);
             var draft = UILayoutDraftTemplateService.LoadDraft(layoutDraftJsonPath);
-            var components = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ComponentCandidateIndex).ToDictionary(r => r["ComponentId"]);
+            var components = UIComponentCandidateIndexService.ReadIndexRows(profile).ToDictionary(r => r["ComponentId"]);
             var roles = new HashSet<string>(BuiltInRoles.Concat(components.Values.Select(r => r["Role"])));
             var lines = new List<string> { UIReportFiles.CreationLayoutDryRunHeader };
             var index = 1;

@@ -53,28 +53,44 @@ namespace Xipin.UIAITools
 
         public static void Validate(UIAIToolsProfile profile)
         {
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ComponentCandidateIndex, UIReportFiles.ComponentCandidateIndexHeader);
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ComponentCandidateIndex);
-            if (rows.Count == 0)
-                throw new Exception("Empty UI component candidate index.");
-            var invalidId = rows.FirstOrDefault(r => !ValidComponentId(r["ComponentId"]));
-            if (invalidId != null)
-                throw new Exception($"Invalid UI component candidate id: {invalidId["ComponentId"]}");
-            var duplicateId = rows.GroupBy(r => r["ComponentId"]).FirstOrDefault(g => g.Count() > 1);
-            if (duplicateId != null)
-                throw new Exception($"Duplicate UI component candidate id: {duplicateId.Key}");
+            var rows = ReadIndexRows(profile);
             var summaryPath = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateIndexSummary);
             if (!File.Exists(summaryPath))
                 throw new Exception($"Missing UI component candidate index summary: {summaryPath}");
             ValidateSummarySections(File.ReadAllLines(summaryPath));
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ComponentCandidateReview, UIReportFiles.ComponentCandidateReviewHeader);
             ValidateReviewChecklist(profile, rows);
             Debug.Log($"UI component candidate index validation passed: {rows.Count} candidates.");
         }
 
+        public static List<Dictionary<string, string>> ReadIndexRows(UIAIToolsProfile profile)
+        {
+            UIReportValidationService.ValidateReport(profile, UIReportFiles.ComponentCandidateIndex, UIReportFiles.ComponentCandidateIndexHeader);
+            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ComponentCandidateIndex);
+            if (rows.Count == 0)
+                throw new Exception("Empty UI component candidate index.");
+            foreach (var row in rows)
+                ValidateIndexRow(row);
+            var duplicateId = rows.GroupBy(r => r["ComponentId"]).FirstOrDefault(g => g.Count() > 1);
+            if (duplicateId != null)
+                throw new Exception($"Duplicate UI component candidate id: {duplicateId.Key}");
+            return rows;
+        }
+
+        public static List<Dictionary<string, string>> ReadReviewRows(UIAIToolsProfile profile)
+        {
+            UIReportValidationService.ValidateReport(profile, UIReportFiles.ComponentCandidateReview, UIReportFiles.ComponentCandidateReviewHeader);
+            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ComponentCandidateReview);
+            foreach (var row in rows)
+                ValidateReviewRow(row);
+            var duplicateId = rows.GroupBy(r => r["ComponentId"]).FirstOrDefault(g => g.Count() > 1);
+            if (duplicateId != null)
+                throw new Exception($"Duplicate UI component candidate review id: {duplicateId.Key}");
+            return rows;
+        }
+
         static string GenerateSummary(UIAIToolsProfile profile)
         {
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ComponentCandidateIndex);
+            var rows = ReadIndexRows(profile);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateIndexSummary);
             var lines = new List<string>
             {
@@ -109,7 +125,7 @@ namespace Xipin.UIAITools
 
         static string GenerateReviewChecklist(UIAIToolsProfile profile)
         {
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ComponentCandidateIndex);
+            var rows = ReadIndexRows(profile);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateReview);
             var existingRows = ReadExistingReviewRows(profile, path);
             var lines = new List<string> { UIReportFiles.ComponentCandidateReviewHeader };
@@ -138,7 +154,7 @@ namespace Xipin.UIAITools
             }
 
             File.WriteAllLines(path, lines, new UTF8Encoding(true));
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ComponentCandidateReview, UIReportFiles.ComponentCandidateReviewHeader);
+            ReadReviewRows(profile);
             return path;
         }
 
@@ -146,12 +162,7 @@ namespace Xipin.UIAITools
         {
             if (!File.Exists(path))
                 return new Dictionary<string, Dictionary<string, string>>();
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ComponentCandidateReview, UIReportFiles.ComponentCandidateReviewHeader);
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ComponentCandidateReview);
-            var duplicateId = rows.GroupBy(r => r["ComponentId"]).FirstOrDefault(g => g.Count() > 1);
-            if (duplicateId != null)
-                throw new Exception($"Duplicate UI component candidate review id: {duplicateId.Key}");
-            return rows.ToDictionary(r => r["ComponentId"]);
+            return ReadReviewRows(profile).ToDictionary(r => r["ComponentId"]);
         }
 
         static string ReviewValue(Dictionary<string, string> row, string field, string defaultValue)
@@ -161,12 +172,9 @@ namespace Xipin.UIAITools
 
         static void ValidateReviewChecklist(UIAIToolsProfile profile, List<Dictionary<string, string>> indexRows)
         {
-            var reviewRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ComponentCandidateReview);
+            var reviewRows = ReadReviewRows(profile);
             if (reviewRows.Count != indexRows.Count)
                 throw new Exception($"UI component candidate review row count mismatch: {reviewRows.Count}->{indexRows.Count}");
-            var duplicateId = reviewRows.GroupBy(r => r["ComponentId"]).FirstOrDefault(g => g.Count() > 1);
-            if (duplicateId != null)
-                throw new Exception($"Duplicate UI component candidate review id: {duplicateId.Key}");
 
             var indexById = indexRows.ToDictionary(r => r["ComponentId"]);
             foreach (var row in reviewRows)
@@ -180,11 +188,35 @@ namespace Xipin.UIAITools
                 }
                 if (row["ReviewTier"] != ReviewTier(indexRow))
                     throw new Exception($"Stale UI component candidate review tier: {row["ComponentId"]}");
-                if (!ValidDecision(row["SuggestedDecision"]))
-                    throw new Exception($"Invalid UI component candidate review decision: {row["ComponentId"]} {row["SuggestedDecision"]}");
-                if (row["SuggestedDecision"] == "Approved" && string.IsNullOrEmpty(row["ComponentPrefabPath"]))
-                    throw new Exception($"Approved UI component candidate requires ComponentPrefabPath: {row["ComponentId"]}");
             }
+        }
+
+        static void ValidateIndexRow(Dictionary<string, string> row)
+        {
+            if (!ValidComponentId(row["ComponentId"]))
+                throw new Exception($"Invalid UI component candidate id: {row["ComponentId"]}");
+            if (string.IsNullOrEmpty(row["Role"]))
+                throw new Exception("Invalid UI component candidate row: Role is required");
+            if (!PositiveInt(row["UseCount"]) || !PositiveInt(row["PrefabCount"]))
+                throw new Exception("Invalid UI component candidate row count: " + row["ComponentId"]);
+            if (string.IsNullOrEmpty(row["SamplePrefabs"]) || string.IsNullOrEmpty(row["SampleNodes"]))
+                throw new Exception("Invalid UI component candidate row samples: " + row["ComponentId"]);
+        }
+
+        static void ValidateReviewRow(Dictionary<string, string> row)
+        {
+            if (!ValidComponentId(row["ComponentId"]))
+                throw new Exception($"Invalid UI component candidate review id: {row["ComponentId"]}");
+            if (string.IsNullOrEmpty(row["Role"]) || string.IsNullOrEmpty(row["ReviewTier"]))
+                throw new Exception("Invalid UI component candidate review row: Role and ReviewTier are required");
+            if (!ValidDecision(row["SuggestedDecision"]))
+                throw new Exception($"Invalid UI component candidate review decision: {row["ComponentId"]} {row["SuggestedDecision"]}");
+            if (!PositiveInt(row["UseCount"]) || !PositiveInt(row["PrefabCount"]))
+                throw new Exception("Invalid UI component candidate review row count: " + row["ComponentId"]);
+            if (row["SuggestedDecision"] == "Approved" && string.IsNullOrEmpty(row["ComponentPrefabPath"]))
+                throw new Exception($"Approved UI component candidate requires ComponentPrefabPath: {row["ComponentId"]}");
+            if (string.IsNullOrEmpty(row["States"]))
+                throw new Exception("Invalid UI component candidate review row: States is required " + row["ComponentId"]);
         }
 
         static void AddButtonReviewSections(List<string> lines, List<Dictionary<string, string>> rows)
@@ -251,6 +283,11 @@ namespace Xipin.UIAITools
         static bool ValidDecision(string decision)
         {
             return decision == "NeedsReview" || decision == "Approved" || decision == "Rejected";
+        }
+
+        static bool PositiveInt(string value)
+        {
+            return int.TryParse(value, out var count) && count > 0;
         }
 
         static CandidateKey BuildCandidateKey(UIControlCatalog catalog, Dictionary<string, string> row)
