@@ -2,7 +2,7 @@
 把 `com.xipin.ui-ai-tools` 做成可审计的 Unity UI 自动化工具包，当前优先稳定改版和新 UI 生成链路的 gate 与宿主结果契约。
 
 # Status
-替换链路的 manifest、dry-run、pending input、external input package、execution plan、core scan rows、reuse search result、component candidate、host apply checklist 和 host apply result 已串起前置复验；dry-run、pending input、readiness、external input package、execution plan、core scan rows、reuse search result 和 component candidate 都会拒绝重复逻辑行，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。CSV 底层契约补充覆盖 quoted 字段跨物理行和引号后夹空格的严格拒绝样本；Markdown section 契约会用 duplicate section 明确报错重复合法标题，并忽略 fenced code block 内的 `## `。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
+替换链路的 manifest、dry-run、pending input、external input package、execution plan、core scan rows、reuse search result、component candidate、host apply checklist 和 host apply result 已串起前置复验；dry-run、pending input、readiness、external input package、execution plan、core scan rows、reuse search result 和 component candidate 都会拒绝重复逻辑行，execution plan 也有独立重复计划行 contract，host apply result 要求所有可产生结果的 action 都有结果行，并拒绝同一计划行重复上报。Creation layout dry-run 和 host generate result 会拒绝重复逻辑行，并复验生成前清单、目标 prefab、当前 dry-run 组件列表和 Ready gate 文案。CSV 底层契约补充覆盖 quoted 字段跨物理行和引号后夹空格的严格拒绝样本；Markdown section 契约会用 duplicate section 明确报错重复合法标题，并忽略 fenced code block 内的 `## `。UIVipcard 真实 apply 仍按外部输入缺失预期阻断：`PendingPreview：1，PendingAsset：13，PendingAtlas：13`。
 
 # Key Files
 - `Editor/Generation/UIReplacementPlanDryRunService.cs`：替换 dry-run 读取、校验和重复检查行 gate。
@@ -31,6 +31,7 @@
 - `ValidateReplacementPlanDryRunContractBatch` -> `Logs/Verify_ReplacementPlanDryRunContract_DuplicateRows.log`，覆盖替换 dry-run 重复检查行复验，return code 0。
 - `ValidateReplacementPendingInputContractsBatch` -> `Logs/Verify_ReplacementPendingInputContracts_DuplicateRows.log`，覆盖待补输入清单和就绪检查重复行复验，return code 0。
 - `ValidateJsonContractBatch` -> `Logs/Verify_JsonContract_ExternalPackageDuplicateItems.log`，覆盖外部输入包 JSON 重复 list item 复验，return code 0。
+- `ValidateReplacementExecutionPlanContractBatch` -> `Logs/Verify_ReplacementExecutionPlanContract_DuplicateRows.log`，覆盖执行计划重复 plan row 复验，return code 0。
 - `ValidateHostApplyResultContractBatch` -> `Logs/Verify_HostApplyResultContract_DuplicatePlanRows.log`，覆盖缺失结果、阻断 plan、重复 plan 行和 result 契约，return code 0。
 - `ValidateScanReportRowsContractBatch` -> `Logs/Verify_ScanReportRowsContract_DuplicateAllCoreRows.log`，覆盖全部 CoreReports 重复逻辑行复验，return code 0。
 - `ValidateCsvContractBatch` -> `Logs/Verify_CsvContract_MultilineAndStrictQuotes.log`，覆盖 CSV multiline quoted value 和 quote 后夹空格严格拒绝复验，return code 0。

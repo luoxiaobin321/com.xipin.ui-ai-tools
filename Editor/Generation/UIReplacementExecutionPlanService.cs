@@ -58,6 +58,27 @@ namespace Xipin.UIAITools
             Debug.Log($"UI replacement execution plan gate passed: {rows.Count} steps, 0 blocking steps.");
         }
 
+        public static void ValidateContract()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsReplacementExecutionPlanContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                var profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+                profile.logRoot = root;
+                var row = Row("0", "ConfirmNewAsset", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/Prefab/A.prefab", "true", "人工确认新图", "reason");
+                WriteCsv(profile, new[] { row });
+                ReadRows(profile);
+                ExpectRowsFailure(profile, "duplicate_plan_row", new[] { row, row }, "duplicate plan row");
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
+            Debug.Log("UI replacement execution plan contract validation passed.");
+        }
+
         static void AddItem(List<string> lines, int index, UIReplacementItem item, List<Dictionary<string, string>> checks)
         {
             var prefabs = Evidence(checks, "PrefabReference");
@@ -338,6 +359,33 @@ namespace Xipin.UIAITools
         {
             value = value ?? "";
             return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+
+        static void WriteCsv(UIAIToolsProfile profile, IEnumerable<string> rows)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            File.WriteAllLines(path, new[] { UIReportFiles.ReplacementExecutionPlanHeader }.Concat(rows), new UTF8Encoding(true));
+        }
+
+        static string Row(string itemIndex, string action, string status, string oldAsset, string newAsset, string targetAtlas, string prefabRefs, string requiresManualConfirmation, string note, string risk)
+        {
+            return string.Join(",", new[] { itemIndex, action, status, oldAsset, newAsset, targetAtlas, prefabRefs, requiresManualConfirmation, note, risk }.Select(Csv));
+        }
+
+        static void ExpectRowsFailure(UIAIToolsProfile profile, string name, IEnumerable<string> rows, string expectedMessage)
+        {
+            WriteCsv(profile, rows);
+            try
+            {
+                ReadRows(profile);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI replacement execution plan contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI replacement execution plan contract sample did not fail: " + name);
         }
     }
 }
