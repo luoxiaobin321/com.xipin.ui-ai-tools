@@ -63,6 +63,12 @@ namespace Xipin.UIAITools
             var reportSections = lines.Select((line, index) => new { line, lineNumber = index + 1 })
                 .Where(section => section.line.StartsWith("## ", StringComparison.Ordinal))
                 .ToList();
+            var duplicate = reportSections.GroupBy(section => section.line).FirstOrDefault(group => sections.Contains(group.Key) && group.Count() > 1);
+            if (duplicate != null)
+            {
+                var section = duplicate.Skip(1).First();
+                throw new Exception($"{report} has duplicate section at line {section.lineNumber}: {section.line}");
+            }
             var count = Math.Min(reportSections.Count, sections.Length);
             for (var i = 0; i < count; i++)
             {
