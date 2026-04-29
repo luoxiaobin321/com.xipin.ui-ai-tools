@@ -47,7 +47,7 @@ UIReplacementHostApplyChecklistService.ValidateNoBlockingSteps(profile);
 | 字段 | 含义 |
 | --- | --- |
 | `ItemIndex` | 对应 `UIReplacementExecutionPlan.csv` 的替换项。 |
-| `Action` | 宿主执行动作，例如 `MoveNewAsset`、`ApplyPrefabReference`、`UpdateAtlas`、`UpdateAddress`、`VerifyAfterApply`。 |
+| `Action` | 宿主执行动作，只允许 `MoveNewAsset`、`ApplyPrefabReference`、`UpdateAtlas`、`UpdateAddress`、`VerifyAfterApply`。 |
 | `Status` | `Applied`、`Skipped`、`Failed` 或 `Verified`。 |
 | `OldAsset` | 旧资源路径。 |
 | `NewAsset` | 新资源路径。 |
@@ -56,7 +56,7 @@ UIReplacementHostApplyChecklistService.ValidateNoBlockingSteps(profile);
 | `Confirmation` | 宿主人工确认记录标识。 |
 | `Message` | 执行结果说明。 |
 
-包侧会校验 CSV 精确表头、非空结果行、`ItemIndex`、`Action`、状态、Applied/Verified 确认记录、Skipped/Failed 说明、Markdown 顶层标题、状态分布和执行后复验清单。与当前执行计划比对时，每条结果必须能反查到计划行，计划内的 `ApplyPrefabReference` 和 `VerifyAfterApply` 都必须有结果行覆盖；若执行计划仍有阻断步骤，结果只能记录 `Skipped`。
+包侧会校验 CSV 精确表头、非空结果行、`ItemIndex`、`Action` 白名单、状态、Applied/Verified 确认记录、Skipped/Failed 说明、Markdown 顶层标题、状态分布和执行后复验清单。与当前执行计划比对时，每条结果必须能反查到计划行，计划内的 `ApplyPrefabReference` 和 `VerifyAfterApply` 都必须有结果行覆盖；若执行计划仍有阻断步骤，结果只能记录 `Skipped`。
 
 测试宿主可用 `GenerateHostApplyBlockedResultSampleBatch` 从当前执行计划生成阻断样例结果，并用 `ValidateHostApplyBlockedResultSampleBatch` 读回逐行比对执行计划。它只写 `Skipped` 报告行并复用包侧汇总和校验，不移动资源、不覆盖 prefab、不修改图集。
 

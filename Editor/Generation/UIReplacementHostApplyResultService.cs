@@ -9,6 +9,7 @@ namespace Xipin.UIAITools
 {
     public static class UIReplacementHostApplyResultService
     {
+        static readonly HashSet<string> AllowedActions = new HashSet<string> { "MoveNewAsset", "ApplyPrefabReference", "UpdateAtlas", "UpdateAddress", "VerifyAfterApply" };
         static readonly HashSet<string> AllowedStatuses = new HashSet<string> { "Applied", "Skipped", "Failed", "Verified" };
 
         public static string GenerateSummary(UIAIToolsProfile profile)
@@ -101,6 +102,7 @@ namespace Xipin.UIAITools
                 ExpectFailure(profile, "empty_rows", null, "result rows are required");
                 ExpectFailure(profile, "bad_item_index", Row("x", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "bad"), "ItemIndex must be an integer");
                 ExpectFailure(profile, "missing_action", Row("0", "", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "bad"), "Action is required");
+                ExpectFailure(profile, "unknown_action", Row("0", "ApplyTypo", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "bad"), "invalid action");
                 ExpectFailure(profile, "bad_status", Row("0", "ApplyPrefabReference", "Done", "Assets/Old.png", "Assets/New.png", "", "", "QA-1", "bad"), "invalid status");
                 ExpectFailure(profile, "missing_confirmation", Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "", "", "", "bad"), "confirmation is required");
                 ExpectFailure(profile, "missing_skipped_message", Row("0", "ApplyPrefabReference", "Skipped", "Assets/Old.png", "Assets/New.png", "", "", "", ""), "skipped message is required");
@@ -131,6 +133,8 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement host apply result: ItemIndex must be an integer");
             if (string.IsNullOrEmpty(row["Action"]))
                 throw new Exception("Invalid UI replacement host apply result: Action is required");
+            if (!AllowedActions.Contains(row["Action"]))
+                throw new Exception("Invalid UI replacement host apply result: invalid action " + row["Action"]);
             if (!AllowedStatuses.Contains(row["Status"]))
                 throw new Exception("Invalid UI replacement host apply result: invalid status " + row["Status"]);
             if ((row["Status"] == "Applied" || row["Status"] == "Verified") && string.IsNullOrEmpty(row["Confirmation"]))
