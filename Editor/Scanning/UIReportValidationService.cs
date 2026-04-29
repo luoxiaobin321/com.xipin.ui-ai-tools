@@ -34,8 +34,10 @@ namespace Xipin.UIAITools
                 ExpectCsvFailure(root, "empty_header.csv", new[] { "A,", "1,2" }, "Invalid UI AI Tools CSV empty header");
                 ExpectCsvFailure(root, "column_count.csv", new[] { "A,B", "1" }, "Invalid UI AI Tools CSV column count");
                 ExpectCsvFailure(root, "bad_quote.csv", new[] { "A,B", "\"1,2" }, "Invalid UI AI Tools CSV quote");
+                ExpectCsvFailure(root, "multiline_quoted_value.csv", new[] { "A,B", "\"1", "2\",3" }, "Invalid UI AI Tools CSV quote");
                 ExpectCsvFailure(root, "quote_in_unquoted_value.csv", new[] { "A,B", "1\"2,3" }, "Invalid UI AI Tools CSV quote");
                 ExpectCsvFailure(root, "text_after_quote.csv", new[] { "A,B", "\"1\"2,3" }, "Invalid UI AI Tools CSV quote");
+                ExpectCsvFailure(root, "space_after_quote.csv", new[] { "A,B", "\"1\" ,3" }, "Invalid UI AI Tools CSV quote");
             }
             finally
             {
