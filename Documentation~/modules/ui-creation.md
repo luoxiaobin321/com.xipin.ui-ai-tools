@@ -127,7 +127,7 @@ UICreationLayoutDryRunService.Run(profile, layoutDraftJsonPath);
 UICreationLayoutDryRunService.ValidateNoErrors(profile);
 ```
 
-入口输出 `UICreationLayoutDryRun.csv` 和 `UICreationLayoutDryRunSummary.md`。验证入口会先复验 dry-run CSV 精确表头和行结构，再检查汇总 Markdown 的顶层标题结构；模板草稿通常会因为布局节点为空、资源需求仍是 `NeedsReview` 被 gate 阻断，补齐后再复跑。
+入口输出 `UICreationLayoutDryRun.csv` 和 `UICreationLayoutDryRunSummary.md`。验证入口会先复验 dry-run CSV 精确表头、行结构和 OK/Exists 路径证据，再检查汇总 Markdown 的顶层标题结构；模板草稿通常会因为布局节点为空、资源需求仍是 `NeedsReview` 被 gate 阻断，补齐后再复跑。
 
 ## 宿主生成前确认清单
 

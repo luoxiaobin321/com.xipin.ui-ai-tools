@@ -117,7 +117,10 @@ namespace Xipin.UIAITools
                 profile.logRoot = root;
                 WriteCsv(profile, new[]
                 {
-                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo")
+                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo"),
+                    Row("2", "TargetPrefab", "Info", "OK", "目标 prefab 不存在", "Assets/Art/UI/AI/Demo/Demo.prefab"),
+                    Row("3", "NodeAssetPath", "Info", "OK", "节点资源路径合法", "Assets/Art/UI/Icon.png"),
+                    Row("4", "AssetNeedPath", "Info", "OK", "资源需求路径合法", "Assets/Art/UI/Need.png")
                 });
                 ReadRows(profile);
                 ExpectRowsFailure(profile, "duplicate_dry_run_row", new[]
@@ -125,6 +128,26 @@ namespace Xipin.UIAITools
                     Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo"),
                     Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo")
                 }, "duplicate dry-run row");
+                ExpectRowsFailure(profile, "bad_target_folder_path", new[]
+                {
+                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Generated/Demo")
+                }, "TargetFolder path is invalid");
+                ExpectRowsFailure(profile, "bad_target_prefab_path", new[]
+                {
+                    Row("1", "TargetPrefab", "Info", "OK", "目标 prefab 不存在", "Generated/Demo.prefab")
+                }, "TargetPrefab path is invalid");
+                ExpectRowsFailure(profile, "bad_target_prefab_extension", new[]
+                {
+                    Row("1", "TargetPrefab", "Info", "OK", "目标 prefab 不存在", "Assets/Art/UI/AI/Demo/Demo.png")
+                }, "TargetPrefab must be .prefab");
+                ExpectRowsFailure(profile, "bad_node_asset_path", new[]
+                {
+                    Row("1", "NodeAssetPath", "Info", "OK", "节点资源路径合法", "Art/UI/Icon.png")
+                }, "NodeAssetPath path is invalid");
+                ExpectRowsFailure(profile, "bad_asset_need_path", new[]
+                {
+                    Row("1", "AssetNeedPath", "Info", "OK", "资源需求路径合法", "Assets/Art/UI/../Need.png")
+                }, "AssetNeedPath path is invalid");
             }
             finally
             {
@@ -156,6 +179,32 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI creation layout dry-run: invalid status " + row["Status"]);
             if (string.IsNullOrEmpty(row["Message"]))
                 throw new Exception("Invalid UI creation layout dry-run: Message is required");
+            ValidateEvidence(row);
+        }
+
+        static void ValidateEvidence(Dictionary<string, string> row)
+        {
+            var status = row["Status"];
+            var evidence = row["Evidence"];
+            if (row["Check"] == "TargetFolder" && status == "OK")
+                RequireAssetPath(evidence, "TargetFolder");
+            else if (row["Check"] == "TargetPrefab" && (status == "OK" || status == "Exists"))
+                RequireTargetPrefabPath(evidence);
+            else if ((row["Check"] == "NodeAssetPath" || row["Check"] == "AssetNeedPath") && status == "OK")
+                RequireAssetPath(evidence, row["Check"]);
+        }
+
+        static void RequireTargetPrefabPath(string path)
+        {
+            RequireAssetPath(path, "TargetPrefab");
+            if (!path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase))
+                throw new Exception("Invalid UI creation layout dry-run: TargetPrefab must be .prefab");
+        }
+
+        static void RequireAssetPath(string path, string label)
+        {
+            if (!ValidAssetPath(path))
+                throw new Exception($"Invalid UI creation layout dry-run: {label} path is invalid");
         }
 
         static void ValidateNoDuplicateRows(List<Dictionary<string, string>> rows)
