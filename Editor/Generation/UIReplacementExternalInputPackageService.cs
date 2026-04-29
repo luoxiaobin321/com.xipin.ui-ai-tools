@@ -1428,7 +1428,23 @@ namespace Xipin.UIAITools
             var package = JsonUtility.FromJson<ExternalInputPackage>(json);
             if (package == null || package.inputs == null || package.outputDirectories == null || package.referenceInputs == null)
                 throw new Exception("Invalid UI replacement external input package: " + path);
+            ValidateNoDuplicatePackageRows(package);
             return package;
+        }
+
+        static void ValidateNoDuplicatePackageRows(ExternalInputPackage package)
+        {
+            var duplicateDirectory = package.outputDirectories.GroupBy(row => row.path).FirstOrDefault(group => group.Count() > 1);
+            if (duplicateDirectory != null)
+                throw new Exception("Invalid UI replacement external input package: duplicate output directory " + duplicateDirectory.Key);
+
+            var duplicateReference = package.referenceInputs.GroupBy(row => new { row.referenceKind, row.path, row.itemIndices }).FirstOrDefault(group => group.Count() > 1);
+            if (duplicateReference != null)
+                throw new Exception($"Invalid UI replacement external input package: duplicate reference input {duplicateReference.Key.referenceKind} {duplicateReference.Key.path}");
+
+            var duplicateInput = package.inputs.GroupBy(row => new { row.inputKind, row.outputPath, row.itemIndices, row.sourceAction }).FirstOrDefault(group => group.Count() > 1);
+            if (duplicateInput != null)
+                throw new Exception($"Invalid UI replacement external input package: duplicate input {duplicateInput.Key.inputKind} {duplicateInput.Key.outputPath}");
         }
 
         static void ValidateSourceReports(UIAIToolsProfile profile)
