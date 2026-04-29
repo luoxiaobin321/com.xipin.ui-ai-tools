@@ -87,6 +87,26 @@ namespace Xipin.UIAITools
                 Require(report, row, "Path", "Name", "Guid", "SizeClass", "Kind", "Hash", "Advice", "Reason");
                 RequireInts(report, row, "Width", "Height", "PrefabCount", "OwnerCount", "SameHashCount");
             }
+            else if (report == UIReportFiles.AssetTriagePlan)
+            {
+                Require(report, row, "Action", "Risk", "Source", "Target", "Advice");
+                RequireInts(report, row, "Width", "Height", "PrefabCount");
+            }
+            else if (report == UIReportFiles.PrefabAtlasStats)
+            {
+                Require(report, row, "Prefab", "Owner");
+                RequireInts(report, row, "AtlasCount", "UITextureCount", "LargeTextureCount", "ImageCount");
+            }
+            else if (report == UIReportFiles.ACommonUsage)
+            {
+                Require(report, row, "Path", "Name", "Guid", "Hash", "Advice");
+                RequireInts(report, row, "Width", "Height", "PrefabCount", "OwnerCount");
+            }
+            else if (report == UIReportFiles.DuplicateImageReport)
+            {
+                Require(report, row, "Hash", "Paths", "Guids", "Advice");
+                RequireInts(report, row, "Count", "Width", "Height", "Bytes");
+            }
             else if (report == UIReportFiles.PrefabImageDetails)
             {
                 Require(report, row, "Prefab", "Image", "Kind", "Name", "Guid", "SizeClass", "Match");
@@ -121,6 +141,16 @@ namespace Xipin.UIAITools
             {
                 Require(report, row, "Prefab", "Owner", "MainIssue", "NextStep");
                 RequireInts(report, row, "PriorityScore", "ImageBatchGroups", "EstimatedBatchGroups", "BreakCount", "CrossAtlasBreaks", "LooseTextureBreaks", "TextBreaks", "MaterialBreaks", "CanvasBreaks", "AtlasCount", "UITextureCount", "LargeTextureCount");
+            }
+            else if (report == UIReportFiles.PrefabTextureSwitchPairs)
+            {
+                Require(report, row, "Prefab", "Owner", "Advice", "Reason", "PrevTexture", "Texture");
+                RequireInts(report, row, "Count", "FirstIndex");
+            }
+            else if (report == UIReportFiles.PrefabWhiteTextureBreaks)
+            {
+                Require(report, row, "Prefab", "Owner", "WhiteSide", "WhiteKind", "Reason", "Advice");
+                RequireInts(report, row, "Count", "FirstIndex");
             }
             else if (report == UIReportFiles.PrefabNullSpriteImages)
             {
