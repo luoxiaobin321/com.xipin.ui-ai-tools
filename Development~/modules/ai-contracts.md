@@ -27,7 +27,7 @@ provider 返回实际 `UIRedesignDraft` 后，`UIRedesignDraftService.SaveDraft`
 
 新增字段前先确认已有 provider 不能从这些字段推导。
 宿主 batch 入口也应复用这组字段，不另建一套命令行专用 DTO。
-`UIRedesignRequestValidation` 负责 request 边界字段校验；当前 Brief、草稿模板和 `SaveDraft` 都会用它阻断未出现在当前扫描报告里的 `sourcePrefabPath`，Brief 和草稿模板还会用它阻断非法 `outputFolder`。
+`UIRedesignRequestValidation` 负责 request 边界字段校验；当前 Brief、草稿模板和 `SaveDraft` 都会用它阻断未出现在当前扫描报告里的 `sourcePrefabPath`，Brief 和草稿模板还会用它阻断非法 `outputFolder`。`ValidateRedesignPackageContractBatch` 覆盖 source prefab 扫描报告边界和 outputFolder 路径边界。
 
 ## Draft 稳定字段
 

@@ -111,6 +111,21 @@ namespace Xipin.UIAITools
             ExpectFailure("output_folder_backslash", "Assets/ path", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets\\Art\\UI"));
             ExpectFailure("output_folder_parent_segment", "cannot contain ..", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets/Art/../UI"));
             ExpectFailure("output_folder_trailing_parent", "cannot contain ..", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets/Art/UI/.."));
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsRedesignRequestContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                var profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+                profile.logRoot = root;
+                WritePrefabOptimizationTargets(profile, "Assets/Bundle/Prefab/Valid.prefab");
+                UIRedesignRequestValidation.ValidateSourcePrefab(profile, "Assets/Bundle/Prefab/Valid.prefab", "contract");
+                ExpectFailure("source_prefab_missing", "Missing source prefab path", () => UIRedesignRequestValidation.ValidateSourcePrefab(profile, "", "contract"));
+                ExpectFailure("source_prefab_not_scanned", "not present in scan reports", () => UIRedesignRequestValidation.ValidateSourcePrefab(profile, "Assets/Bundle/Prefab/Missing.prefab", "contract"));
+            }
+            finally
+            {
+                Directory.Delete(root, true);
+            }
             Debug.Log("UI redesign package contract validation passed.");
         }
 
@@ -127,6 +142,30 @@ namespace Xipin.UIAITools
                 throw new Exception($"Unexpected UI redesign package contract failure for {name}: {exception.Message}");
             }
             throw new Exception("UI redesign package contract sample did not fail: " + name);
+        }
+
+        static void WritePrefabOptimizationTargets(UIAIToolsProfile profile, string prefab)
+        {
+            var row = string.Join(",", new[]
+            {
+                prefab,
+                "Owner",
+                "1",
+                "Issue",
+                "Next",
+                "1",
+                "1",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1",
+                "0",
+                "0"
+            });
+            File.WriteAllLines(UIReportFiles.GetPath(profile.logRoot, UIReportFiles.PrefabOptimizationTargets), new[] { UIReportFiles.PrefabOptimizationTargetsHeader, row }, new UTF8Encoding(true));
         }
 
         static string GenerateManifest(UIAIToolsProfile profile, UIRedesignRequest request, string brief, string draftJson, string sourceDraftJson, string executionPlan, string pendingInputs, string pendingInputReadiness, string externalInputPackage, string hostApplyChecklist)
