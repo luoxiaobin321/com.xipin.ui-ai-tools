@@ -73,6 +73,7 @@ namespace Xipin.UIAITools
             RequireManifestPath(lines, "- 宿主执行清单：", UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementHostApplyChecklist), "host apply checklist");
             UIReplacementPendingInputChecklistService.Validate(profile);
             UIReplacementPendingInputReadinessService.Validate(profile);
+            UIReplacementHostApplyChecklistService.Validate(profile);
             UIReplacementExternalInputPackageService.Validate(profile, request, ManifestPath(lines, "- Brief："), ManifestPath(lines, "- 草稿 JSON："));
 
             var dryRunRows = UIReplacementPlanDryRunService.ReadRows(profile);
