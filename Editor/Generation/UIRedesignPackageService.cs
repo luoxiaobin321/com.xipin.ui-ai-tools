@@ -76,7 +76,7 @@ namespace Xipin.UIAITools
             UIReplacementExternalInputPackageService.Validate(profile, request, ManifestPath(lines, "- Brief："), ManifestPath(lines, "- 草稿 JSON："));
 
             var dryRunRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPlanDryRun);
-            var executionRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            var executionRows = UIReplacementExecutionPlanService.ReadRows(profile);
             var readinessRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness);
             RequireDistribution(lines, dryRunRows, "Severity", UIReplacementPlanStatus.SeverityOrder);
             RequireDistribution(lines, executionRows, "Status", UIReplacementPlanStatus.StatusOrder);
@@ -109,7 +109,7 @@ namespace Xipin.UIAITools
             var dryRunSummary = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementPlanDryRunSummary);
             var executionPlanSummary = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementExecutionPlanSummary);
             var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPlanDryRun);
-            var executionRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementExecutionPlan);
+            var executionRows = UIReplacementExecutionPlanService.ReadRows(profile);
             var readinessRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReplacementPendingInputReadiness);
             var path = UIReportFiles.GetPath(profile.logRoot, $"UIRedesignPackage_{SafeName(request.sourcePrefabPath)}.md");
             var lines = new List<string>
@@ -265,7 +265,7 @@ namespace Xipin.UIAITools
         static void ValidateManifestSourceReports(UIAIToolsProfile profile)
         {
             UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPlanDryRun, UIReportFiles.ReplacementPlanDryRunHeader);
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementExecutionPlan, UIReportFiles.ReplacementExecutionPlanHeader);
+            UIReplacementExecutionPlanService.ReadRows(profile);
             UIReportValidationService.ValidateReport(profile, UIReportFiles.ReplacementPendingInputReadiness, UIReportFiles.ReplacementPendingInputReadinessHeader);
         }
 
