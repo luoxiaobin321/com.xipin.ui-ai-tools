@@ -52,8 +52,12 @@ namespace Xipin.UIAITools
             var newAssetPaths = new HashSet<string>();
             var first = UniqueNewAssetPath("Assets/Art/UI/AI/Demo", "Assets/Bundle/UIAtlas/A/icon.png", newAssetPaths);
             var second = UniqueNewAssetPath("Assets/Art/UI/AI/Demo", "Assets/Bundle/UIAtlas/B/icon.png", newAssetPaths);
+            var suffixCollision = UniqueNewAssetPath("Assets/Art/UI/AI/Demo", "Assets/Bundle/UIAtlas/C/icon_2.png", newAssetPaths);
+            var third = UniqueNewAssetPath("Assets/Art/UI/AI/Demo", "Assets/Bundle/UIAtlas/D/icon.png", newAssetPaths);
             Require(first == "Assets/Art/UI/AI/Demo/Images/icon.png", "first duplicate-name path");
             Require(second == "Assets/Art/UI/AI/Demo/Images/icon_2.png", "second duplicate-name path");
+            Require(suffixCollision == "Assets/Art/UI/AI/Demo/Images/icon_2_2.png", "suffix collision path");
+            Require(third == "Assets/Art/UI/AI/Demo/Images/icon_3.png", "third duplicate-name path");
             Debug.Log("UI redesign draft template contract validation passed.");
         }
 
