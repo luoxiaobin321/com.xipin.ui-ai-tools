@@ -5,7 +5,7 @@ CSV、JSON 和 Markdown 报告是包与宿主流程之间的契约。改文件�
 ## 修改规则
 
 - 核心 CSV 文件名和表头由 `UIReportFiles` 维护。
-- `UIReportValidationService` 负责核心 CSV batch 验证。
+- `UIReportValidationService` 负责核心 CSV batch 验证和 `UIReportFiles` 注册表契约自检。
 - 写出 CSV 后优先立即复验表头和行结构。
 - 宿主执行结果和宿主生成结果报告必须至少包含一行结果。
 - 宿主执行结果报告应能和当前 `UIReplacementExecutionPlan.csv` 按 `ItemIndex`、`Action`、资源路径、图集和 prefab 引用匹配。
@@ -77,6 +77,7 @@ CSV、JSON 和 Markdown 报告是包与宿主流程之间的契约。改文件�
 - 表头不能为空，列名不能为空且不能重复。
 - 每行列数必须和表头一致。
 - 未闭合引号、非字段开头引号和引号后追加文本都直接报带文件行号的异常。
+- `ValidateReportFilesContractBatch` 覆盖 CoreReports 不重复、每个核心 CSV 都有表头、表头列不为空且不重复。
 - `ValidateCsvContractBatch` 覆盖正向样例、重复表头、空表头、列数不一致和引号错误。
 
 ## JSON 规则
