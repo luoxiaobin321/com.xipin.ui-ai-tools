@@ -39,7 +39,35 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement plan dry-run: rows are required");
             foreach (var row in rows)
                 ValidateRow(row);
+            ValidateNoDuplicateRows(rows);
             return rows;
+        }
+
+        public static void ValidateContract()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "UIAIToolsReplacementPlanDryRunContract_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                var profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+                profile.logRoot = root;
+                WriteCsv(profile, new[]
+                {
+                    Row("0", "OldAssetExists", "Info", "OK", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "通过", "Assets/Old.png")
+                });
+                ReadRows(profile);
+                ExpectRowsFailure(profile, "duplicate_dry_run_row", new[]
+                {
+                    Row("0", "OldAssetExists", "Info", "OK", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "通过", "Assets/Old.png"),
+                    Row("0", "OldAssetExists", "Info", "OK", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "通过", "Assets/Old.png")
+                }, "duplicate dry-run row");
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
+            Debug.Log("UI replacement plan dry-run contract validation passed.");
         }
 
         public static string GenerateSummary(UIAIToolsProfile profile)
@@ -104,6 +132,20 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement plan dry-run: asset paths are required");
             if (string.IsNullOrEmpty(row["Message"]))
                 throw new Exception("Invalid UI replacement plan dry-run: Message is required");
+        }
+
+        static void ValidateNoDuplicateRows(List<Dictionary<string, string>> rows)
+        {
+            var duplicate = rows.GroupBy(row => new
+            {
+                ItemIndex = row["ItemIndex"],
+                Check = row["Check"],
+                OldAsset = row["OldAsset"],
+                NewAsset = row["NewAsset"],
+                TargetAtlas = row["TargetAtlas"]
+            }).FirstOrDefault(group => group.Count() > 1);
+            if (duplicate != null)
+                throw new Exception($"Invalid UI replacement plan dry-run: duplicate dry-run row for Item {duplicate.Key.ItemIndex} / {duplicate.Key.Check}");
         }
 
         static void AddItem(List<string> lines, UIAIToolsProfile profile, UIReplacementItem item, int index, List<Dictionary<string, string>> reuseRows, List<Dictionary<string, string>> detailRows)
@@ -200,6 +242,33 @@ namespace Xipin.UIAITools
         {
             value = value ?? "";
             return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+
+        static void WriteCsv(UIAIToolsProfile profile, IEnumerable<string> rows)
+        {
+            var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementPlanDryRun);
+            File.WriteAllLines(path, new[] { UIReportFiles.ReplacementPlanDryRunHeader }.Concat(rows), new UTF8Encoding(true));
+        }
+
+        static string Row(string itemIndex, string check, string severity, string status, string oldAsset, string newAsset, string targetAtlas, string message, string evidence)
+        {
+            return string.Join(",", new[] { itemIndex, check, severity, status, oldAsset, newAsset, targetAtlas, message, evidence }.Select(Csv));
+        }
+
+        static void ExpectRowsFailure(UIAIToolsProfile profile, string name, IEnumerable<string> rows, string expectedMessage)
+        {
+            WriteCsv(profile, rows);
+            try
+            {
+                ReadRows(profile);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI replacement plan dry-run contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI replacement plan dry-run contract sample did not fail: " + name);
         }
 
         static string Join(List<string> values)
