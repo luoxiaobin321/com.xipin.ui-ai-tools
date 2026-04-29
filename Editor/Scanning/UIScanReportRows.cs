@@ -67,6 +67,31 @@ namespace Xipin.UIAITools
                 WriteCsv(profile, UIReportFiles.PrefabOptimizationTargets, UIReportFiles.PrefabOptimizationTargetsHeader, new[] { row });
                 ReadPrefabOptimizationTargets(profile);
                 ExpectFailure(profile, "duplicate_prefab_optimization_target_row", UIReportFiles.PrefabOptimizationTargets, UIReportFiles.PrefabOptimizationTargetsHeader, new[] { row, row }, () => ReadPrefabOptimizationTargets(profile), "duplicate prefab optimization target row");
+
+                row = PrefabImageDetailsRow("Assets/Prefab/A.prefab", "Assets/Art/UI/Icon.png");
+                WriteCsv(profile, UIReportFiles.PrefabImageDetails, UIReportFiles.PrefabImageDetailsHeader, new[] { row });
+                ReadPrefabImageDetails(profile);
+                ExpectFailure(profile, "duplicate_prefab_image_detail_row", UIReportFiles.PrefabImageDetails, UIReportFiles.PrefabImageDetailsHeader, new[] { row, row }, () => ReadPrefabImageDetails(profile), "duplicate prefab image detail row");
+
+                row = PrefabAtlasBreakdownRow("Assets/Prefab/A.prefab", "Assets/Art/UI/UI.spriteatlasv2");
+                WriteCsv(profile, UIReportFiles.PrefabAtlasBreakdown, UIReportFiles.PrefabAtlasBreakdownHeader, new[] { row });
+                ReadPrefabAtlasBreakdown(profile);
+                ExpectFailure(profile, "duplicate_prefab_atlas_breakdown_row", UIReportFiles.PrefabAtlasBreakdown, UIReportFiles.PrefabAtlasBreakdownHeader, new[] { row, row }, () => ReadPrefabAtlasBreakdown(profile), "duplicate prefab atlas breakdown row");
+
+                row = PrefabBatchSequenceRow("Assets/Prefab/A.prefab", "1");
+                WriteCsv(profile, UIReportFiles.PrefabBatchSequence, UIReportFiles.PrefabBatchSequenceHeader, new[] { row });
+                ReadPrefabBatchSequence(profile);
+                ExpectFailure(profile, "duplicate_prefab_batch_sequence_row", UIReportFiles.PrefabBatchSequence, UIReportFiles.PrefabBatchSequenceHeader, new[] { row, row }, () => ReadPrefabBatchSequence(profile), "duplicate prefab batch sequence row");
+
+                row = PrefabBatchBreakRow("Assets/Prefab/A.prefab", "1");
+                WriteCsv(profile, UIReportFiles.PrefabBatchBreaks, UIReportFiles.PrefabBatchBreaksHeader, new[] { row });
+                ReadPrefabBatchBreaks(profile);
+                ExpectFailure(profile, "duplicate_prefab_batch_break_row", UIReportFiles.PrefabBatchBreaks, UIReportFiles.PrefabBatchBreaksHeader, new[] { row, row }, () => ReadPrefabBatchBreaks(profile), "duplicate prefab batch break row");
+
+                row = PrefabNullSpriteImageRow("Assets/Prefab/A.prefab", "Root/Icon");
+                WriteCsv(profile, UIReportFiles.PrefabNullSpriteImages, UIReportFiles.PrefabNullSpriteImagesHeader, new[] { row });
+                ReadPrefabNullSpriteImages(profile);
+                ExpectFailure(profile, "duplicate_prefab_null_sprite_image_row", UIReportFiles.PrefabNullSpriteImages, UIReportFiles.PrefabNullSpriteImagesHeader, new[] { row, row }, () => ReadPrefabNullSpriteImages(profile), "duplicate prefab null sprite image row");
             }
             finally
             {
@@ -147,27 +172,34 @@ namespace Xipin.UIAITools
 
         static void ValidateNoDuplicateRows(string report, List<Dictionary<string, string>> rows)
         {
-            var field = DuplicateRowField(report);
-            if (field == "")
+            var duplicate = rows.GroupBy(row => DuplicateRowKey(report, row)).FirstOrDefault(group => group.Key != "" && group.Count() > 1);
+            if (duplicate == null)
                 return;
-            var duplicate = rows.GroupBy(row => row[field]).FirstOrDefault(group => group.Count() > 1);
-            if (duplicate != null)
-                throw new Exception($"Invalid {report}: duplicate {DuplicateRowName(report)} for {duplicate.Key}");
+            throw new Exception($"Invalid {report}: duplicate {DuplicateRowName(report)} for {duplicate.Key}");
         }
 
-        static string DuplicateRowField(string report)
+        static string DuplicateRowKey(string report, Dictionary<string, string> row)
         {
             if (report == UIReportFiles.ReuseIndex ||
                 report == UIReportFiles.AssetTriageReport ||
                 report == UIReportFiles.TextureSizeReport ||
                 report == UIReportFiles.ACommonUsage ||
                 report == UIReportFiles.LooseTextureCandidates)
-                return "Path";
+                return row["Path"];
             if (report == UIReportFiles.PrefabAtlasStats ||
                 report == UIReportFiles.PrefabDrawCallRisk ||
                 report == UIReportFiles.PrefabBatchBreakSummary ||
                 report == UIReportFiles.PrefabOptimizationTargets)
-                return "Prefab";
+                return row["Prefab"];
+            if (report == UIReportFiles.PrefabImageDetails)
+                return row["Prefab"] + " " + row["Image"];
+            if (report == UIReportFiles.PrefabAtlasBreakdown)
+                return row["Prefab"] + " " + row["Atlas"];
+            if (report == UIReportFiles.PrefabBatchSequence ||
+                report == UIReportFiles.PrefabBatchBreaks)
+                return row["Prefab"] + " " + row["Index"];
+            if (report == UIReportFiles.PrefabNullSpriteImages)
+                return row["Prefab"] + " " + row["Path"];
             return "";
         }
 
@@ -189,6 +221,16 @@ namespace Xipin.UIAITools
                 return "prefab batch break summary row";
             if (report == UIReportFiles.PrefabOptimizationTargets)
                 return "prefab optimization target row";
+            if (report == UIReportFiles.PrefabImageDetails)
+                return "prefab image detail row";
+            if (report == UIReportFiles.PrefabAtlasBreakdown)
+                return "prefab atlas breakdown row";
+            if (report == UIReportFiles.PrefabBatchSequence)
+                return "prefab batch sequence row";
+            if (report == UIReportFiles.PrefabBatchBreaks)
+                return "prefab batch break row";
+            if (report == UIReportFiles.PrefabNullSpriteImages)
+                return "prefab null sprite image row";
             return "asset triage row";
         }
 
@@ -506,6 +548,108 @@ namespace Xipin.UIAITools
                 "1",
                 "1",
                 "0"
+            });
+        }
+
+        static string PrefabImageDetailsRow(string prefab, string image)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(prefab),
+                Csv("Owner"),
+                Csv(image),
+                Csv("UI"),
+                Csv("Image"),
+                Csv("Icon"),
+                Csv("guid"),
+                "64",
+                "64",
+                Csv("Small"),
+                Csv("Assets/Art/UI/UI.spriteatlasv2"),
+                Csv("UI"),
+                Csv(""),
+                Csv("hash"),
+                Csv("Match")
+            });
+        }
+
+        static string PrefabAtlasBreakdownRow(string prefab, string atlas)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(prefab),
+                Csv("Owner"),
+                Csv(atlas),
+                Csv("UI"),
+                "1",
+                Csv("Match"),
+                Csv("Assets/Art/UI/Icon.png")
+            });
+        }
+
+        static string PrefabBatchSequenceRow(string prefab, string index)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(prefab),
+                Csv("Owner"),
+                index,
+                Csv("Root/Icon"),
+                Csv("Image"),
+                Csv("Image"),
+                Csv("AtlasImage"),
+                Csv("RootCanvas"),
+                Csv("Atlas:UI"),
+                Csv("Default"),
+                Csv("Atlas:UI|Default"),
+                Csv("Assets/Art/UI/Icon.png"),
+                Csv("Assets/Art/UI/UI.spriteatlasv2")
+            });
+        }
+
+        static string PrefabBatchBreakRow(string prefab, string index)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(prefab),
+                Csv("Owner"),
+                index,
+                Csv("Root/A"),
+                Csv("Root/B"),
+                Csv("Image"),
+                Csv("Image"),
+                Csv("AtlasImage"),
+                Csv("AtlasImage"),
+                Csv("Texture"),
+                Csv("Atlas:A"),
+                Csv("Atlas:B"),
+                Csv("Default"),
+                Csv("Default"),
+                Csv("RootCanvas"),
+                Csv("RootCanvas"),
+                Csv("Review")
+            });
+        }
+
+        static string PrefabNullSpriteImageRow(string prefab, string path)
+        {
+            return string.Join(",", new[]
+            {
+                Csv(prefab),
+                Csv("Owner"),
+                Csv(path),
+                Csv("Icon"),
+                "64",
+                "64",
+                Csv("1"),
+                Csv("True"),
+                Csv("True"),
+                Csv("False"),
+                Csv("Image"),
+                Csv("Root"),
+                Csv("Transform"),
+                Csv("Review"),
+                Csv("same")
             });
         }
 
