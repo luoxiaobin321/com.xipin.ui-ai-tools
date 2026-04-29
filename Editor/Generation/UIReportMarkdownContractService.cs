@@ -31,6 +31,7 @@ namespace Xipin.UIAITools
             }, "## 目标", "## 状态分布", "## 下一步");
             RequireFailure("missing", new[] { "## A" }, "markdown contract self-test is missing section: ## B");
             RequireFailure("unexpected", new[] { "## A", "## C" }, "markdown contract self-test has unexpected section at line 2: ## C");
+            RequireFailure("duplicate", new[] { "## A", "## B", "## B" }, "markdown contract self-test has unexpected section at line 3: ## B");
             RequireFailure("out-of-order", new[] { "## B", "## A" }, "markdown contract self-test section is out of order at line 1: expected ## A, found ## B");
             Debug.Log("UI report markdown section contract validation passed.");
         }
