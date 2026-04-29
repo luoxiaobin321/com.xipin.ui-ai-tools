@@ -9,6 +9,8 @@ namespace Xipin.UIAITools
 {
     public static class UICreationHostGenerateResultService
     {
+        const string PanelComponentId = "Component00000001";
+        const string TextComponentId = "Component00000002";
         static readonly HashSet<string> AllowedActions = new HashSet<string> { "CreatePrefab", "CreateTemplateNode", "InstantiateComponent", "ApplyLayout", "ApplyText", "ApplyAssetReference", "ApplyBindingPlaceholder", "VerifyAfterGenerate" };
         static readonly HashSet<string> AllowedStatuses = new HashSet<string> { "Applied", "Skipped", "Failed", "Verified" };
 
@@ -46,6 +48,7 @@ namespace Xipin.UIAITools
             var draft = UILayoutDraftTemplateService.LoadDraft(layoutDraftJsonPath);
             var rows = ReadRows(profile);
             ValidateSummary(profile, rows);
+            UICreationHostGenerateChecklistService.ValidateNoBlockingSteps(profile);
             var expectedTargetPrefab = TargetPrefabPath(draft);
             var actualTargetPrefab = TargetPrefab(rows);
             if (actualTargetPrefab != expectedTargetPrefab)
@@ -108,50 +111,53 @@ namespace Xipin.UIAITools
                 WriteCsv(profile, new[]
                 {
                     Row("0", "CreatePrefab", "Applied", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "created"),
-                    Row("1", "CreateTemplateNode", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Panel.png", "", "QA-1", "created"),
-                    Row("2", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("3", "ApplyAssetReference", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Panel.png", "", "QA-1", "asset"),
-                    Row("4", "ApplyBindingPlaceholder", "Skipped", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "", "empty"),
-                    Row("5", "InstantiateComponent", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Text.prefab", "", "QA-1", "created"),
-                    Row("6", "ApplyLayout", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("7", "ApplyText", "Skipped", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "", "empty"),
+                    Row("1", "CreateTemplateNode", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Panel.png", "", "QA-1", "created"),
+                    Row("2", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("3", "ApplyAssetReference", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Panel.png", "", "QA-1", "asset"),
+                    Row("4", "ApplyBindingPlaceholder", "Skipped", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "", "empty"),
+                    Row("5", "InstantiateComponent", "Applied", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Text.prefab", "", "QA-1", "created"),
+                    Row("6", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("7", "ApplyText", "Skipped", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "", "empty"),
                     Row("8", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
                 });
                 GenerateSummary(profile, "Demo", 2);
                 Validate(profile);
                 ValidateTargetPrefab(profile, "Assets/Art/UI/AI/Demo/Demo.prefab");
                 var draftJsonPath = WriteDraftJson(profile, "Demo", "Assets/Art/UI/AI/Demo");
+                WriteComponentCandidateReports(profile);
+                UICreationLayoutDryRunService.Run(profile, draftJsonPath);
+                UICreationHostGenerateChecklistService.Generate(profile, draftJsonPath);
                 ValidateAgainstLayoutDraft(profile, draftJsonPath);
                 ExpectTargetFailure(profile, "Assets/Art/UI/AI/Other/Other.prefab", "TargetPrefab mismatch");
                 ExpectDraftFailure(profile, WriteDraftJson(profile, "Other", "Assets/Art/UI/AI/Other"), "TargetPrefab mismatch");
-                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "MissingNode", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
+                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "MissingNode", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
                 GenerateSummary(profile, "Demo", 1);
                 ExpectDraftFailure(profile, draftJsonPath, "unknown NodeId");
-                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "Root", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
+                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "Root", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
                 GenerateSummary(profile, "Demo", 1);
                 ExpectDraftFailure(profile, draftJsonPath, "ComponentId mismatch");
-                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
+                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
                 GenerateSummary(profile, "Demo", 1);
                 ExpectDraftFailure(profile, draftJsonPath, "missing NodeId");
                 WriteCsv(profile, new[]
                 {
-                    Row("0", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("1", "ApplyText", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "title"),
+                    Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("1", "ApplyText", "Applied", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "title"),
                     Row("2", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
                 });
                 GenerateSummary(profile, "Demo", 2);
                 ExpectDraftFailure(profile, draftJsonPath, "missing ApplyLayout Title");
                 WriteCsv(profile, new[]
                 {
-                    Row("0", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("1", "ApplyLayout", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout")
+                    Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("1", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout")
                 });
                 GenerateSummary(profile, "Demo", 2);
                 ExpectDraftFailure(profile, draftJsonPath, "missing VerifyAfterGenerate");
                 WriteCsv(profile, new[]
                 {
-                    Row("0", "ApplyLayout", "Applied", "Root", "builtin:Panel", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("1", "ApplyLayout", "Applied", "Title", "builtin:Text", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("1", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
                     Row("2", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
                 });
                 GenerateSummary(profile, "Demo", 2);
@@ -164,7 +170,7 @@ namespace Xipin.UIAITools
                 ExpectFailure(profile, "bad_status", Row("0", "CreatePrefab", "Done", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "invalid status");
                 ExpectFailure(profile, "missing_target_prefab", Row("0", "CreatePrefab", "Applied", "", "", "", "", "", "QA-1", "bad"), "TargetPrefab is required");
                 ExpectFailure(profile, "missing_node_reference", Row("0", "ApplyText", "Skipped", "", "", "Assets/Demo.prefab", "", "", "", "empty"), "node action requires NodeId and ComponentId");
-                ExpectFailure(profile, "target_action_with_node", Row("0", "VerifyAfterGenerate", "Verified", "Title", "builtin:Text", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "target action must not reference NodeId or ComponentId");
+                ExpectFailure(profile, "target_action_with_node", Row("0", "VerifyAfterGenerate", "Verified", "Title", TextComponentId, "Assets/Demo.prefab", "", "", "QA-1", "bad"), "target action must not reference NodeId or ComponentId");
                 ExpectRowsFailure(profile, "inconsistent_target_prefab", new[]
                 {
                     Row("0", "CreatePrefab", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "created"),
@@ -298,9 +304,44 @@ namespace Xipin.UIAITools
         static string WriteDraftJson(UIAIToolsProfile profile, string name, string targetFolder)
         {
             var path = UIReportFiles.GetPath(profile.logRoot, "UICreationHostGenerateResultContractDraft_" + name + ".json");
-            var json = "{\"root\":{\"name\":\"" + name + "\",\"uiType\":\"Dialog\",\"targetFolder\":\"" + targetFolder + "\",\"referenceResolution\":\"1080x1920\",\"safeAreaPolicy\":\"\"},\"nodes\":[{\"nodeId\":\"Root\",\"parentId\":\"\",\"name\":\"Root\",\"componentRole\":\"Panel\",\"componentId\":\"builtin:Panel\",\"anchor\":\"stretch_full\",\"position\":\"0,0\",\"size\":\"1080x1920\"},{\"nodeId\":\"Title\",\"parentId\":\"Root\",\"name\":\"Title\",\"componentRole\":\"Text\",\"componentId\":\"builtin:Text\",\"anchor\":\"top_center\",\"position\":\"0,-80\",\"size\":\"520x80\"}],\"assets\":[],\"interactions\":[],\"risks\":[],\"requiresConfirmation\":true}";
+            var json = "{\"root\":{\"name\":\"" + name + "\",\"uiType\":\"Dialog\",\"targetFolder\":\"" + targetFolder + "\",\"referenceResolution\":\"1080x1920\",\"safeAreaPolicy\":\"\"},\"nodes\":[{\"nodeId\":\"Root\",\"parentId\":\"\",\"name\":\"Root\",\"componentRole\":\"Panel\",\"componentId\":\"" + PanelComponentId + "\",\"anchor\":\"stretch_full\",\"position\":\"0,0\",\"size\":\"1080x1920\"},{\"nodeId\":\"Title\",\"parentId\":\"Root\",\"name\":\"Title\",\"componentRole\":\"Text\",\"componentId\":\"" + TextComponentId + "\",\"anchor\":\"top_center\",\"position\":\"0,-80\",\"size\":\"520x80\",\"text\":\"Demo Title\"}],\"assets\":[],\"interactions\":[],\"risks\":[],\"requiresConfirmation\":true}";
             File.WriteAllText(path, json, new UTF8Encoding(true));
             return path;
+        }
+
+        static void WriteComponentCandidateReports(UIAIToolsProfile profile)
+        {
+            File.WriteAllLines(UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateIndex), new[]
+            {
+                UIReportFiles.ComponentCandidateIndexHeader,
+                CandidateRow(PanelComponentId, "Panel", "Assets/Panel.png", "Assets/Demo.prefab#Root"),
+                CandidateRow(TextComponentId, "Text", "Assets/Text.prefab", "Assets/Demo.prefab#Title")
+            }, new UTF8Encoding(true));
+            File.WriteAllLines(UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateReview), new[]
+            {
+                UIReportFiles.ComponentCandidateReviewHeader,
+                ReviewRow(PanelComponentId, "Panel", "Assets/Panel.png", "Assets/Demo.prefab#Root", "Assets/Components/Panel.prefab"),
+                ReviewRow(TextComponentId, "Text", "Assets/Text.prefab", "Assets/Demo.prefab#Title", "Assets/Components/Text.prefab")
+            }, new UTF8Encoding(true));
+            File.WriteAllLines(UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateIndexSummary), new[]
+            {
+                "# UI 组件候选索引",
+                "",
+                "## 角色分布",
+                "## 高频候选",
+                "## Button 复核队列",
+                "## 使用方式"
+            }, new UTF8Encoding(true));
+        }
+
+        static string CandidateRow(string componentId, string role, string imageAsset, string sampleNode)
+        {
+            return string.Join(",", new[] { componentId, role, "Image", "Image", "Sprite", imageAsset, "", "1", "1", "Assets/Demo.prefab", sampleNode, "contract" }.Select(Csv));
+        }
+
+        static string ReviewRow(string componentId, string role, string imageAsset, string sampleNode, string componentPrefabPath)
+        {
+            return string.Join(",", new[] { componentId, role, "Candidate", "Approved", "1", "1", imageAsset, "", "Assets/Demo.prefab", sampleNode, componentPrefabPath, "", "normal", "contract", "QA", "approved" }.Select(Csv));
         }
 
         static string Row(string itemIndex, string action, string status, string nodeId, string componentId, string targetPrefab, string assetPath, string binding, string confirmation, string message)
