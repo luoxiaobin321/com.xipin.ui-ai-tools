@@ -103,6 +103,32 @@ namespace Xipin.UIAITools
             Debug.Log($"UI redesign package manifest validation passed: {path}");
         }
 
+        public static void ValidateContract()
+        {
+            UIRedesignRequestValidation.ValidateOutputFolder("");
+            UIRedesignRequestValidation.ValidateOutputFolder("Assets/Art/UI/AI/Demo");
+            ExpectFailure("output_folder_relative", "Assets/ path", () => UIRedesignRequestValidation.ValidateOutputFolder("Art/UI/AI/Demo"));
+            ExpectFailure("output_folder_backslash", "Assets/ path", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets\\Art\\UI"));
+            ExpectFailure("output_folder_parent_segment", "cannot contain ..", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets/Art/../UI"));
+            ExpectFailure("output_folder_trailing_parent", "cannot contain ..", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets/Art/UI/.."));
+            Debug.Log("UI redesign package contract validation passed.");
+        }
+
+        static void ExpectFailure(string name, string expectedMessage, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI redesign package contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI redesign package contract sample did not fail: " + name);
+        }
+
         static string GenerateManifest(UIAIToolsProfile profile, UIRedesignRequest request, string brief, string draftJson, string sourceDraftJson, string executionPlan, string pendingInputs, string pendingInputReadiness, string externalInputPackage, string hostApplyChecklist)
         {
             ValidateManifestSourceReports(profile);
