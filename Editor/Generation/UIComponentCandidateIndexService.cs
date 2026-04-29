@@ -12,7 +12,7 @@ namespace Xipin.UIAITools
         public static string Generate(UIAIToolsProfile profile, UIControlCatalog catalog)
         {
             UIReportValidationService.Validate(profile);
-            var rows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabBatchSequence);
+            var rows = UIScanReportRows.ReadPrefabBatchSequence(profile);
             var lines = new List<string> { UIReportFiles.ComponentCandidateIndexHeader };
             var count = 0;
             foreach (var group in rows.GroupBy(r => BuildCandidateKey(catalog, r))

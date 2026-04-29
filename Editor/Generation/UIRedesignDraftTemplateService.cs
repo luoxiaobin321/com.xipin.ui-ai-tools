@@ -16,8 +16,8 @@ namespace Xipin.UIAITools
             UIRedesignRequestValidation.ValidateSourcePrefab(profile, prefab, "draft template");
             UIRedesignRequestValidation.ValidateOutputFolder(request.outputFolder);
 
-            var details = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabImageDetails).Where(r => r["Prefab"] == prefab).ToList();
-            var loose = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.LooseTextureCandidates).Where(r => r["Prefabs"].Contains(prefab)).ToList();
+            var details = UIScanReportRows.ReadPrefabImageDetails(profile).Where(r => r["Prefab"] == prefab).ToList();
+            var loose = UIScanReportRows.ReadLooseTextureCandidates(profile).Where(r => r["Prefabs"].Contains(prefab)).ToList();
             var outputFolder = OutputFolder(request, prefab);
             var draft = new UIRedesignDraft
             {

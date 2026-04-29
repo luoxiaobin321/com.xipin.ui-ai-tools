@@ -9,8 +9,7 @@ namespace Xipin.UIAITools
         {
             if (string.IsNullOrEmpty(sourcePrefabPath))
                 throw new Exception($"Missing source prefab path for UI redesign {context}.");
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.PrefabOptimizationTargets, UIReportFiles.PrefabOptimizationTargetsHeader);
-            var targets = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabOptimizationTargets);
+            var targets = UIScanReportRows.ReadPrefabOptimizationTargets(profile);
             if (!targets.Any(r => r["Prefab"] == sourcePrefabPath))
                 throw new Exception("UI prefab is not present in scan reports: " + sourcePrefabPath);
         }

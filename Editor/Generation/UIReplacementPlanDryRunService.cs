@@ -17,8 +17,8 @@ namespace Xipin.UIAITools
         {
             UIReportValidationService.Validate(profile);
             var draft = UIRedesignDraftService.LoadDraft(draftJsonPath);
-            var reuseRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReuseIndex);
-            var detailRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabImageDetails);
+            var reuseRows = UIScanReportRows.ReadReuseIndex(profile);
+            var detailRows = UIScanReportRows.ReadPrefabImageDetails(profile);
             var lines = new List<string> { UIReportFiles.ReplacementPlanDryRunHeader };
             for (int i = 0; i < draft.replacementPlan.items.Count; i++)
                 AddItem(lines, profile, draft.replacementPlan.items[i], i, reuseRows, detailRows);

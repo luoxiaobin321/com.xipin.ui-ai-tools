@@ -59,7 +59,7 @@ namespace Xipin.UIAITools
                 throw new Exception($"UI replacement external input package item count mismatch: {package.inputs.Count}->{expectedInputs.Count}");
             foreach (var expected in expectedInputs)
                 RequireInput(package.inputs, expected);
-            var reuseRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReuseIndex);
+            var reuseRows = UIScanReportRows.ReadReuseIndex(profile);
             foreach (var input in package.inputs)
                 RequireInputDerivedFields(input, reuseRows);
             RequireOutputDirectories(package.outputDirectories, OutputDirectories(package.inputs));
@@ -106,7 +106,7 @@ namespace Xipin.UIAITools
         static List<ExternalInput> Inputs(UIAIToolsProfile profile)
         {
             var rows = UIReplacementPendingInputReadinessService.ReadRows(profile);
-            var reuseRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReuseIndex);
+            var reuseRows = UIScanReportRows.ReadReuseIndex(profile);
             return rows.Select(row => new ExternalInput
             {
                 inputKind = row["InputKind"],
@@ -1434,7 +1434,7 @@ namespace Xipin.UIAITools
         static void ValidateSourceReports(UIAIToolsProfile profile)
         {
             UIReplacementPendingInputReadinessService.Validate(profile);
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReuseIndex, UIReportFiles.ReuseIndexHeader);
+            UIScanReportRows.ReadReuseIndex(profile);
         }
 
         static void RequireSummarySections(string[] lines)

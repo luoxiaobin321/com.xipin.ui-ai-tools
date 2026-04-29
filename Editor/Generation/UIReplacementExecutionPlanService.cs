@@ -165,10 +165,9 @@ namespace Xipin.UIAITools
 
         static string GenerateSummary(UIAIToolsProfile profile, UIRedesignDraft draft)
         {
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ReuseIndex, UIReportFiles.ReuseIndexHeader);
             var dryRunRows = UIReplacementPlanDryRunService.ReadRows(profile);
             var planRows = ReadRows(profile);
-            var reuseRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReuseIndex);
+            var reuseRows = UIScanReportRows.ReadReuseIndex(profile);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ReplacementExecutionPlanSummary);
             var lines = new List<string>
             {

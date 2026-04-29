@@ -14,13 +14,13 @@ namespace Xipin.UIAITools
         {
             UIReportValidationService.Validate(profile);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.Summary);
-            var triage = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.AssetTriageReport);
-            var reuse = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReuseIndex);
-            var loose = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.LooseTextureCandidates);
-            var targets = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabOptimizationTargets);
-            var breaks = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabBatchBreaks);
-            var nullSprites = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabNullSpriteImages);
-            var textureSizes = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.TextureSizeReport);
+            var triage = UIScanReportRows.ReadAssetTriage(profile);
+            var reuse = UIScanReportRows.ReadReuseIndex(profile);
+            var loose = UIScanReportRows.ReadLooseTextureCandidates(profile);
+            var targets = UIScanReportRows.ReadPrefabOptimizationTargets(profile);
+            var breaks = UIScanReportRows.ReadPrefabBatchBreaks(profile);
+            var nullSprites = UIScanReportRows.ReadPrefabNullSpriteImages(profile);
+            var textureSizes = UIScanReportRows.ReadTextureSizes(profile);
             var lines = new List<string>
             {
                 "# UI AI Tools 扫描摘要",
@@ -52,15 +52,15 @@ namespace Xipin.UIAITools
         {
             UIReportValidationService.Validate(profile);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.PanelFocus);
-            var targets = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabOptimizationTargets)
+            var targets = UIScanReportRows.ReadPrefabOptimizationTargets(profile)
                 .OrderByDescending(r => Int(r, "PriorityScore"))
                 .ThenBy(r => r["Prefab"])
                 .Take(10)
                 .ToList();
-            var risks = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabDrawCallRisk).ToDictionary(r => r["Prefab"]);
-            var summaries = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabBatchBreakSummary).ToDictionary(r => r["Prefab"]);
-            var loose = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.LooseTextureCandidates);
-            var nullSprites = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabNullSpriteImages);
+            var risks = UIScanReportRows.ReadPrefabDrawCallRisk(profile).ToDictionary(r => r["Prefab"]);
+            var summaries = UIScanReportRows.ReadPrefabBatchBreakSummary(profile).ToDictionary(r => r["Prefab"]);
+            var loose = UIScanReportRows.ReadLooseTextureCandidates(profile);
+            var nullSprites = UIScanReportRows.ReadPrefabNullSpriteImages(profile);
             var lines = new List<string>
             {
                 "# UI 面板实测聚焦清单",

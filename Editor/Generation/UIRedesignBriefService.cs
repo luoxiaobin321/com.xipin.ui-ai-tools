@@ -19,18 +19,18 @@ namespace Xipin.UIAITools
             if (string.IsNullOrEmpty(request.sourcePreviewPath))
                 request.sourcePreviewPath = UIPrefabBaselineScreenshotService.Capture(profile, prefab);
 
-            var targets = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabOptimizationTargets);
-            var risks = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabDrawCallRisk);
-            var summaries = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabBatchBreakSummary);
+            var targets = UIScanReportRows.ReadPrefabOptimizationTargets(profile);
+            var risks = UIScanReportRows.ReadPrefabDrawCallRisk(profile);
+            var summaries = UIScanReportRows.ReadPrefabBatchBreakSummary(profile);
             var target = RequiredPrefabRow(targets, prefab);
             var risk = RequiredPrefabRow(risks, prefab);
             var summary = RequiredPrefabRow(summaries, prefab);
-            var details = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabImageDetails).Where(r => r["Prefab"] == prefab).ToList();
-            var atlases = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabAtlasBreakdown).Where(r => r["Prefab"] == prefab).ToList();
-            var loose = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.LooseTextureCandidates).Where(r => r["Prefabs"].Contains(prefab)).ToList();
-            var nullSprites = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.PrefabNullSpriteImages).Where(r => r["Prefab"] == prefab).ToList();
+            var details = UIScanReportRows.ReadPrefabImageDetails(profile).Where(r => r["Prefab"] == prefab).ToList();
+            var atlases = UIScanReportRows.ReadPrefabAtlasBreakdown(profile).Where(r => r["Prefab"] == prefab).ToList();
+            var loose = UIScanReportRows.ReadLooseTextureCandidates(profile).Where(r => r["Prefabs"].Contains(prefab)).ToList();
+            var nullSprites = UIScanReportRows.ReadPrefabNullSpriteImages(profile).Where(r => r["Prefab"] == prefab).ToList();
             var detailImages = new HashSet<string>(details.Select(r => r["Image"]));
-            var reuseRows = UIReportCsv.ReadRows(profile.logRoot, UIReportFiles.ReuseIndex).Where(r => detailImages.Contains(r["Path"]) && r["Advice"] != "功能内使用，保留当前归属").ToList();
+            var reuseRows = UIScanReportRows.ReadReuseIndex(profile).Where(r => detailImages.Contains(r["Path"]) && r["Advice"] != "功能内使用，保留当前归属").ToList();
             var path = UIReportFiles.GetPath(profile.logRoot, $"UIRedesignBrief_{SafeName(prefab)}.md");
             var lines = new List<string>
             {
