@@ -28,7 +28,7 @@ UIImageSearchService.SearchReuseByImageBatch(profile, catalog);
 
 ## 输出
 
-结果写入 `UIReuseSearchResults.csv`，写出后会立即复验表头和 CSV 行结构。核心字段：
+结果写入 `UIReuseSearchResults.csv`，写出后会立即复验表头、CSV 行结构、候选资源路径、图集路径和 prefab 引用路径。核心字段：
 
 | 字段 | 含义 |
 | --- | --- |

@@ -30,14 +30,34 @@ namespace Xipin.UIAITools
                 profile.logRoot = root;
                 WriteCsv(profile, new[]
                 {
-                    Row("Assets/Query.png", "Assets/Art/UI/Old.png", "Old", "guid", "128", "128", "0.95", "Small", "Image", "", "UI", "1", "1", "Owner", "Prefab#Node", "", "Reuse", "same")
+                    Row("Logs/Query.png", "Assets/Art/UI/Old.png", "Old", "guid", "128", "128", "0.95", "Small", "Image", "Assets/Atlas.spriteatlasv2", "UI", "1", "1", "Owner", "Assets/Prefab/A.prefab;Assets/Prefab/B.prefab;...", "", "Reuse", "same")
                 });
                 ReadRows(profile);
                 ExpectRowsFailure(profile, "duplicate_reuse_search_row", new[]
                 {
-                    Row("Assets/Query.png", "Assets/Art/UI/Old.png", "Old", "guid", "128", "128", "0.95", "Small", "Image", "", "UI", "1", "1", "Owner", "Prefab#Node", "", "Reuse", "same"),
-                    Row("Assets/Query.png", "Assets/Art/UI/Old.png", "Old", "guid", "128", "128", "0.95", "Small", "Image", "", "UI", "1", "1", "Owner", "Prefab#Node", "", "Reuse", "same")
+                    Row("Logs/Query.png", "Assets/Art/UI/Old.png", "Old", "guid", "128", "128", "0.95", "Small", "Image", "", "UI", "1", "1", "Owner", "Assets/Prefab/A.prefab", "", "Reuse", "same"),
+                    Row("Logs/Query.png", "Assets/Art/UI/Old.png", "Old", "guid", "128", "128", "0.95", "Small", "Image", "", "UI", "1", "1", "Owner", "Assets/Prefab/A.prefab", "", "Reuse", "same")
                 }, "duplicate reuse search result row");
+                ExpectRowsFailure(profile, "query_extension", new[]
+                {
+                    Row("Logs/Query.gif", "Assets/Art/UI/Old.png", "Old", "guid", "128", "128", "0.95", "Small", "Image", "", "UI", "1", "1", "Owner", "Assets/Prefab/A.prefab", "", "Reuse", "same")
+                }, "Query must be png/jpg/jpeg");
+                ExpectRowsFailure(profile, "result_path", new[]
+                {
+                    Row("Logs/Query.png", "Art/UI/Old.png", "Old", "guid", "128", "128", "0.95", "Small", "Image", "", "UI", "1", "1", "Owner", "Assets/Prefab/A.prefab", "", "Reuse", "same")
+                }, "Path path is invalid");
+                ExpectRowsFailure(profile, "result_extension", new[]
+                {
+                    Row("Logs/Query.png", "Assets/Art/UI/Old.psd", "Old", "guid", "128", "128", "0.95", "Small", "Image", "", "UI", "1", "1", "Owner", "Assets/Prefab/A.prefab", "", "Reuse", "same")
+                }, "Path must be png/jpg/jpeg");
+                ExpectRowsFailure(profile, "atlas_extension", new[]
+                {
+                    Row("Logs/Query.png", "Assets/Art/UI/Old.png", "Old", "guid", "128", "128", "0.95", "Small", "Image", "Assets/Atlas.png", "UI", "1", "1", "Owner", "Assets/Prefab/A.prefab", "", "Reuse", "same")
+                }, "Atlas must be .spriteatlasv2");
+                ExpectRowsFailure(profile, "prefab_refs_path", new[]
+                {
+                    Row("Logs/Query.png", "Assets/Art/UI/Old.png", "Old", "guid", "128", "128", "0.95", "Small", "Image", "", "UI", "1", "1", "Owner", "Assets/Prefab/A.prefab;Prefab.prefab", "", "Reuse", "same")
+                }, "PrefabRefs path is invalid");
             }
             finally
             {
@@ -50,6 +70,15 @@ namespace Xipin.UIAITools
         {
             if (string.IsNullOrEmpty(row["Query"]) || string.IsNullOrEmpty(row["Path"]) || string.IsNullOrEmpty(row["Name"]))
                 throw new Exception("Invalid UI reuse search result row: Query, Path and Name are required");
+            RequireImageExtension(row["Query"], "Query");
+            RequireAssetImagePath(row["Path"], "Path");
+            if (!string.IsNullOrEmpty(row["Atlas"]))
+                RequireAssetPath(row["Atlas"], "Atlas", ".spriteatlasv2");
+            foreach (var prefab in row["PrefabRefs"].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (prefab != "...")
+                    RequireAssetPath(prefab, "PrefabRefs", ".prefab");
+            }
             if (!int.TryParse(row["Width"], out _) || !int.TryParse(row["Height"], out _))
                 throw new Exception("Invalid UI reuse search result row: Width and Height must be integers");
             if (!float.TryParse(row["Score"], NumberStyles.Float, CultureInfo.InvariantCulture, out _))
@@ -58,6 +87,27 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI reuse search result row: PrefabCount and OwnerCount must be integers");
             if (string.IsNullOrEmpty(row["Advice"]) || string.IsNullOrEmpty(row["Reason"]))
                 throw new Exception("Invalid UI reuse search result row: Advice and Reason are required");
+        }
+
+        static void RequireAssetImagePath(string path, string label)
+        {
+            RequireAssetPath(path, label, "");
+            RequireImageExtension(path, label);
+        }
+
+        static void RequireAssetPath(string path, string label, string extension)
+        {
+            if (!path.StartsWith("Assets/", StringComparison.Ordinal) || path.Contains("\\") || path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal))
+                throw new Exception($"Invalid UI reuse search result row: {label} path is invalid");
+            if (!string.IsNullOrEmpty(extension) && !path.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+                throw new Exception($"Invalid UI reuse search result row: {label} must be {extension}");
+        }
+
+        static void RequireImageExtension(string path, string label)
+        {
+            var extension = Path.GetExtension(path).ToLowerInvariant();
+            if (extension != ".png" && extension != ".jpg" && extension != ".jpeg")
+                throw new Exception($"Invalid UI reuse search result row: {label} must be png/jpg/jpeg");
         }
 
         static void ValidateNoDuplicateRows(List<Dictionary<string, string>> rows)
