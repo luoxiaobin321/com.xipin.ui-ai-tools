@@ -65,6 +65,7 @@ namespace Xipin.UIAITools
                     throw new Exception($"Invalid UI replacement host apply result: execution plan row missing for Item {row["ItemIndex"]} / {row["Action"]}");
             }
             ValidatePlanCoverage(planRows, rows);
+            ValidateBlockingPlanDidNotExecute(planRows, rows);
             Debug.Log($"UI replacement host apply result execution plan validation passed: {rows.Count} rows.");
         }
 
@@ -94,6 +95,7 @@ namespace Xipin.UIAITools
                 });
                 ValidateAgainstExecutionPlan(profile);
                 ExpectPlanCoverageFailure(profile, "result row missing for plan Item 0 / VerifyAfterApply");
+                ExpectBlockingPlanFailure(profile, "blocking steps present");
                 ExpectPlanFailure(profile, Row("3", "ApplyPrefabReference", "Skipped", "Assets/Old4.png", "Assets/New4.png", "", "", "", "stale"), "execution plan row missing");
                 ExpectSummaryFailure(profile, "bad_title", "# Bad", "unexpected title");
                 ExpectFailure(profile, "empty_rows", null, "result rows are required");
@@ -158,6 +160,15 @@ namespace Xipin.UIAITools
         static bool RequiresResultRow(Dictionary<string, string> plan)
         {
             return plan["Action"] == "ApplyPrefabReference" || plan["Action"] == "VerifyAfterApply";
+        }
+
+        static void ValidateBlockingPlanDidNotExecute(List<Dictionary<string, string>> planRows, List<Dictionary<string, string>> rows)
+        {
+            if (!planRows.Any(row => UIReplacementPlanStatus.IsBlocking(row["Status"])))
+                return;
+            var executed = rows.FirstOrDefault(row => row["Status"] != "Skipped");
+            if (executed != null)
+                throw new Exception($"Invalid UI replacement host apply result: blocking steps present, result must be Skipped only. Item {executed["ItemIndex"]} / {executed["Action"]} is {executed["Status"]}");
         }
 
         static void AddStatusSummary(List<string> lines, List<Dictionary<string, string>> rows)
@@ -374,6 +385,33 @@ namespace Xipin.UIAITools
                 throw new Exception($"Unexpected host apply result execution plan coverage failure: {exception.Message}");
             }
             throw new Exception("Host apply result execution plan coverage sample did not fail");
+        }
+
+        static void ExpectBlockingPlanFailure(UIAIToolsProfile profile, string expectedMessage)
+        {
+            WritePlanCsv(profile, new[]
+            {
+                PlanRow("0", "ConfirmNewAsset", "PendingAsset", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab"),
+                PlanRow("0", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab"),
+                PlanRow("0", "VerifyAfterApply", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab")
+            });
+            WriteCsv(profile, new[]
+            {
+                Row("0", "ApplyPrefabReference", "Applied", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab", "QA-1", "updated"),
+                Row("0", "VerifyAfterApply", "Verified", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/UI.prefab", "QA-1", "verified")
+            });
+            GenerateSummary(profile);
+            try
+            {
+                ValidateAgainstExecutionPlan(profile);
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected host apply result blocking plan failure: {exception.Message}");
+            }
+            throw new Exception("Host apply result blocking plan sample did not fail");
         }
     }
 }
