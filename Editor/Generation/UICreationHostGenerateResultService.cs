@@ -179,6 +179,7 @@ namespace Xipin.UIAITools
                 ExpectFailure(profile, "unknown_action", Row("0", "ApplyTypo", "Applied", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "invalid action");
                 ExpectFailure(profile, "bad_status", Row("0", "CreatePrefab", "Done", "", "", "Assets/Demo.prefab", "", "", "QA-1", "bad"), "invalid status");
                 ExpectFailure(profile, "missing_target_prefab", Row("0", "CreatePrefab", "Applied", "", "", "", "", "", "QA-1", "bad"), "TargetPrefab is required");
+                ExpectFailure(profile, "bad_target_prefab_path", Row("0", "CreatePrefab", "Applied", "", "", "Generated/Demo.prefab", "", "", "QA-1", "bad"), "TargetPrefab path is invalid");
                 ExpectFailure(profile, "missing_node_reference", Row("0", "ApplyText", "Skipped", "", "", "Assets/Demo.prefab", "", "", "", "empty"), "node action requires NodeId and ComponentId");
                 ExpectFailure(profile, "target_action_with_node", Row("0", "VerifyAfterGenerate", "Verified", "Title", TextComponentId, "Assets/Demo.prefab", "", "", "QA-1", "bad"), "target action must not reference NodeId or ComponentId");
                 ExpectRowsFailure(profile, "inconsistent_target_prefab", new[]
@@ -215,6 +216,7 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI creation host generate result: invalid status " + row["Status"]);
             if (string.IsNullOrEmpty(row["TargetPrefab"]))
                 throw new Exception("Invalid UI creation host generate result: TargetPrefab is required");
+            RequirePrefabPath(row["TargetPrefab"]);
             var nodeAction = row["Action"] != "CreatePrefab" && row["Action"] != "VerifyAfterGenerate";
             if (nodeAction && (string.IsNullOrEmpty(row["NodeId"]) || string.IsNullOrEmpty(row["ComponentId"])))
                 throw new Exception("Invalid UI creation host generate result: node action requires NodeId and ComponentId");
@@ -234,6 +236,12 @@ namespace Xipin.UIAITools
             if (rows.Any(r => r["TargetPrefab"] != targetPrefab))
                 throw new Exception("Invalid UI creation host generate result: TargetPrefab must be consistent");
             return targetPrefab;
+        }
+
+        static void RequirePrefabPath(string path)
+        {
+            if (!path.StartsWith("Assets/", StringComparison.Ordinal) || path.Contains("\\") || path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal) || !path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase))
+                throw new Exception("Invalid UI creation host generate result: TargetPrefab path is invalid");
         }
 
         static void ValidateNoDuplicateRows(List<Dictionary<string, string>> rows)
