@@ -52,7 +52,7 @@ UIReplacementHostApplyChecklistService.ValidateNoBlockingSteps(profile);
 | `OldAsset` | 旧资源 `Assets/*.png` 路径。 |
 | `NewAsset` | 新资源 `Assets/*.png` 路径。 |
 | `TargetAtlas` | 目标 `Assets/*.spriteatlasv2` 图集，可为空。 |
-| `PrefabRefs` | 实际处理的 `Assets/*.prefab`，多个用 `;` 分隔。 |
+| `PrefabRefs` | 实际处理的 `Assets/*.prefab`，多个用 `;` 分隔；执行计划截断标记 `...` 保持原样。 |
 | `Confirmation` | 宿主人工确认记录标识。 |
 | `Message` | 执行结果说明。 |
 

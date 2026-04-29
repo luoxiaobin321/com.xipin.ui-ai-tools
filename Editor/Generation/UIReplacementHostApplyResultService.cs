@@ -162,7 +162,10 @@ namespace Xipin.UIAITools
             RequirePath(row["NewAsset"], "NewAsset", ".png");
             RequirePath(row["TargetAtlas"], "TargetAtlas", ".spriteatlasv2");
             foreach (var prefab in row["PrefabRefs"].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
-                RequirePath(prefab, "PrefabRefs", ".prefab");
+            {
+                if (prefab != "...")
+                    RequirePath(prefab, "PrefabRefs", ".prefab");
+            }
             if ((row["Status"] == "Applied" || row["Status"] == "Verified") && string.IsNullOrEmpty(row["Confirmation"]))
                 throw new Exception("Invalid UI replacement host apply result: confirmation is required");
             if (row["Status"] == "Skipped" && string.IsNullOrEmpty(row["Message"]))

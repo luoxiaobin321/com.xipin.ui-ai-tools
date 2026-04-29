@@ -70,6 +70,27 @@ namespace Xipin.UIAITools
                 WriteCsv(profile, new[] { row });
                 ReadRows(profile);
                 ExpectRowsFailure(profile, "duplicate_plan_row", new[] { row, row }, "duplicate plan row");
+                ExpectRowsFailure(profile, "old_asset_path", new[]
+                {
+                    Row("0", "ConfirmNewAsset", "PendingConfirmation", "Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/Prefab/A.prefab", "true", "人工确认新图", "reason")
+                }, "OldAsset path is invalid");
+                ExpectRowsFailure(profile, "new_asset_extension", new[]
+                {
+                    Row("0", "ConfirmNewAsset", "PendingConfirmation", "Assets/Old.png", "Assets/New.jpg", "Assets/Atlas.spriteatlasv2", "Assets/Prefab/A.prefab", "true", "人工确认新图", "reason")
+                }, "NewAsset must be .png");
+                ExpectRowsFailure(profile, "target_atlas_extension", new[]
+                {
+                    Row("0", "ConfirmTargetAtlas", "PendingAtlas", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.png", "Assets/Prefab/A.prefab", "true", "人工确认目标图集", "reason")
+                }, "TargetAtlas must be .spriteatlasv2");
+                ExpectRowsFailure(profile, "prefab_ref_path", new[]
+                {
+                    Row("0", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/Prefab/A.prefab;Prefab.prefab", "true", "人工确认 prefab 引用", "reason")
+                }, "PrefabRefs path is invalid");
+                WriteCsv(profile, new[]
+                {
+                    Row("0", "ApplyPrefabReference", "PendingConfirmation", "Assets/Old.png", "Assets/New.png", "Assets/Atlas.spriteatlasv2", "Assets/Prefab/A.prefab;...", "true", "人工确认 prefab 引用", "reason")
+                });
+                ReadRows(profile);
             }
             finally
             {
@@ -121,6 +142,14 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI replacement execution plan: invalid action " + row["Action"]);
             if (!AllowedStatuses.Contains(row["Status"]))
                 throw new Exception("Invalid UI replacement execution plan: invalid status " + row["Status"]);
+            RequirePath(row["OldAsset"], "OldAsset", ".png");
+            RequirePath(row["NewAsset"], "NewAsset", ".png");
+            RequirePath(row["TargetAtlas"], "TargetAtlas", ".spriteatlasv2");
+            foreach (var prefab in row["PrefabRefs"].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (prefab != "...")
+                    RequirePath(prefab, "PrefabRefs", ".prefab");
+            }
             if (row["RequiresManualConfirmation"] != "true")
                 throw new Exception("Invalid UI replacement execution plan: RequiresManualConfirmation must be true");
             if (string.IsNullOrEmpty(row["Note"]))
@@ -140,6 +169,16 @@ namespace Xipin.UIAITools
             }).FirstOrDefault(group => group.Count() > 1);
             if (duplicate != null)
                 throw new Exception($"Invalid UI replacement execution plan: duplicate plan row for Item {duplicate.Key.ItemIndex} / {duplicate.Key.Action}");
+        }
+
+        static void RequirePath(string path, string label, string extension)
+        {
+            if (string.IsNullOrEmpty(path))
+                return;
+            if (!path.StartsWith("Assets/", StringComparison.Ordinal) || path.Contains("\\") || path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal))
+                throw new Exception($"Invalid UI replacement execution plan: {label} path is invalid");
+            if (!path.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+                throw new Exception($"Invalid UI replacement execution plan: {label} must be {extension}");
         }
 
         static string Status(List<Dictionary<string, string>> checks, string check, string ok, string missing)
