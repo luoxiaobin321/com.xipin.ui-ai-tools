@@ -34,7 +34,7 @@ UIRedesignPackageService.ValidateManifest(profile, request);
 ## Request 字段
 
 - `sourcePrefabPath`：原始 prefab，必须已经出现在当前扫描报告里。
-- `sourcePreviewPath`：原界面预览图；为空时 Brief 入口会生成旧版基准图。
+- `sourcePreviewPath`：原界面预览图；为空时 Brief 入口会生成旧版基准图，非空时必须是图片路径。
 - `stylePrompt`：目标风格描述。
 - `inputImageFolder`：新切图输入目录，非空时必须是 `Assets/...`。
 - `reuseCandidateReportPath`：复用候选报告。

@@ -111,6 +111,11 @@ namespace Xipin.UIAITools
             ExpectFailure("output_folder_backslash", "Assets/ path", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets\\Art\\UI"));
             ExpectFailure("output_folder_parent_segment", "cannot contain ..", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets/Art/../UI"));
             ExpectFailure("output_folder_trailing_parent", "cannot contain ..", () => UIRedesignRequestValidation.ValidateOutputFolder("Assets/Art/UI/.."));
+            UIRedesignRequestValidation.ValidateSourcePreviewPath("");
+            UIRedesignRequestValidation.ValidateSourcePreviewPath("Logs/Preview.png");
+            ExpectFailure("source_preview_backslash", "must be an image path", () => UIRedesignRequestValidation.ValidateSourcePreviewPath("Logs\\Preview.png"));
+            ExpectFailure("source_preview_parent_segment", "cannot contain ..", () => UIRedesignRequestValidation.ValidateSourcePreviewPath("Logs/../Preview.png"));
+            ExpectFailure("source_preview_extension", "must be an image path", () => UIRedesignRequestValidation.ValidateSourcePreviewPath("Logs/Preview.prefab"));
             UIRedesignRequestValidation.ValidateInputImageFolder("");
             UIRedesignRequestValidation.ValidateInputImageFolder("Assets/Art/UI/Input");
             ExpectFailure("input_folder_relative", "Assets/ path", () => UIRedesignRequestValidation.ValidateInputImageFolder("Art/UI/Input"));

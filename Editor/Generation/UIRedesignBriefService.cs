@@ -18,6 +18,7 @@ namespace Xipin.UIAITools
             var prefab = request.sourcePrefabPath;
             UIRedesignRequestValidation.ValidateSourcePrefab(profile, prefab, "brief");
             UIRedesignRequestValidation.ValidateOutputFolder(request.outputFolder);
+            UIRedesignRequestValidation.ValidateSourcePreviewPath(request.sourcePreviewPath);
             UIRedesignRequestValidation.ValidateInputImageFolder(request.inputImageFolder);
             UIRedesignRequestValidation.ValidateReferenceImagePaths(request.referenceImagePaths);
             if (string.IsNullOrEmpty(request.sourcePreviewPath))
