@@ -21,12 +21,12 @@ namespace Xipin.UIAITools
 
         public static void ValidateOutputFolder(string outputFolder)
         {
-            if (string.IsNullOrEmpty(outputFolder))
-                return;
-            if (outputFolder.Contains("\\") || !outputFolder.StartsWith("Assets/", StringComparison.Ordinal))
-                throw new Exception("UI redesign outputFolder must be an Assets/ path.");
-            if (outputFolder.Contains("/../") || outputFolder.EndsWith("/..", StringComparison.Ordinal))
-                throw new Exception("UI redesign outputFolder cannot contain .. path segments.");
+            ValidateOptionalAssetsFolder(outputFolder, "outputFolder");
+        }
+
+        public static void ValidateInputImageFolder(string inputImageFolder)
+        {
+            ValidateOptionalAssetsFolder(inputImageFolder, "inputImageFolder");
         }
 
         public static void ValidateReferenceImagePaths(List<string> referenceImagePaths)
@@ -55,6 +55,16 @@ namespace Xipin.UIAITools
                 || path.EndsWith(".tga", StringComparison.OrdinalIgnoreCase)
                 || path.EndsWith(".psd", StringComparison.OrdinalIgnoreCase)
                 || path.EndsWith(".psb", StringComparison.OrdinalIgnoreCase);
+        }
+
+        static void ValidateOptionalAssetsFolder(string path, string field)
+        {
+            if (string.IsNullOrEmpty(path))
+                return;
+            if (path.Contains("\\") || !path.StartsWith("Assets/", StringComparison.Ordinal))
+                throw new Exception($"UI redesign {field} must be an Assets/ path.");
+            if (path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal))
+                throw new Exception($"UI redesign {field} cannot contain .. path segments.");
         }
     }
 }
