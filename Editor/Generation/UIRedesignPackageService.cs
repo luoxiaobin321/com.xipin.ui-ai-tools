@@ -120,6 +120,11 @@ namespace Xipin.UIAITools
             UIRedesignRequestValidation.ValidateInputImageFolder("Assets/Art/UI/Input");
             ExpectFailure("input_folder_relative", "Assets/ path", () => UIRedesignRequestValidation.ValidateInputImageFolder("Art/UI/Input"));
             ExpectFailure("input_folder_parent_segment", "cannot contain ..", () => UIRedesignRequestValidation.ValidateInputImageFolder("Assets/Art/../Input"));
+            UIRedesignRequestValidation.ValidateReuseCandidateReportPath("");
+            UIRedesignRequestValidation.ValidateReuseCandidateReportPath("Logs/UIReuseIndex.csv");
+            ExpectFailure("reuse_report_backslash", ".csv path", () => UIRedesignRequestValidation.ValidateReuseCandidateReportPath("Logs\\UIReuseIndex.csv"));
+            ExpectFailure("reuse_report_parent_segment", "cannot contain ..", () => UIRedesignRequestValidation.ValidateReuseCandidateReportPath("Logs/../UIReuseIndex.csv"));
+            ExpectFailure("reuse_report_extension", ".csv path", () => UIRedesignRequestValidation.ValidateReuseCandidateReportPath("Logs/UIReuseIndex.md"));
             UIRedesignRequestValidation.ValidateReferenceImagePaths(new List<string>());
             UIRedesignRequestValidation.ValidateReferenceImagePaths(new List<string> { "Assets/Art/UI/Reference.psd" });
             ExpectFailure("reference_image_relative", "Assets/ image path", () => UIRedesignRequestValidation.ValidateReferenceImagePaths(new List<string> { "Art/UI/Reference.png" }));

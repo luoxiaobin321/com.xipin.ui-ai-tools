@@ -20,6 +20,7 @@ namespace Xipin.UIAITools
             UIRedesignRequestValidation.ValidateOutputFolder(request.outputFolder);
             UIRedesignRequestValidation.ValidateSourcePreviewPath(request.sourcePreviewPath);
             UIRedesignRequestValidation.ValidateInputImageFolder(request.inputImageFolder);
+            UIRedesignRequestValidation.ValidateReuseCandidateReportPath(request.reuseCandidateReportPath);
             UIRedesignRequestValidation.ValidateReferenceImagePaths(request.referenceImagePaths);
             if (string.IsNullOrEmpty(request.sourcePreviewPath))
                 request.sourcePreviewPath = UIPrefabBaselineScreenshotService.Capture(profile, prefab);

@@ -35,6 +35,12 @@ namespace Xipin.UIAITools
             ValidateOptionalAssetsFolder(inputImageFolder, "inputImageFolder");
         }
 
+        public static void ValidateReuseCandidateReportPath(string reuseCandidateReportPath)
+        {
+            if (!string.IsNullOrEmpty(reuseCandidateReportPath))
+                ValidateCsvFilePath(reuseCandidateReportPath, "reuseCandidateReportPath");
+        }
+
         public static void ValidateReferenceImagePaths(List<string> referenceImagePaths)
         {
             if (referenceImagePaths == null)
@@ -61,6 +67,16 @@ namespace Xipin.UIAITools
                 throw new Exception($"UI redesign {field} cannot contain .. path segments.");
             if (!IsImagePath(path))
                 throw new Exception($"UI redesign {field} must be an image path.");
+        }
+
+        static void ValidateCsvFilePath(string path, string field)
+        {
+            if (path.Contains("\\"))
+                throw new Exception($"UI redesign {field} must be a .csv path.");
+            if (path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal))
+                throw new Exception($"UI redesign {field} cannot contain .. path segments.");
+            if (!path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                throw new Exception($"UI redesign {field} must be a .csv path.");
         }
 
         static bool IsImagePath(string path)

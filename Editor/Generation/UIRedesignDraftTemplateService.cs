@@ -17,6 +17,7 @@ namespace Xipin.UIAITools
             UIRedesignRequestValidation.ValidateOutputFolder(request.outputFolder);
             UIRedesignRequestValidation.ValidateSourcePreviewPath(request.sourcePreviewPath);
             UIRedesignRequestValidation.ValidateInputImageFolder(request.inputImageFolder);
+            UIRedesignRequestValidation.ValidateReuseCandidateReportPath(request.reuseCandidateReportPath);
             UIRedesignRequestValidation.ValidateReferenceImagePaths(request.referenceImagePaths);
 
             var details = UIScanReportRows.ReadPrefabImageDetails(profile).Where(r => r["Prefab"] == prefab).ToList();

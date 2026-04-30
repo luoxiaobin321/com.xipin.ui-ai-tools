@@ -21,13 +21,13 @@ provider 返回实际 `UIRedesignDraft` 后，`UIRedesignDraftService.SaveDraft`
 - `sourcePreviewPath`：为空时 Brief 入口会生成旧版基准图，非空时必须是图片路径。
 - `stylePrompt`
 - `inputImageFolder`：非空时必须是 `Assets/...` 路径。
-- `reuseCandidateReportPath`
+- `reuseCandidateReportPath`：非空时必须是 CSV 路径。
 - `outputFolder`：非空时必须是 `Assets/...` 路径。
 - `referenceImagePaths`：参考图列表，必须是 `Assets/...` 下的图片源文件。
 
 新增字段前先确认已有 provider 不能从这些字段推导。
 宿主 batch 入口也应复用这组字段，不另建一套命令行专用 DTO。
-`UIRedesignRequestValidation` 负责 request 边界字段校验；当前 Brief、草稿模板和 `SaveDraft` 都会用它阻断不是 `Assets/*.prefab` 或未出现在当前扫描报告里的 `sourcePrefabPath`，Brief 和草稿模板还会用它阻断非法 `sourcePreviewPath`、`outputFolder`、`inputImageFolder` 和参考图路径。`ValidateRedesignPackageContractBatch` 覆盖 source prefab 资源路径、扫描报告边界、sourcePreviewPath 图片路径边界、outputFolder/inputImageFolder 路径边界和 referenceImagePaths 路径边界。
+`UIRedesignRequestValidation` 负责 request 边界字段校验；当前 Brief、草稿模板和 `SaveDraft` 都会用它阻断不是 `Assets/*.prefab` 或未出现在当前扫描报告里的 `sourcePrefabPath`，Brief 和草稿模板还会用它阻断非法 `sourcePreviewPath`、`outputFolder`、`inputImageFolder`、`reuseCandidateReportPath` 和参考图路径。`ValidateRedesignPackageContractBatch` 覆盖 source prefab 资源路径、扫描报告边界、sourcePreviewPath 图片路径边界、outputFolder/inputImageFolder 路径边界、reuseCandidateReportPath CSV 路径边界和 referenceImagePaths 路径边界。
 
 ## Draft 稳定字段
 
