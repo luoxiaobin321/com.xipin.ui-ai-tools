@@ -4,7 +4,7 @@
 把 UI 扫描、复用反查、自动制作 UI 和新版换皮的报告契约收紧到可复跑、可审计、可接力。
 
 ## Status
-包内通用报告契约已覆盖扫描、复用反查、自动制作 UI、global runtime、换皮 summary/visual/binding/apply、generated summaries、host-adapter checklist 和宿主 UIVipcard 专项报告。宿主 master plan 会校验现有真实 CSV 全覆盖、Creation JSON 本体复读、skin generated JSON 覆盖、skin 子报告实物字段、非 skin Markdown 实物章节顺序、host-adapter 实物字段、UIVipcard Sprite Backfill 与标题绑定实物字段。最新验证：`Logs/Verify_CodexSkinSubreports_MasterPlan_20260507.log` 通过。
+包内报告契约代码已按 5 个提交收口并 push 到 `origin/main`，代码基线为 `a4290d2589e05a744b75ad217dc25c182699dc54`。旧 redesign/replacement 链路已移除；skinning 通用契约、报告摘要契约和 package dependency boundary gate 已落地。宿主已生成非 UIVipcard 样本 `UICatPassInfo` 的 host-adapter checklist，最新 skin contract 与 master plan 验证均通过。
 
 ## Key Files
 - `Editor/Generation/UIReportMarkdown.cs`：Markdown 章节顺序契约核心。
@@ -12,17 +12,18 @@
 - `Editor/Skinning/UISkinContractService.cs`：包内换皮报告契约。
 - `Development~/modules/report-contracts.md`：报告契约说明。
 - `../Assets/Scripts/GameApp/Editor/GameApp/UIAssetTriageScanner.cs`：宿主总体验证入口。
+- `../UIAIToolsReports/Skinning/UICatPassInfo/host-adapter-checklist.md`：非 UIVipcard 宿主映射样本。
 
 ## Next Steps
-1. 继续只扫真实用户可读报告是否还有契约缺口。
-2. prompt 型 Markdown 不为形式感加报告契约，除非它变成用户审计报告。
-3. 若改章节或 CSV 结构，同步生成逻辑、契约验证、实际报告和文档说明。
-4. 收口跑宿主 `UIAssetTriageScanner.ValidateUIToolsMasterPlanBatch`。
+1. 若继续换皮泛化，先在宿主为 `UICatPassInfo` 补 adapter，生成 `provided-crops-spec.md`。
+2. adapter 成形后跑 provided-crops spec、crops validation 和 review package。
+3. 若改章节或 CSV/JSON 结构，同步生成逻辑、契约验证、实际报告和文档说明。
+4. prompt 型 Markdown 不为形式感加报告契约，除非它变成用户审计报告。
 
 ## Run / Test
-- `UIAssetTriageScanner.ValidateUIToolsMasterPlanBatch`：通过，`Logs/Verify_CodexSkinSubreports_MasterPlan_20260507.log`。
-- `git -C Packages/com.xipin.ui-ai-tools diff --check`：仅既有 LF/CRLF warning。
-- 卫生检查：无 Unity/CrashHandler、`Logs/` 仅 `.log`、无 `__Contract_*`。
+- `UIAssetTriageScanner.GenerateSkinHostAdapterChecklistBatch`：通过，`Logs/Generate_UICatPassInfoHostAdapterChecklist_20260507.log`。
+- `UIAssetTriageScanner.ValidateSkinContractBatch`：通过，`Logs/ValidateSkinContractBatch_20260507.log`。
+- `UIAssetTriageScanner.ValidateUIToolsMasterPlanBatch`：通过，`Logs/ValidateUIToolsMasterPlanBatch_20260507.log`。
 
 ## Constraints
 - 包内不得依赖 `GameApp`、`MotionFramework`、`com.xipin.lframework` 或 YooAsset。
@@ -32,4 +33,3 @@
 
 ## Known Issues
 - 当前 provided-crops 可直接生成 `_v2.prefab` 的是宿主 UIVipcard 分支；其它 UI 要先补宿主映射。
-- 包仓库仍是 dirty 状态，继续工作时只处理当前任务相关 diff。
