@@ -12,6 +12,7 @@ namespace Xipin.UIAITools
     {
         static readonly string[] SummarySections =
         {
+            "## 输入",
             "## 图片归类分布",
             "## UITexture 尺寸分布",
             "## 直挂散图候选",
@@ -45,6 +46,14 @@ namespace Xipin.UIAITools
                 ""
             };
 
+            AddInput(lines, profile, "UIAssetTriageScanner.GenerateSummary",
+                UIReportFiles.AssetTriageReport,
+                UIReportFiles.ReuseIndex,
+                UIReportFiles.LooseTextureCandidates,
+                UIReportFiles.PrefabOptimizationTargets,
+                UIReportFiles.PrefabBatchBreaks,
+                UIReportFiles.PrefabNullSpriteImages,
+                UIReportFiles.TextureSizeReport);
             AddGroup(lines, "图片归类分布", triage, "Advice", 12);
             AddGroup(lines, "UITexture 尺寸分布", textureSizes, "SizeClass", 8);
             AddGroup(lines, "直挂散图候选", loose, "Advice", 8);
@@ -85,6 +94,12 @@ namespace Xipin.UIAITools
                 ""
             };
 
+            AddInput(lines, profile, "UIAssetTriageScanner.GeneratePanelFocus",
+                UIReportFiles.PrefabOptimizationTargets,
+                UIReportFiles.PrefabDrawCallRisk,
+                UIReportFiles.PrefabBatchBreakSummary,
+                UIReportFiles.LooseTextureCandidates,
+                UIReportFiles.PrefabNullSpriteImages);
             foreach (var target in targets)
                 AddPanelFocus(lines, target, risks[target["Prefab"]], summaries[target["Prefab"]], loose, nullSprites);
 
@@ -109,10 +124,21 @@ namespace Xipin.UIAITools
                 new Dictionary<string, string> { { "Prefab", "Assets/Bundle/Prefab/Home.prefab" } },
                 new Dictionary<string, string> { { "Prefab", "Assets/Bundle/Prefab/Shop.prefab" } }
             };
-            ValidatePanelFocusSections(new[] { "## Home", "## Shop" }, targets);
+            ValidatePanelFocusSections(new[] { "## 输入", "## Home", "## Shop" }, targets);
             ExpectSectionFailure("panel_focus_out_of_order", "UI AI tools panel focus section is out of order", () =>
-                ValidatePanelFocusSections(new[] { "## Shop", "## Home" }, targets));
+                ValidatePanelFocusSections(new[] { "## 输入", "## Shop", "## Home" }, targets));
             Debug.Log("UI scan summary contract validation passed.");
+        }
+
+        static void AddInput(List<string> lines, UIAIToolsProfile profile, string rerunCommand, params string[] sourceReports)
+        {
+            lines.Add("## 输入");
+            lines.Add($"- Report Root: `{profile.logRoot}`");
+            foreach (var report in sourceReports)
+                lines.Add($"- Source CSV: `{UIReportFiles.GetPath(profile.logRoot, report)}`");
+            lines.Add($"- Validate Reports: `UIAssetTriageScanner.ValidateReports`");
+            lines.Add($"- Re-run Report: `{rerunCommand}`");
+            lines.Add("");
         }
 
         static void AddGroup(List<string> lines, string title, List<Dictionary<string, string>> rows, string field, int count)
@@ -225,7 +251,7 @@ namespace Xipin.UIAITools
 
         static void ValidatePanelFocusSections(string[] lines, List<Dictionary<string, string>> targets)
         {
-            UIReportMarkdown.RequireExactSectionOrder("UI AI tools panel focus", lines, targets.Select(target => "## " + ShortPrefab(target["Prefab"])).ToArray());
+            UIReportMarkdown.RequireExactSectionOrder("UI AI tools panel focus", lines, new[] { "## 输入" }.Concat(targets.Select(target => "## " + ShortPrefab(target["Prefab"]))).ToArray());
         }
 
         static void ExpectSectionFailure(string name, string expectedMessage, Action validate)

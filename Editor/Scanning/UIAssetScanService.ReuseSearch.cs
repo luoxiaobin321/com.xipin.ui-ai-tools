@@ -71,6 +71,13 @@ public static partial class UIAssetScanService
         SearchReuseByImageBatch();
     }
 
+    public static void SearchReuseByImagePath(UIAIToolsProfile scanProfile, UIControlCatalog controlCatalog, string queryPath)
+    {
+        Profile = scanProfile;
+        Catalog = controlCatalog;
+        SearchReuseByImagePath(queryPath);
+    }
+
     static void SearchReuseByImagePath(string queryPath)
     {
         Directory.CreateDirectory(Profile.logRoot);
@@ -117,10 +124,11 @@ public static partial class UIAssetScanService
         lines.AddRange(rows.OrderBy(r => float.Parse(r[6], CultureInfo.InvariantCulture)).Take(80).Select(r => string.Join(",", r.Select(Csv))));
         File.WriteAllLines(ReuseSearchPath, lines, new UTF8Encoding(true));
         UIReuseSearchResultService.ReadRows(Profile);
+        var summaryPath = UIReuseSearchResultService.GenerateSummary(Profile, queryPath);
         EditorUtility.ClearProgressBar();
-        Debug.Log($"按截图查找已有图片完成：{ReuseSearchPath}");
+        Debug.Log($"按截图查找已有图片完成：{ReuseSearchPath}，{summaryPath}");
         if (!Application.isBatchMode)
-            EditorUtility.RevealInFinder(Path.GetFullPath(ReuseSearchPath));
+            EditorUtility.RevealInFinder(Path.GetFullPath(summaryPath));
     }
 
     static string ReuseAdvice(string path, string size, string owner, List<string> owners, int textCount, int sameHashCount)

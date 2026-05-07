@@ -160,7 +160,7 @@ public static partial class UIAssetScanService
     static void WriteNullSpriteImages(List<NullSpriteInfo> infos)
     {
         var lines = new List<string> { UIReportFiles.PrefabNullSpriteImagesHeader };
-        foreach (var i in infos.OrderByDescending(i => i.Advice).ThenBy(i => i.Prefab).ThenBy(i => i.Path))
+        foreach (var i in infos.GroupBy(i => i.Prefab + " " + i.Path).Select(g => g.First()).OrderByDescending(i => i.Advice).ThenBy(i => i.Prefab).ThenBy(i => i.Path))
         {
             lines.Add(string.Join(",", new[]
             {

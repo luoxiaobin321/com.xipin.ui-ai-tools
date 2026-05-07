@@ -13,6 +13,12 @@ namespace Xipin.UIAITools
         const string TextComponentId = "Component00000002";
         static readonly HashSet<string> AllowedActions = new HashSet<string> { "CreatePrefab", "CreateTemplateNode", "InstantiateComponent", "ApplyLayout", "ApplyText", "ApplyAssetReference", "ApplyBindingPlaceholder", "VerifyAfterGenerate" };
         static readonly HashSet<string> AllowedStatuses = new HashSet<string> { "Applied", "Skipped", "Failed", "Verified" };
+        static readonly string[] SummarySections =
+        {
+            "## 输入",
+            "## 状态分布",
+            "## 下一步"
+        };
 
         public static List<Dictionary<string, string>> ReadRows(UIAIToolsProfile profile)
         {
@@ -60,6 +66,7 @@ namespace Xipin.UIAITools
             ValidateDraftLayoutRows(rows, draft);
             ValidateGenerateVerification(rows, expectedTargetPrefab);
             ValidatePrefabCreation(rows, expectedTargetPrefab);
+            ValidateDraftCreationRows(profile, rows, draft);
             Debug.Log($"UI creation host generate result layout draft validation passed: {expectedTargetPrefab}, {draft.nodes.Count} nodes, {rows.Count} rows.");
         }
 
@@ -69,6 +76,11 @@ namespace Xipin.UIAITools
         }
 
         public static string GenerateSummary(UIAIToolsProfile profile, string uiName, int nodeCount)
+        {
+            return GenerateSummary(profile, uiName, nodeCount, "");
+        }
+
+        public static string GenerateSummary(UIAIToolsProfile profile, string uiName, int nodeCount, string layoutDraftJsonPath)
         {
             var rows = ReadRows(profile);
             var targetPrefab = TargetPrefab(rows);
@@ -81,14 +93,24 @@ namespace Xipin.UIAITools
                 "",
                 "本文件记录宿主侧 prefab 草稿生成结果，不移动图片、不修改图集或 YooAsset 配置。",
                 "",
-                "## 目标"
+                "## 输入"
             };
             if (!string.IsNullOrEmpty(uiName))
                 lines.Add($"- UI：`{uiName}`");
-            lines.Add($"- prefab：`{targetPrefab}`");
             if (nodeCount >= 0)
                 lines.Add($"- 节点：{nodeCount}");
-            lines.Add($"- CSV：`{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationHostGenerateResult)}`");
+            if (!string.IsNullOrEmpty(layoutDraftJsonPath))
+                lines.Add($"- Layout Draft JSON：`{layoutDraftJsonPath}`");
+            lines.Add($"- Target Prefab：`{targetPrefab}`");
+            lines.Add($"- Host Generate Result CSV：`{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationHostGenerateResult)}`");
+            lines.Add($"- Host Generate Checklist：`{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationHostGenerateChecklist)}`");
+            lines.Add($"- Layout Dry Run CSV：`{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationLayoutDryRun)}`");
+            lines.Add($"- Component Candidate Review CSV：`{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateReview)}`");
+            if (!string.IsNullOrEmpty(layoutDraftJsonPath))
+            {
+                lines.Add($"- Re-run Generate：`UIAssetTriageScanner.GenerateUICreationHostPrefabDraftBatch -uiLayoutDraftJsonPath \"{layoutDraftJsonPath}\"`");
+                lines.Add($"- Re-run Validate：`UIAssetTriageScanner.ValidateUICreationHostGenerateResultBatch -uiLayoutDraftJsonPath \"{layoutDraftJsonPath}\"`");
+            }
             lines.Add("");
             lines.Add("## 状态分布");
             foreach (var group in rows.GroupBy(r => r["Status"]).OrderBy(g => g.Key))
@@ -105,6 +127,12 @@ namespace Xipin.UIAITools
 
         public static void ValidateContract()
         {
+            ValidateSummarySections(SummarySections);
+            ExpectSectionFailure("summary_missing_section", "UI creation host generate result is missing section: ## 状态分布", () =>
+                ValidateSummarySections(SummarySections.Where(section => section != "## 状态分布").ToArray()));
+            ExpectSectionFailure("summary_out_of_order", "UI creation host generate result section is out of order", () =>
+                ValidateSummarySections(new[] { SummarySections[1], SummarySections[0] }.Concat(SummarySections.Skip(2)).ToArray()));
+
             var root = Path.Combine(Path.GetTempPath(), "UIAIToolsCreationHostGenerateResultContract_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
             try
@@ -113,65 +141,107 @@ namespace Xipin.UIAITools
                 profile.logRoot = root;
                 WriteCsv(profile, new[]
                 {
-                    Row("0", "CreatePrefab", "Applied", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "created"),
-                    Row("1", "CreateTemplateNode", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Panel.png", "", "QA-1", "created"),
-                    Row("2", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("3", "ApplyAssetReference", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Panel.png", "", "QA-1", "asset"),
-                    Row("4", "ApplyBindingPlaceholder", "Skipped", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "", "empty"),
-                    Row("5", "InstantiateComponent", "Applied", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "Assets/Text.prefab", "", "QA-1", "created"),
-                    Row("6", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("7", "ApplyText", "Skipped", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "", "empty"),
-                    Row("8", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
+                    Row("0", "CreatePrefab", "Applied", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "created"),
+                    Row("1", "InstantiateComponent", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "Assets/Components/Panel.prefab", "", "QA-1", "created"),
+                    Row("2", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("3", "ApplyAssetReference", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "Assets/Panel.png", "", "QA-1", "asset"),
+                    Row("4", "ApplyBindingPlaceholder", "Skipped", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "", "empty"),
+                    Row("5", "CreateTemplateNode", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "created"),
+                    Row("6", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("7", "ApplyText", "Skipped", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "", "empty"),
+                    Row("8", "VerifyAfterGenerate", "Verified", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "verified")
                 });
                 GenerateSummary(profile, "Demo", 2);
                 Validate(profile);
-                ValidateTargetPrefab(profile, "Assets/Art/UI/AI/Demo/Demo.prefab");
-                var draftJsonPath = WriteDraftJson(profile, "Demo", "Assets/Art/UI/AI/Demo");
+                ValidateTargetPrefab(profile, "Assets/UIAITools/Creation/Demo/Demo.prefab");
+                var draftJsonPath = WriteDraftJson(profile, "Demo", "Assets/UIAITools/Creation/Demo");
                 WriteComponentCandidateReports(profile);
                 UICreationLayoutDryRunService.Run(profile, draftJsonPath);
                 UICreationHostGenerateChecklistService.Generate(profile, draftJsonPath);
                 ValidateAgainstLayoutDraft(profile, draftJsonPath);
                 ExpectChecklistLineFailure(profile, draftJsonPath);
-                ExpectTargetFailure(profile, "Assets/Art/UI/AI/Other/Other.prefab", "TargetPrefab mismatch");
-                ExpectChecklistTargetFailure(profile, draftJsonPath, WriteDraftJson(profile, "Other", "Assets/Art/UI/AI/Other"));
+                ExpectTargetFailure(profile, "Assets/UIAITools/Creation/Other/Other.prefab", "TargetPrefab mismatch");
+                ExpectChecklistTargetFailure(profile, draftJsonPath, WriteDraftJson(profile, "Other", "Assets/UIAITools/Creation/Other"));
                 UICreationLayoutDryRunService.Run(profile, draftJsonPath);
                 UICreationHostGenerateChecklistService.Generate(profile, draftJsonPath);
-                ExpectChecklistComponentFailure(profile, draftJsonPath, WritePanelOnlyDraftJson(profile, "Demo", "Assets/Art/UI/AI/Demo"));
+                ExpectChecklistComponentFailure(profile, draftJsonPath, WritePanelOnlyDraftJson(profile, "Demo", "Assets/UIAITools/Creation/Demo"));
                 UICreationLayoutDryRunService.Run(profile, draftJsonPath);
                 UICreationHostGenerateChecklistService.Generate(profile, draftJsonPath);
-                ExpectDraftFailure(profile, WriteDraftJson(profile, "Other", "Assets/Art/UI/AI/Other"), "TargetPrefab mismatch");
-                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "MissingNode", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
+                ExpectDraftFailure(profile, WriteDraftJson(profile, "Other", "Assets/UIAITools/Creation/Other"), "TargetPrefab mismatch");
+                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "MissingNode", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout") });
                 GenerateSummary(profile, "Demo", 1);
                 ExpectDraftFailure(profile, draftJsonPath, "unknown NodeId");
-                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "Root", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
+                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "Root", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout") });
                 GenerateSummary(profile, "Demo", 1);
                 ExpectDraftFailure(profile, draftJsonPath, "ComponentId mismatch");
-                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout") });
+                WriteCsv(profile, new[] { Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout") });
                 GenerateSummary(profile, "Demo", 1);
                 ExpectDraftFailure(profile, draftJsonPath, "missing NodeId");
                 WriteCsv(profile, new[]
                 {
-                    Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("1", "ApplyText", "Applied", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "title"),
-                    Row("2", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
+                    Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("1", "ApplyText", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "title"),
+                    Row("2", "VerifyAfterGenerate", "Verified", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "verified")
                 });
                 GenerateSummary(profile, "Demo", 2);
                 ExpectDraftFailure(profile, draftJsonPath, "missing ApplyLayout Title");
                 WriteCsv(profile, new[]
                 {
-                    Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("1", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout")
+                    Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("1", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout")
                 });
                 GenerateSummary(profile, "Demo", 2);
                 ExpectDraftFailure(profile, draftJsonPath, "missing VerifyAfterGenerate");
                 WriteCsv(profile, new[]
                 {
-                    Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("1", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "layout"),
-                    Row("2", "VerifyAfterGenerate", "Verified", "", "", "Assets/Art/UI/AI/Demo/Demo.prefab", "", "", "QA-1", "verified")
+                    Row("0", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("1", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("2", "VerifyAfterGenerate", "Verified", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "verified")
                 });
                 GenerateSummary(profile, "Demo", 2);
                 ExpectDraftFailure(profile, draftJsonPath, "missing CreatePrefab");
+                WriteCsv(profile, new[]
+                {
+                    Row("0", "CreatePrefab", "Applied", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "created"),
+                    Row("1", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("2", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("3", "VerifyAfterGenerate", "Verified", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "verified")
+                });
+                GenerateSummary(profile, "Demo", 2);
+                ExpectDraftFailure(profile, draftJsonPath, "missing node creation Root");
+                WriteCsv(profile, new[]
+                {
+                    Row("0", "CreatePrefab", "Applied", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "created"),
+                    Row("1", "CreateTemplateNode", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "Resources/unity_builtin_extra", "", "QA-1", "created"),
+                    Row("2", "CreateTemplateNode", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "created"),
+                    Row("3", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("4", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("5", "VerifyAfterGenerate", "Verified", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "verified")
+                });
+                GenerateSummary(profile, "Demo", 2);
+                ExpectDraftFailure(profile, draftJsonPath, "missing node creation Root");
+                WriteCsv(profile, new[]
+                {
+                    Row("0", "CreatePrefab", "Applied", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "created"),
+                    Row("1", "InstantiateComponent", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "Assets/Components/Panel.prefab", "", "QA-1", "created"),
+                    Row("2", "InstantiateComponent", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "Assets/Components/Text.prefab", "", "QA-1", "created"),
+                    Row("3", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("4", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("5", "VerifyAfterGenerate", "Verified", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "verified")
+                });
+                GenerateSummary(profile, "Demo", 2);
+                ExpectDraftFailure(profile, draftJsonPath, "missing node creation Title");
+                WriteCsv(profile, new[]
+                {
+                    Row("0", "CreatePrefab", "Applied", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "created"),
+                    Row("1", "InstantiateComponent", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "Assets/Components/Panel.prefab", "", "QA-1", "created"),
+                    Row("2", "CreateTemplateNode", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "Assets/Text.png", "", "QA-1", "created"),
+                    Row("3", "ApplyLayout", "Applied", "Root", PanelComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("4", "ApplyLayout", "Applied", "Title", TextComponentId, "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "layout"),
+                    Row("5", "VerifyAfterGenerate", "Verified", "", "", "Assets/UIAITools/Creation/Demo/Demo.prefab", "", "", "QA-1", "verified")
+                });
+                GenerateSummary(profile, "Demo", 2);
+                ExpectDraftFailure(profile, draftJsonPath, "Text template node AssetPath must be empty");
                 WriteCsv(profile, new[] { Row("0", "CreateTemplateNode", "Applied", "Root", PanelComponentId, "Assets/Demo.prefab", "Resources/unity_builtin_extra", "", "QA-1", "created") });
                 ReadRows(profile);
                 ExpectSummaryFailure(profile, "bad_title", "# Bad", "unexpected title");
@@ -403,6 +473,26 @@ namespace Xipin.UIAITools
                 throw new Exception("Invalid UI creation host generate result: missing CreatePrefab");
         }
 
+        static void ValidateDraftCreationRows(UIAIToolsProfile profile, List<Dictionary<string, string>> rows, UILayoutDraft draft)
+        {
+            var reviews = UIComponentCandidateIndexService.ReadReviewRows(profile).ToDictionary(r => r["ComponentId"]);
+            foreach (var node in draft.nodes)
+            {
+                var role = reviews[node.componentId]["Role"];
+                var action = TemplateRole(role) ? "CreateTemplateNode" : "InstantiateComponent";
+                var created = rows.FirstOrDefault(r => r["Action"] == action && r["Status"] == "Applied" && r["NodeId"] == node.nodeId && r["ComponentId"] == node.componentId);
+                if (created == null)
+                    throw new Exception("Invalid UI creation host generate result: missing node creation " + node.nodeId);
+                if (role == "Text" && !string.IsNullOrEmpty(created["AssetPath"]))
+                    throw new Exception("Invalid UI creation host generate result: Text template node AssetPath must be empty " + node.nodeId);
+            }
+        }
+
+        static bool TemplateRole(string role)
+        {
+            return role == "Image" || role == "Text";
+        }
+
         static void ValidateSummary(UIAIToolsProfile profile, List<Dictionary<string, string>> rows)
         {
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationHostGenerateResultSummary);
@@ -410,12 +500,20 @@ namespace Xipin.UIAITools
                 throw new Exception("Missing UI creation host generate result summary: " + path);
             var lines = File.ReadAllLines(path);
             RequireTitle(lines, "# UI 生成宿主结果");
-            UIReportMarkdown.RequireExactSectionOrder("UI creation host generate result", lines, "## 目标", "## 状态分布", "## 下一步");
+            ValidateSummarySections(lines);
             RequireLine(lines, "本文件记录宿主侧 prefab 草稿生成结果，不移动图片、不修改图集或 YooAsset 配置。");
-            RequireLine(lines, $"- prefab：`{TargetPrefab(rows)}`");
-            RequireLine(lines, $"- CSV：`{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationHostGenerateResult)}`");
+            RequireLine(lines, $"- Target Prefab：`{TargetPrefab(rows)}`");
+            RequireLine(lines, $"- Host Generate Result CSV：`{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationHostGenerateResult)}`");
+            RequireLine(lines, $"- Host Generate Checklist：`{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationHostGenerateChecklist)}`");
+            RequireLine(lines, $"- Layout Dry Run CSV：`{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationLayoutDryRun)}`");
+            RequireLine(lines, $"- Component Candidate Review CSV：`{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateReview)}`");
             foreach (var group in rows.GroupBy(r => r["Status"]).OrderBy(g => g.Key))
                 RequireLine(lines, $"- {group.Key}：{group.Count()}");
+        }
+
+        static void ValidateSummarySections(string[] lines)
+        {
+            UIReportMarkdown.RequireExactSectionOrder("UI creation host generate result", lines, SummarySections);
         }
 
         static void RequireLine(string[] lines, string line)
@@ -470,6 +568,7 @@ namespace Xipin.UIAITools
             {
                 "# UI 组件候选索引",
                 "",
+                "## 输入",
                 "## 角色分布",
                 "## 高频候选",
                 "## Button 复核队列",
@@ -597,6 +696,21 @@ namespace Xipin.UIAITools
                 throw new Exception($"Unexpected UI creation host generate result summary contract failure for {name}: {exception.Message}");
             }
             File.WriteAllLines(path, original, new UTF8Encoding(true));
+            throw new Exception("UI creation host generate result summary contract sample did not fail: " + name);
+        }
+
+        static void ExpectSectionFailure(string name, string expectedMessage, Action validate)
+        {
+            try
+            {
+                validate();
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI creation host generate result summary contract failure for {name}: {exception.Message}");
+            }
             throw new Exception("UI creation host generate result summary contract sample did not fail: " + name);
         }
     }

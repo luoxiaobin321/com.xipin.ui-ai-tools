@@ -10,6 +10,7 @@ namespace Xipin.UIAITools
         {
             UIComponentCandidateIndexService.Validate(profile);
             ValidateBrief(brief);
+            RequireCreationTargetFolder(profile, brief.targetFolder, "targetFolder");
             brief.requiresConfirmation = true;
             var path = UIReportFiles.GetPath(profile.logRoot, $"UICreationBriefTemplate_{SafeName(brief.featureName)}.json");
             Directory.CreateDirectory(profile.logRoot);
@@ -54,7 +55,7 @@ namespace Xipin.UIAITools
                 LoadBrief(ContractPath(root, "valid"));
 
                 var relativeTarget = SampleBrief();
-                relativeTarget.targetFolder = "Art/UI/AI/Demo";
+                relativeTarget.targetFolder = "UIAITools/Creation/DemoPanel";
                 ExpectBriefFailure(root, "relative_target_folder", relativeTarget, "targetFolder must be an Assets/ path");
 
                 var parentTarget = SampleBrief();
@@ -68,6 +69,10 @@ namespace Xipin.UIAITools
                 var parentReference = SampleBrief();
                 parentReference.referenceImagePaths.Add("Assets/Art/UI/../Reference.png");
                 ExpectBriefFailure(root, "parent_reference_image", parentReference, "referenceImagePaths cannot contain ..");
+
+                var profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+                profile.workspaceRoot = "Assets/UIAITools";
+                ExpectContractFailure("target_folder_outside_workspace", () => RequireCreationTargetFolder(profile, "Assets/Art/UI/Demo", "targetFolder"), "targetFolder must be under Assets/UIAITools/Creation/");
 
                 var badReferenceExtension = SampleBrief();
                 badReferenceExtension.referenceImagePaths.Add("Assets/Art/UI/Reference.prefab");
@@ -92,6 +97,20 @@ namespace Xipin.UIAITools
         internal static void RequireAssetsFolder(string value, string field)
         {
             RequireAssetsPath(value, field);
+        }
+
+        internal static void RequireCreationTargetFolder(UIAIToolsProfile profile, string value, string field)
+        {
+            RequireAssetsFolder(value, field);
+            var root = CreationRoot(profile);
+            if (!value.TrimEnd('/', '\\').Replace('\\', '/').StartsWith(root + "/", StringComparison.Ordinal))
+                throw new Exception($"Invalid UI creation brief: {field} must be under {root}/");
+        }
+
+        internal static string CreationRoot(UIAIToolsProfile profile)
+        {
+            var workspaceRoot = string.IsNullOrEmpty(profile.workspaceRoot) ? "Assets/UIAITools" : profile.workspaceRoot;
+            return workspaceRoot.TrimEnd('/', '\\').Replace('\\', '/') + "/Creation";
         }
 
         static void RequireAssetsPath(string value, string field)
@@ -655,7 +674,7 @@ namespace Xipin.UIAITools
             {
                 featureName = "DemoPanel",
                 uiType = "Panel",
-                targetFolder = "Assets/Art/UI/AI/DemoPanel",
+                targetFolder = "Assets/UIAITools/Creation/DemoPanel",
                 stylePrompt = "clean",
                 requiresConfirmation = true
             };
@@ -683,6 +702,21 @@ namespace Xipin.UIAITools
             ExpectLoadFailure(ContractPath(root, name), name, expectedMessage);
         }
 
+        static void ExpectContractFailure(string name, Action action, string expectedMessage)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI creation brief contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI creation brief contract sample did not fail: " + name);
+        }
+
         static void ExpectLoadFailure(string path, string name, string expectedMessage)
         {
             try
@@ -705,7 +739,7 @@ namespace Xipin.UIAITools
                 "{",
                 "    \"featureName\": \"DemoPanel\",",
                 "    \"uiType\": \"Panel\",",
-                "    \"targetFolder\": \"Assets/Art/UI/AI/DemoPanel\",",
+                "    \"targetFolder\": \"Assets/UIAITools/Creation/DemoPanel\",",
                 "    \"stylePrompt\": \"clean\",",
                 "    \"referenceImagePaths\": [" + item + "],",
                 "    \"requiredInteractions\": [],",

@@ -28,6 +28,7 @@ namespace Xipin.UIAITools
         {
             UIComponentCandidateIndexService.Validate(profile);
             UICreationBriefTemplateService.ValidateBrief(brief);
+            UICreationBriefTemplateService.RequireCreationTargetFolder(profile, brief.targetFolder, "targetFolder");
             var draft = CreateDraft(brief);
             ValidateDraft(draft);
             var path = UIReportFiles.GetPath(profile.logRoot, $"UILayoutDraftTemplate_{SafeName(brief.featureName)}.json");
@@ -153,7 +154,7 @@ namespace Xipin.UIAITools
                 "    \"root\": {",
                 "        \"name\": \"DemoPanel\",",
                 "        \"uiType\": \"Panel\",",
-                "        \"targetFolder\": \"Assets/Art/UI/AI/DemoPanel\",",
+                "        \"targetFolder\": \"Assets/UIAITools/Creation/DemoPanel\",",
                 "        \"referenceResolution\": \"1080x1920\",",
                 "        \"safeAreaPolicy\": \"\"",
                 "    },",

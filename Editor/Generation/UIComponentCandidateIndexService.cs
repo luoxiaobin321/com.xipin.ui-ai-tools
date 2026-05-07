@@ -9,10 +9,24 @@ namespace Xipin.UIAITools
 {
     public static class UIComponentCandidateIndexService
     {
+        static readonly string[] SummarySections =
+        {
+            "## 输入",
+            "## 角色分布",
+            "## 高频候选",
+            "## Button 复核队列",
+            "## 使用方式"
+        };
+
         public static string Generate(UIAIToolsProfile profile, UIControlCatalog catalog)
         {
-            UIReportValidationService.Validate(profile);
-            var rows = UIScanReportRows.ReadPrefabBatchSequence(profile);
+            return Generate(profile, profile, catalog);
+        }
+
+        public static string Generate(UIAIToolsProfile scanProfile, UIAIToolsProfile outputProfile, UIControlCatalog catalog)
+        {
+            UIReportValidationService.Validate(scanProfile);
+            var rows = UIScanReportRows.ReadPrefabBatchSequence(scanProfile);
             var lines = new List<string> { UIReportFiles.ComponentCandidateIndexHeader };
             var count = 0;
             foreach (var group in rows.GroupBy(r => BuildCandidateKey(catalog, r))
@@ -41,12 +55,13 @@ namespace Xipin.UIAITools
                 count++;
             }
 
-            var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateIndex);
+            Directory.CreateDirectory(outputProfile.logRoot);
+            var path = UIReportFiles.GetPath(outputProfile.logRoot, UIReportFiles.ComponentCandidateIndex);
             File.WriteAllLines(path, lines, new UTF8Encoding(true));
-            UIReportValidationService.ValidateReport(profile, UIReportFiles.ComponentCandidateIndex, UIReportFiles.ComponentCandidateIndexHeader);
-            var summaryPath = GenerateSummary(profile);
-            var reviewPath = GenerateReviewChecklist(profile);
-            Validate(profile);
+            UIReportValidationService.ValidateReport(outputProfile, UIReportFiles.ComponentCandidateIndex, UIReportFiles.ComponentCandidateIndexHeader);
+            var summaryPath = GenerateSummary(outputProfile, UIReportFiles.GetPath(scanProfile.logRoot, UIReportFiles.PrefabBatchSequence));
+            var reviewPath = GenerateReviewChecklist(outputProfile);
+            Validate(outputProfile);
             Debug.Log($"UI component candidate index generated: {path}, summary: {summaryPath}, review: {reviewPath}, {count} candidates.");
             return path;
         }
@@ -64,6 +79,12 @@ namespace Xipin.UIAITools
 
         public static void ValidateContract()
         {
+            ValidateSummarySections(SummarySections);
+            ExpectSectionFailure("summary_missing_section", "UI component candidate index summary is missing section: ## Button 复核队列", () =>
+                ValidateSummarySections(SummarySections.Where(section => section != "## Button 复核队列").ToArray()));
+            ExpectSectionFailure("summary_out_of_order", "UI component candidate index summary section is out of order", () =>
+                ValidateSummarySections(new[] { SummarySections[1], SummarySections[0] }.Concat(SummarySections.Skip(2)).ToArray()));
+
             var root = Path.Combine(Path.GetTempPath(), "UIAIToolsComponentCandidateContract_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
             try
@@ -73,6 +94,9 @@ namespace Xipin.UIAITools
                 var indexRow = IndexRow("Component00000001");
                 WriteIndexCsv(profile, new[] { indexRow });
                 ReadIndexRows(profile);
+                var summaryPath = GenerateSummary(profile, "UIAIToolsReports/Scanning/UIPrefabBatchSequence.csv");
+                RequireLine(summaryPath, "- Source Batch Sequence CSV: `UIAIToolsReports/Scanning/UIPrefabBatchSequence.csv`");
+                RequireLine(summaryPath, "- Re-run Index: `UIAssetTriageScanner.GenerateComponentCandidateIndexBatch`");
                 ExpectFailure("duplicate_index_row", "Duplicate UI component candidate id", () => WriteIndexCsv(profile, new[] { indexRow, indexRow }), () => ReadIndexRows(profile));
                 ExpectFailure("bad_index_sample_prefab_path", "SamplePrefabs path is invalid", () => WriteIndexCsv(profile, new[]
                 {
@@ -138,7 +162,7 @@ namespace Xipin.UIAITools
             return rows;
         }
 
-        static string GenerateSummary(UIAIToolsProfile profile)
+        static string GenerateSummary(UIAIToolsProfile profile, string sourceBatchSequencePath)
         {
             var rows = ReadIndexRows(profile);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateIndexSummary);
@@ -149,6 +173,13 @@ namespace Xipin.UIAITools
                 $"生成时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}",
                 "",
                 "本文件只汇总扫描报告中的组件候选，不创建 prefab、不复制图片、不修改图集。",
+                "",
+                "## 输入",
+                $"- Component Candidate Index CSV: `{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateIndex)}`",
+                $"- Component Candidate Review CSV: `{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateReview)}`",
+                $"- Source Batch Sequence CSV: `{sourceBatchSequencePath}`",
+                "- Re-run Index: `UIAssetTriageScanner.GenerateComponentCandidateIndexBatch`",
+                "- Validate Index: `UIAssetTriageScanner.ValidateComponentCandidateIndexBatch`",
                 "",
                 "## 角色分布"
             };
@@ -334,7 +365,7 @@ namespace Xipin.UIAITools
 
         static void ValidateSummarySections(string[] lines)
         {
-            UIReportMarkdown.RequireExactSectionOrder("UI component candidate index summary", lines, "## 角色分布", "## 高频候选", "## Button 复核队列", "## 使用方式");
+            UIReportMarkdown.RequireExactSectionOrder("UI component candidate index summary", lines, SummarySections);
         }
 
         static int UseCount(Dictionary<string, string> row)
@@ -611,6 +642,27 @@ namespace Xipin.UIAITools
                 throw new Exception($"Unexpected UI component candidate contract failure for {name}: {exception.Message}");
             }
             throw new Exception("UI component candidate contract sample did not fail: " + name);
+        }
+
+        static void RequireLine(string path, string expected)
+        {
+            if (!File.ReadAllText(path).Contains(expected))
+                throw new Exception("UI component candidate summary missing line: " + expected);
+        }
+
+        static void ExpectSectionFailure(string name, string expectedMessage, Action validate)
+        {
+            try
+            {
+                validate();
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI component candidate summary contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI component candidate summary contract sample did not fail: " + name);
         }
 
         struct CandidateKey

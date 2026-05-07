@@ -9,6 +9,19 @@ namespace Xipin.UIAITools
 {
     public static class UICreationHostGenerateChecklistService
     {
+        static readonly string[] ChecklistSections =
+        {
+            "## 输入",
+            "## 目标",
+            "## 阻断项",
+            "## 人工复核项",
+            "## 组件候选确认",
+            "## 宿主生成前确认",
+            "## 宿主生成器允许动作",
+            "## 宿主生成器禁止动作",
+            "## 生成后验证"
+        };
+
         public static string Generate(UIAIToolsProfile profile, string layoutDraftJsonPath)
         {
             UIComponentCandidateIndexService.Validate(profile);
@@ -42,6 +55,13 @@ namespace Xipin.UIAITools
                 "本文件只整理宿主 prefab 生成前确认项，不创建 prefab、不复制图片、不修改图集。",
                 "",
                 $"Gate：{(errors.Count == 0 ? "Passed" : "Blocked")}",
+                "",
+                "## 输入",
+                $"- Layout Draft JSON: `{layoutDraftJsonPath}`",
+                $"- Dry-run CSV: `{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationLayoutDryRun)}`",
+                $"- Component Candidate Review CSV: `{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateReview)}`",
+                $"- Re-run Checklist: `UIAssetTriageScanner.GenerateUICreationHostGenerateChecklistBatch -uiLayoutDraftJsonPath \"{layoutDraftJsonPath}\"`",
+                $"- Re-run Dry Run: `UIAssetTriageScanner.DryRunUICreationLayoutDraftBatch -uiLayoutDraftJsonPath \"{layoutDraftJsonPath}\"`",
                 "",
                 "## 目标",
                 $"- UI：`{draft.root.name}`",
@@ -119,6 +139,12 @@ namespace Xipin.UIAITools
 
         public static void ValidateContract()
         {
+            ValidateSections(ChecklistSections);
+            ExpectFailure("missing_section", "UI creation host generate checklist is missing section: ## 宿主生成前确认", () =>
+                ValidateSections(ChecklistSections.Where(section => section != "## 宿主生成前确认").ToArray()));
+            ExpectFailure("out_of_order_section", "UI creation host generate checklist section is out of order", () =>
+                ValidateSections(new[] { ChecklistSections[1], ChecklistSections[0] }.Concat(ChecklistSections.Skip(2)).ToArray()));
+
             var root = Path.Combine(Path.GetTempPath(), "UIAIToolsCreationHostGenerateChecklistContract_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
             try
@@ -367,7 +393,7 @@ namespace Xipin.UIAITools
 
         static void ValidateSections(string[] lines)
         {
-            UIReportMarkdown.RequireExactSectionOrder("UI creation host generate checklist", lines, "## 目标", "## 阻断项", "## 人工复核项", "## 组件候选确认", "## 宿主生成前确认", "## 宿主生成器允许动作", "## 宿主生成器禁止动作", "## 生成后验证");
+            UIReportMarkdown.RequireExactSectionOrder("UI creation host generate checklist", lines, ChecklistSections);
         }
 
         static void WriteDryRun(UIAIToolsProfile profile, string componentId)
@@ -376,8 +402,8 @@ namespace Xipin.UIAITools
             File.WriteAllLines(path, new[]
             {
                 UIReportFiles.CreationLayoutDryRunHeader,
-                DryRunRow("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo"),
-                DryRunRow("2", "TargetPrefab", "Info", "OK", "目标 prefab 可创建", "Assets/Art/UI/AI/Demo/Demo.prefab"),
+                DryRunRow("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/UIAITools/Creation/Demo"),
+                DryRunRow("2", "TargetPrefab", "Info", "OK", "目标 prefab 可创建", "Assets/UIAITools/Creation/Demo/Demo.prefab"),
                 DryRunRow("3", "RequiresConfirmation", "Info", "OK", "需要人工确认", ""),
                 DryRunRow("4", "LayoutNodes", "Info", "OK", "布局节点已提供", "1"),
                 DryRunRow("5", "NodeComponentId", "Info", "OK", "组件已确认", componentId + " Root")
@@ -387,7 +413,7 @@ namespace Xipin.UIAITools
         static string WriteDraftJson(UIAIToolsProfile profile, string componentId)
         {
             var path = UIReportFiles.GetPath(profile.logRoot, "UICreationHostGenerateChecklistContractDraft.json");
-            var json = "{\"root\":{\"name\":\"Demo\",\"uiType\":\"Dialog\",\"targetFolder\":\"Assets/Art/UI/AI/Demo\",\"referenceResolution\":\"1080x1920\",\"safeAreaPolicy\":\"\"},\"nodes\":[{\"nodeId\":\"Root\",\"parentId\":\"\",\"name\":\"Root\",\"componentRole\":\"Panel\",\"componentId\":\"" + componentId + "\",\"anchor\":\"stretch_full\",\"position\":\"0,0\",\"size\":\"1080x1920\"}],\"assets\":[],\"interactions\":[],\"risks\":[],\"requiresConfirmation\":true}";
+            var json = "{\"root\":{\"name\":\"Demo\",\"uiType\":\"Dialog\",\"targetFolder\":\"Assets/UIAITools/Creation/Demo\",\"referenceResolution\":\"1080x1920\",\"safeAreaPolicy\":\"\"},\"nodes\":[{\"nodeId\":\"Root\",\"parentId\":\"\",\"name\":\"Root\",\"componentRole\":\"Panel\",\"componentId\":\"" + componentId + "\",\"anchor\":\"stretch_full\",\"position\":\"0,0\",\"size\":\"1080x1920\"}],\"assets\":[],\"interactions\":[],\"risks\":[],\"requiresConfirmation\":true}";
             File.WriteAllText(path, json, new UTF8Encoding(true));
             return path;
         }
@@ -408,6 +434,7 @@ namespace Xipin.UIAITools
             {
                 "# UI 组件候选索引",
                 "",
+                "## 输入",
                 "## 角色分布",
                 "## 高频候选",
                 "## Button 复核队列",

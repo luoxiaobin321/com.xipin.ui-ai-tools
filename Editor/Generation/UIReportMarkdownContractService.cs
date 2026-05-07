@@ -15,22 +15,13 @@ namespace Xipin.UIAITools
         {
             UIReportMarkdown.RequireExactSectionOrder("markdown contract self-test", new[] { "# Report", "", "## A", "- ok", "## B" }, "## A", "## B");
             UIReportMarkdown.RequireExactSectionOrder("markdown fenced heading self-test", new[] { "# Report", "```json", "## Ignored", "```", "## A", "## B" }, "## A", "## B");
-            UIReportMarkdown.RequireExactSectionOrder("host apply result contract self-test", new[]
-            {
-                "# UI 替换宿主执行结果",
-                "## 总览",
-                "## 状态分布",
-                "## 失败项",
-                "## 执行项",
-                "## 执行后复验"
-            }, "## 总览", "## 状态分布", "## 失败项", "## 执行项", "## 执行后复验");
             UIReportMarkdown.RequireExactSectionOrder("UI creation host generate result contract self-test", new[]
             {
                 "# UI 生成宿主结果",
-                "## 目标",
+                "## 输入",
                 "## 状态分布",
                 "## 下一步"
-            }, "## 目标", "## 状态分布", "## 下一步");
+            }, "## 输入", "## 状态分布", "## 下一步");
             ValidateSummaryHelpers();
             RequireFailure("missing", new[] { "## A" }, "markdown contract self-test is missing section: ## B");
             RequireFailure("unexpected", new[] { "## A", "## C" }, "markdown contract self-test has unexpected section at line 2: ## C");
@@ -48,12 +39,13 @@ namespace Xipin.UIAITools
                 Row("Warning", "Size", "风险：B"),
                 Row("Warning", "Atlas", "风险：C"),
                 Row("Review", "Other", "人工确认：A"),
-                Row("Review", "Size", "人工确认：B"),
+                Row("Review", "Size", "人工确认：B；TextLayoutReview：需要复核文字"),
                 Row("Info", "Size", "无冒号")
             };
             UIReportMarkdown.AddCheckSummary(lines, "检查分布", rows);
             UIReportMarkdown.AddSeverityCheckSummary(lines, "Severity 检查分布", rows);
             UIReportMarkdown.AddNotePrefixSummary(lines, "备注前缀分布", rows);
+            UIReportMarkdown.AddNoteRiskSummary(lines, "备注风险分布", rows);
             RequireLine(lines, "## 检查分布");
             RequireLine(lines, "- Size：4");
             RequireLine(lines, "- Atlas：1");
@@ -67,6 +59,11 @@ namespace Xipin.UIAITools
             RequireLine(lines, "## 备注前缀分布");
             RequireLine(lines, "- 风险：3");
             RequireLine(lines, "- 人工确认：2");
+            RequireLine(lines, "- 无冒号：1");
+            RequireLine(lines, "## 备注风险分布");
+            RequireLine(lines, "- 风险：3");
+            RequireLine(lines, "- 人工确认：2");
+            RequireLine(lines, "- TextLayoutReview：1");
             RequireLine(lines, "- 无冒号：1");
         }
 

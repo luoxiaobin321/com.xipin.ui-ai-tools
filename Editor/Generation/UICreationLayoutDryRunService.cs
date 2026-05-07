@@ -63,6 +63,13 @@ namespace Xipin.UIAITools
         };
         static readonly HashSet<string> AllowedSeverities = new HashSet<string> { "Info", "Warning", "Error" };
         static readonly HashSet<string> AllowedStatuses = new HashSet<string> { "OK", "Missing", "NeedsReview", "Exists", "Duplicate", "Unknown", "Invalid", "Ready" };
+        static readonly string[] SummarySections =
+        {
+            "## 输入",
+            "## Severity 分布",
+            "## Status 分布",
+            "## 阻断项"
+        };
 
         public static string Run(UIAIToolsProfile profile, string layoutDraftJsonPath)
         {
@@ -72,7 +79,7 @@ namespace Xipin.UIAITools
             var roles = new HashSet<string>(BuiltInRoles.Concat(components.Values.Select(r => r["Role"])));
             var lines = new List<string> { UIReportFiles.CreationLayoutDryRunHeader };
             var index = 1;
-            AddTargetFolderCheck(lines, ref index, draft);
+            AddTargetFolderCheck(profile, lines, ref index, draft);
             AddReferenceResolutionCheck(lines, ref index, draft);
             AddTargetPrefabCheck(lines, ref index, draft);
             AddLine(lines, index++, "RequiresConfirmation", draft.requiresConfirmation ? "Info" : "Error", draft.requiresConfirmation ? "OK" : "Missing", draft.requiresConfirmation ? "需要人工确认" : "requiresConfirmation 必须为 true", "");
@@ -90,7 +97,7 @@ namespace Xipin.UIAITools
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationLayoutDryRun);
             File.WriteAllLines(path, lines, new UTF8Encoding(true));
             ReadRows(profile);
-            var summaryPath = GenerateSummary(profile);
+            var summaryPath = GenerateSummary(profile, layoutDraftJsonPath);
             Debug.Log($"UI creation layout dry-run generated: {path}, summary: {summaryPath}");
             return path;
         }
@@ -109,24 +116,36 @@ namespace Xipin.UIAITools
 
         public static void ValidateContract()
         {
+            ValidateSummarySections(SummarySections);
+            ExpectSectionFailure("summary_missing_section", "UI creation layout dry-run summary is missing section: ## Status 分布", () =>
+                ValidateSummarySections(SummarySections.Where(section => section != "## Status 分布").ToArray()));
+            ExpectSectionFailure("summary_out_of_order", "UI creation layout dry-run summary section is out of order", () =>
+                ValidateSummarySections(new[] { SummarySections[1], SummarySections[0] }.Concat(SummarySections.Skip(2)).ToArray()));
+
             var root = Path.Combine(Path.GetTempPath(), "UIAIToolsCreationLayoutDryRunContract_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
             try
             {
                 var profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
                 profile.logRoot = root;
+                profile.workspaceRoot = "Assets/UIAITools";
+                if (ValidCreationTargetFolder(profile, "Assets/Art/UI/Demo"))
+                    throw new Exception("UI creation layout dry-run target folder contract failed.");
                 WriteCsv(profile, new[]
                 {
-                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo"),
-                    Row("2", "TargetPrefab", "Info", "OK", "目标 prefab 不存在", "Assets/Art/UI/AI/Demo/Demo.prefab"),
+                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/UIAITools/Creation/Demo"),
+                    Row("2", "TargetPrefab", "Info", "OK", "目标 prefab 不存在", "Assets/UIAITools/Creation/Demo/Demo.prefab"),
                     Row("3", "NodeAssetPath", "Info", "OK", "节点资源路径合法", "Assets/Art/UI/Icon.png"),
                     Row("4", "AssetNeedPath", "Info", "OK", "资源需求路径合法", "Assets/Art/UI/Need.png")
                 });
                 ReadRows(profile);
+                var summaryPath = GenerateSummary(profile, "Assets/UIAITools/Creation/Demo/UILayoutDraft.json");
+                RequireLine(summaryPath, "- Layout Draft JSON: `Assets/UIAITools/Creation/Demo/UILayoutDraft.json`");
+                RequireLine(summaryPath, "- Re-run Dry Run: `UIAssetTriageScanner.DryRunUICreationLayoutDraftBatch -uiLayoutDraftJsonPath \"Assets/UIAITools/Creation/Demo/UILayoutDraft.json\"`");
                 ExpectRowsFailure(profile, "duplicate_dry_run_row", new[]
                 {
-                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo"),
-                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/Art/UI/AI/Demo")
+                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/UIAITools/Creation/Demo"),
+                    Row("1", "TargetFolder", "Info", "OK", "目标目录格式合法", "Assets/UIAITools/Creation/Demo")
                 }, "duplicate dry-run row");
                 ExpectRowsFailure(profile, "bad_target_folder_path", new[]
                 {
@@ -138,7 +157,7 @@ namespace Xipin.UIAITools
                 }, "TargetPrefab path is invalid");
                 ExpectRowsFailure(profile, "bad_target_prefab_extension", new[]
                 {
-                    Row("1", "TargetPrefab", "Info", "OK", "目标 prefab 不存在", "Assets/Art/UI/AI/Demo/Demo.png")
+                    Row("1", "TargetPrefab", "Info", "OK", "目标 prefab 不存在", "Assets/UIAITools/Creation/Demo/Demo.png")
                 }, "TargetPrefab must be .prefab");
                 ExpectRowsFailure(profile, "bad_node_asset_path", new[]
                 {
@@ -232,7 +251,7 @@ namespace Xipin.UIAITools
                 AddLine(lines, index++, "MissingParent", "Error", "Missing", "父节点不存在", $"{node.nodeId}->{node.parentId}");
         }
 
-        static void AddTargetFolderCheck(List<string> lines, ref int index, UILayoutDraft draft)
+        static void AddTargetFolderCheck(UIAIToolsProfile profile, List<string> lines, ref int index, UILayoutDraft draft)
         {
             if (string.IsNullOrEmpty(draft.root.targetFolder))
             {
@@ -240,8 +259,8 @@ namespace Xipin.UIAITools
                 return;
             }
 
-            var ok = ValidAssetPath(draft.root.targetFolder);
-            AddLine(lines, index++, "TargetFolder", ok ? "Info" : "Error", ok ? "OK" : "Invalid", ok ? "目标目录格式合法" : "目标目录必须是 Assets/... 且不能包含 ..", draft.root.targetFolder);
+            var ok = ValidCreationTargetFolder(profile, draft.root.targetFolder);
+            AddLine(lines, index++, "TargetFolder", ok ? "Info" : "Error", ok ? "OK" : "Invalid", ok ? "目标目录格式合法" : "目标目录必须在 " + UICreationBriefTemplateService.CreationRoot(profile) + "/ 下且不能包含 ..", draft.root.targetFolder);
         }
 
         static void AddReferenceResolutionCheck(List<string> lines, ref int index, UILayoutDraft draft)
@@ -430,7 +449,7 @@ namespace Xipin.UIAITools
             AddLine(lines, index++, "AssetNeedPath", ok ? "Info" : "Error", ok ? "OK" : "Invalid", ok ? "资源需求路径合法" : "资源需求路径必须是 Assets/... 且不能包含 ..", need.path);
         }
 
-        static string GenerateSummary(UIAIToolsProfile profile)
+        static string GenerateSummary(UIAIToolsProfile profile, string layoutDraftJsonPath = "")
         {
             var rows = ReadRows(profile);
             var path = UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationLayoutDryRunSummary);
@@ -444,6 +463,14 @@ namespace Xipin.UIAITools
                 "本文件只检查布局草稿是否可进入 prefab 生成，不创建 prefab、不复制图片、不修改图集。",
                 "",
                 $"Gate：{(errors == 0 ? "Passed" : "Blocked")}",
+                "",
+                "## 输入",
+                $"- Layout Draft JSON: `{layoutDraftJsonPath}`",
+                $"- Dry-run CSV: `{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.CreationLayoutDryRun)}`",
+                $"- Component Candidate Index CSV: `{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateIndex)}`",
+                $"- Component Candidate Review CSV: `{UIReportFiles.GetPath(profile.logRoot, UIReportFiles.ComponentCandidateReview)}`",
+                $"- Re-run Dry Run: `UIAssetTriageScanner.DryRunUICreationLayoutDraftBatch -uiLayoutDraftJsonPath \"{layoutDraftJsonPath}\"`",
+                "- Validate Dry Run: `UIAssetTriageScanner.ValidateUICreationLayoutDryRunBatch`",
                 "",
                 "## Severity 分布"
             };
@@ -472,7 +499,7 @@ namespace Xipin.UIAITools
 
         static void ValidateSummarySections(string[] lines)
         {
-            UIReportMarkdown.RequireExactSectionOrder("UI creation layout dry-run summary", lines, "## Severity 分布", "## Status 分布", "## 阻断项");
+            UIReportMarkdown.RequireExactSectionOrder("UI creation layout dry-run summary", lines, SummarySections);
         }
 
         static void AddLine(List<string> lines, int index, string check, string severity, string status, string message, string evidence)
@@ -539,6 +566,11 @@ namespace Xipin.UIAITools
             return value.StartsWith("Assets/", StringComparison.Ordinal) && !value.Contains("\\") && !value.Contains("/../") && !value.EndsWith("/..", StringComparison.Ordinal);
         }
 
+        static bool ValidCreationTargetFolder(UIAIToolsProfile profile, string value)
+        {
+            return ValidAssetPath(value) && value.TrimEnd('/', '\\').Replace('\\', '/').StartsWith(UICreationBriefTemplateService.CreationRoot(profile) + "/", StringComparison.Ordinal);
+        }
+
         static bool StateFitsRole(string role, string state)
         {
             return state == "normal" || state == "hidden" || role == "Button";
@@ -575,6 +607,27 @@ namespace Xipin.UIAITools
                 throw new Exception($"Unexpected UI creation layout dry-run contract failure for {name}: {exception.Message}");
             }
             throw new Exception("UI creation layout dry-run contract sample did not fail: " + name);
+        }
+
+        static void RequireLine(string path, string expected)
+        {
+            if (!File.ReadAllText(path).Contains(expected))
+                throw new Exception("UI creation layout dry-run summary missing line: " + expected);
+        }
+
+        static void ExpectSectionFailure(string name, string expectedMessage, Action validate)
+        {
+            try
+            {
+                validate();
+            }
+            catch (Exception exception)
+            {
+                if (exception.Message.Contains(expectedMessage))
+                    return;
+                throw new Exception($"Unexpected UI creation layout dry-run summary contract failure for {name}: {exception.Message}");
+            }
+            throw new Exception("UI creation layout dry-run summary contract sample did not fail: " + name);
         }
     }
 }
