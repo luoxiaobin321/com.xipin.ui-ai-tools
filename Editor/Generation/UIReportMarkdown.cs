@@ -34,7 +34,7 @@ namespace Xipin.UIAITools
             }
 
             foreach (var group in rows.GroupBy(r => new { Severity = r["Severity"], Check = r["Check"] })
-                         .OrderBy(g => UIReplacementPlanStatus.SeverityOrder(g.Key.Severity))
+                         .OrderBy(g => SeverityOrder(g.Key.Severity))
                          .ThenByDescending(g => g.Count())
                          .ThenBy(g => g.Key.Check))
                 lines.Add($"- {group.Key.Severity} / {group.Key.Check}：{group.Count()}");
@@ -56,6 +56,31 @@ namespace Xipin.UIAITools
                          .ThenBy(g => g.Key))
                 lines.Add($"- {group.Key}：{group.Count()}");
             lines.Add("");
+        }
+
+        public static void AddNoteRiskSummary(List<string> lines, string title, List<Dictionary<string, string>> rows)
+        {
+            lines.Add($"## {title}");
+            if (rows.Count == 0)
+            {
+                lines.Add("- 无");
+                lines.Add("");
+                return;
+            }
+
+            foreach (var group in rows.SelectMany(r => NoteRiskLabels(r["Note"]))
+                         .GroupBy(label => label)
+                         .OrderByDescending(g => g.Count())
+                         .ThenBy(g => g.Key))
+                lines.Add($"- {group.Key}：{group.Count()}");
+            lines.Add("");
+        }
+
+        public static IEnumerable<string> NoteRiskLabels(string note)
+        {
+            return note.Split(new[] { '；' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(part => NotePrefix(part.Trim()))
+                .Where(label => label.Length > 0);
         }
 
         public static void RequireExactSectionOrder(string report, string[] lines, params string[] sections)
@@ -106,6 +131,23 @@ namespace Xipin.UIAITools
         {
             var index = note.IndexOf('：');
             return index > 0 ? note.Substring(0, index) : note;
+        }
+
+        static int SeverityOrder(string severity)
+        {
+            switch (severity)
+            {
+                case "Error":
+                    return 0;
+                case "Warning":
+                    return 1;
+                case "Review":
+                    return 2;
+                case "Info":
+                    return 3;
+                default:
+                    return 4;
+            }
         }
 
         struct MarkdownSection

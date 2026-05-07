@@ -11,14 +11,14 @@
 ## 包边界
 
 - 包保持可复用，不编译引用 `GameApp`、`MotionFramework`、`com.xipin.lframework`、YooAsset 或其他项目业务程序集。
-- 项目路径、日志目录、YooAsset 地址规则通过 `UIAIToolsProfile` 表达。
+- 工作目录、报告目录、YooAsset 地址规则通过 `UIAIToolsProfile` 表达。
 - 项目控件类型差异通过 `UIControlCatalog` 或字符串角色识别表达，不在包内直接依赖业务控件类型。
 - 菜单、batch 参数适配、最终资源写入和 prefab 生成执行器放在宿主项目。
 
 ## 代码原则
 
 - 默认只做确定性扫描、报告、草稿和 gate，不自动执行资源迁移或 prefab 覆盖。
-- AI 改版能力只能输出 `UIRedesignDraft`、`UIReplacementPlan`、外部输入包和风险项；真正替换必须由宿主确认流程执行。
+- 当前产品主线只有自动整理、复用反查、自动制作 UI、新版换皮；不要恢复已删除的历史实验链路。
 - 新增公共 API 要有明确调用方，不添加占位扩展点。
 - 内部函数之间信任契约，不补防御性 null 检查；只在文件选择、命令行参数、外部 provider 返回等边界做验证。
 
