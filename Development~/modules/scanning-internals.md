@@ -35,7 +35,7 @@
 - `UIAssetScanService.Csv.cs` 保留 CSV 转义和列表展示格式。
 - `UIAssetScanService.Models.cs` 保留扫描内部临时数据结构。
 - `UIReportFiles.cs` 保留 CSV 文件名和表头契约，`UIReportValidationService.cs` 保留报告完整性检查；扫描入口写完核心 CSV 后会立即复用该验证。
-- `UIReportCsv.cs` 保留 CSV 读取工具，供摘要和 AI Brief 复用。
+- `UIReportCsv.cs` 保留 CSV 读取工具，供摘要、复用反查和自动制作契约复用。
 - `UIScanSummaryService.cs` 读取已生成 CSV，按需写出 `UIAIToolsSummary.md` 和 `UIAIToolsPanelFocus.md`；扫描摘要会校验固定 Markdown 标题结构，面板实测清单会按当前 Top 面板顺序校验动态标题结构，不参与扫描写表流程。
 
 ## 项目差异入口
@@ -45,6 +45,6 @@
 ## 修改原则
 
 - 新报告优先复用已有事实映射，不重复遍历全项目。
-- 改字段名会影响外部表格和 AI 阅读流程，先看 `report-contracts.md`。
+- 改字段名会影响外部表格和自动化阅读流程，先看 `report-contracts.md`。
 - 静态 DrawCall 结果是排序和定位依据，不写成运行时真实性能结论。
 - 扫描服务不做资源迁移，迁移只能由宿主项目确认流程执行。

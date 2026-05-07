@@ -28,7 +28,7 @@ UIImageSearchService.SearchReuseByImageBatch(profile, catalog);
 
 ## 输出
 
-结果写入 `UIReuseSearchResults.csv`，写出后会立即复验表头、CSV 行结构、候选资源路径、图集路径和 prefab 引用路径。核心字段：
+结果写入 `UIReuseSearchResults.csv`，并同步生成 `UIReuseSearchSummary.md`。写出后会立即复验表头、CSV 行结构、候选资源路径、图集路径、prefab 引用路径和 Markdown 顶层标题顺序。核心字段：
 
 | 字段 | 含义 |
 | --- | --- |
@@ -41,6 +41,8 @@ UIImageSearchService.SearchReuseByImageBatch(profile, catalog);
 | `PrefabRefs` | 直接引用候选图片的 prefab。 |
 | `Advice` | 复用建议。 |
 | `Reason` | 建议原因。 |
+
+`UIReuseSearchSummary.md` 会保留查询图、结果 CSV 和带引号的 `Re-run Search` 命令，并汇总建议分布和 Score 最低的候选。
 
 ## 使用建议
 

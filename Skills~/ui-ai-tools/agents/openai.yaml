@@ -1,4 +1,4 @@
 interface:
   display_name: "Xipin UI AI Tools"
-  short_description: "Unity UI工具包的扫描、复用反查和AI改版工作流"
+  short_description: "Unity UI工具包的自动整理、复用反查、自动制作和新版换皮工作流"
   default_prompt: "Use $ui-ai-tools to work with com.xipin.ui-ai-tools in this Unity project."

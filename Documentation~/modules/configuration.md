@@ -9,12 +9,13 @@
 
 | 字段 | 默认值 | 用途 |
 | --- | --- | --- |
+| `workspaceRoot` | `Assets/UIAITools` | 工具工作区，保存配置、制作/换皮工作包和需要 Unity 导入的工具资产。 |
 | `prefabRoot` | `Assets/Bundle/Prefab` | 扫描 UI prefab 的根目录。 |
 | `artUIRoot` | `Assets/Art/UI` | 设计图、源图和参考图目录。 |
 | `uiAtlasRoot` | `Assets/Bundle/UIAtlas` | SpriteAtlas 和图集图片目录。 |
 | `uiTextureRoot` | `Assets/Bundle/UITexture` | 大图、散图和按名加载图片目录。 |
 | `mapTextureRoot` | `Assets/Bundle/MapTexture` | 地图图片目录。 |
-| `logRoot` | `Logs` | CSV 报告输出目录。 |
+| `logRoot` | `UIAIToolsReports` | CSV/Markdown/JSON 报告输出根目录，不放进 `Assets`。 |
 | `yooAssetAddressRule` | `AddressByFileName` | 记录当前 YooAsset 地址规则。 |
 | `textSearchRoots` | `Assets/Scripts`、`Assets/Bundle/Config`、`Assets/Bundle/Setting` | 按文件名弱匹配图片引用的文本目录。 |
 | `excludeMapFromUITriage` | `true` | UI 审计时排除地图图片。 |
@@ -48,3 +49,5 @@ UIAssetScanService.Run(profile, catalog);
 ## 配置边界
 
 项目专属路径、控件名和地址规则应进入 profile 或 catalog。包内代码不要直接依赖宿主项目程序集，也不要把业务控件写成强类型引用。
+
+Profile 和 Catalog 推荐放在 `Assets/UIAITools/Settings`。`Assets/Art/UI` 只作为项目美术扫描根，不作为工具输出目录。

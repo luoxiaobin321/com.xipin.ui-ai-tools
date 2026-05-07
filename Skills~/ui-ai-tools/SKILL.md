@@ -1,98 +1,120 @@
 ---
 name: ui-ai-tools
-description: Unity Editor workflow skill for Xipin UI AI Tools, a UPM package named com.xipin.ui-ai-tools. Use when Codex needs to work with this package or its UI image triage, atlas auditing, reuse-image search, static DrawCall reports, UIAIToolsProfile or UIControlCatalog configuration, project adapter menus, or AI redesign draft, dry-run, execution-plan, and replacement-plan contracts. Use for reviewing package output CSV files, changing package code, or advising a Unity project that has installed this package.
+description: Unity Editor workflow skill for Xipin UI AI Tools, a UPM package named com.xipin.ui-ai-tools. Use when Codex works on UI image triage, atlas auditing, reuse-image search, automatic UI creation contracts, skin prefab contracts, UIAIToolsProfile, UIControlCatalog, project adapter menus, or workbench integration.
 ---
 
 # UI AI Tools
 
-Use this skill for `com.xipin.ui-ai-tools`. Treat the package docs as the source of truth and load only the module needed for the task.
+Use this skill for `com.xipin.ui-ai-tools`. Keep context small: read the package `AGENTS.md`, then load only the module needed for the current task.
 
-## Locate The Package
+## Locate
 
 Prefer the current workspace package:
 
-- `Packages/com.xipin.ui-ai-tools`
+```text
+Packages/com.xipin.ui-ai-tools
+```
 
-If the task runs from another Unity project, find the package with:
+From another Unity project, find it with:
 
 ```powershell
 rg --files -g package.json | rg "com\.xipin\.ui-ai-tools[\\/]package\.json"
 ```
 
-If this skill is loaded from the package itself, the package root is two directories above this `SKILL.md`.
-
 ## Read By Task
 
-For usage or integration questions, read `Documentation~/README.md` first, then only the needed module:
+Usage or integration:
 
-- Configuration, paths, roles: `Documentation~/modules/configuration.md`
-- Scan reports, image triage, atlas and DrawCall auditing: `Documentation~/modules/scanning.md`
-- Screenshot crop to existing-image search: `Documentation~/modules/reuse-search.md`
-- AI redesign draft provider, saved draft JSON, dry-run, execution plan gates, external input package, Prompt files, and reference copy lists: `Documentation~/modules/ai-redesign.md`
-- Host-side confirmed replacement executor contract: `Documentation~/modules/host-apply-executor.md`
-- UI creation brief, layout draft, asset needs, and dry-run contract: `Documentation~/modules/ui-creation.md`
-- Host-side UI prefab draft generator contract: `Documentation~/modules/ui-creation-host-generator.md`
-- Host project menu, default profile, command entry: `Documentation~/modules/project-adapter.md`
+| Task | Module |
+| --- | --- |
+| paths, profile, roles | `Documentation~/modules/configuration.md` |
+| scan reports and DrawCall audit | `Documentation~/modules/scanning.md` |
+| cropped image reuse search | `Documentation~/modules/reuse-search.md` |
+| automatic UI creation contract | `Documentation~/modules/ui-creation.md` |
+| host UI prefab generator contract | `Documentation~/modules/ui-creation-host-generator.md` |
+| host menu, batch, workbench adapter | `Documentation~/modules/project-adapter.md` |
 
-For package code changes, read `Development~/README.md` first, then only the needed module:
+Package changes:
 
-- Package boundary and allowed dependencies: `Development~/modules/package-boundary.md`
-- `UIAssetScanService` internals: `Development~/modules/scanning-internals.md`
-- CSV filenames, fields, and meanings: `Development~/modules/report-contracts.md`
-- AI request, draft, dry-run, and execution contracts: `Development~/modules/ai-contracts.md`
-- UI creation contract boundaries: `Development~/modules/ui-creation-contracts.md`
+| Task | Module |
+| --- | --- |
+| package boundary | `Development~/modules/package-boundary.md` |
+| scan internals | `Development~/modules/scanning-internals.md` |
+| report names, fields, Markdown contracts | `Development~/modules/report-contracts.md` |
+| automatic UI creation boundary | `Development~/modules/ui-creation-contracts.md` |
 
-Always read package `AGENTS.md` before editing package files.
+## Rules
 
-## Working Rules
-
-- Keep package code reusable. Do not add references to `GameApp`, `MotionFramework`, `com.xipin.lframework`, or other host project assemblies.
-- Put project-specific paths in `UIAIToolsProfile`, control role names in `UIControlCatalog`, and host menu/command wrappers in the Unity project.
+- Keep package code reusable. Do not reference `GameApp`, `MotionFramework`, `com.xipin.lframework`, YooAsset, or host assemblies.
+- Put project paths in `UIAIToolsProfile`, roles in `UIControlCatalog`, and menus/batch wrappers/final prefab generation in the host project.
 - Use package APIs from namespace `Xipin.UIAITools`.
 - Do not move assets, overwrite prefabs, edit SpriteAtlas pack lists, or modify YooAsset settings unless the user explicitly asks for execution.
-- For proposed migrations, output a plan first and include source path, target path, reason, risk, and verification.
-- When moving Unity assets after explicit approval, use Unity `AssetDatabase.MoveAsset` or another GUID-preserving Unity path. Do not copy-delete images manually.
+- Proposed migrations must list source path, target path, reason, risk, and verification; approved Unity asset moves should preserve GUIDs.
 
-## Report Workflow
+## Current Priority
 
-Prefer existing CSV outputs under the configured `UIAIToolsProfile.logRoot` before inventing new analysis:
+The product still has four lines: automatic organization, reuse search, automatic UI creation, and new skinning. Current priority is the skinning line for “target concept + provided PNG crops”.
 
-- Start with `UIAssetTriageReport.csv`, `UIAssetTriagePlan.csv`, `UIReuseIndex.csv`, and `UIPrefabOptimizationTargets.csv`.
-- Use prefab and batch details only when diagnosing a specific panel or DrawCall issue.
-- Use `UIComponentCandidateIndex.csv`, `UIComponentCandidateIndexSummary.md`, and `UIComponentCandidateReview.csv` when preparing automatic UI creation component libraries; regenerated review CSVs preserve manual columns by `ComponentId`.
-- Use `UIComponentCandidateIndexService.Validate` as the lightweight gate after generating the component candidate index.
-- Use `UICreationBriefTemplateService.Generate` for automatic UI creation input templates; it writes JSON only and must not create prefabs.
-- Use `UILayoutDraftTemplateService.Generate` after a creation brief exists; it writes a JSON draft template and still must not create prefabs.
-- Use `UICreationLayoutDryRunService.Run` and `ValidateNoErrors` before any host-side UI prefab generator; the package still only reports.
-- Use `UICreationHostGenerateChecklistService.Generate` and `ValidateNoBlockingSteps` to hand a passed layout dry-run to a host-side generator; referenced component candidates must still be `Approved` in the current `UIComponentCandidateReview.csv`, the current dry-run target and component list must match the checklist, and the checklist must explicitly say `Gate：Passed`.
-- Keep the actual UI prefab draft generator in the host project and use `Documentation~/modules/ui-creation-host-generator.md` for its input and result report contract.
-- Use `UIReuseSearchResults.csv` when matching a cropped image against existing project art.
-- Use `UIReplacementPlanDryRun.csv`, `UIReplacementPlanDryRunSummary.md`, `UIReplacementExecutionPlan.csv`, `UIReplacementExecutionPlanSummary.md`, `UIReplacementHostApplyChecklist.md`, and `UIRedesignPackage_*.md` before any host-side replacement flow.
-- Use `UIReplacementExternalInputPackage.json/md`, `UIReplacementExternalGenerationTasks.md`, `UIReplacementExternalPromptPack.md`, `UIReplacementExternalPromptItems.md`, `UIReplacementExternalPrompt_*.md`, and `UIReplacementExternalReferenceCopyList.md` when preparing external image generation; these reports include placement directory groups, prompt item directory indexes, acceptance checks, reference source directory groups, and rerun steps.
-- Use `UIReplacementPendingInputReadiness.csv` and `UIReplacementPendingInputReadinessService.ValidateNoMissing` as the gate before host-side replacement execution; Missing and Invalid both block.
-- Check warning/review distributions, missing previews/assets/atlases, target-atlas image counts, and blocking gate status before advising host-side execution.
-- Keep any confirmed replacement executor in the host project; the package supplies the contract and gates, not resource mutation code.
-- For automatic UI creation, keep package work at brief, layout draft, asset needs, dry-run, and confirmation checklist until a host-side generator is explicitly implemented.
-- When a provider is involved, keep it limited to returning `UIRedesignDraft`; save the draft JSON, then run dry-run, gates, execution plan, host checklist, and manifest. For an existing AI-edited JSON, use the package flow that snapshots the draft JSON before the same gates and records both input and snapshot paths in the manifest.
-- Treat `Advice` as a first pass. Confirm risky moves with prefab refs, text/config refs, owner mismatch, image size, atlas membership, and YooAsset address rules.
+Skin work uses:
+
+```text
+Assets/UIAITools/Skinning/<UIName>
+UIAIToolsReports/Skinning/<UIName>
+```
+
+For a new or non-UIVipcard target, start with `GenerateSkinHostAdapterChecklistBatch` and use `host-adapter-checklist.md` to define host crop ids, dynamic nodes, binding moves, and `_v2.prefab` generator mapping. The checklist should include a directly reusable `Re-run Checklist` command.
+Existing `host-adapter-checklist.md` reports are revalidated for section order and traceability fields by the skin contract, so update generation, validation, and real reports together.
+
+For provided-crops skinning, prefer:
+
+```text
+GenerateProvidedSkinAssetCropSpecBatch
+ValidateProvidedSkinAssetCropsBatch
+GenerateProvidedSkinReviewPackageBatch
+```
+
+`-uiInputImageFolder` must be an `Assets` folder. The crop spec entry may run before that folder exists so it can produce the art handoff spec first. The spec, validation, review-package, and debug step entries should all block a PNG file path or a folder outside `Assets`; validation, registration, prefab draft, and review-package entries should write the crop spec and a blocked crop check when the folder is missing, is a PNG file, or is outside `Assets`. The crop spec should include a directly reusable `Validate Command`, and the crop check report should include a directly reusable `Re-run Check` command. The detected-layout, asset-crops and skin-layout summaries should include `Manifest` plus their source JSON paths, and validation should reload the generated JSON bodies too. Runtime cleanup and post-cleanup reports should include `Manifest` plus directly reusable `Re-run Check`, `Re-run Checklist`, or `Re-run Readiness` commands. The binding report should include a directly reusable `Re-run Binding` command, and provided-crops binding/visual subreports should include a directly reusable `Review Package Command`. Existing provided-crops, visual, binding, and apply subreports are revalidated for section order, rerun commands, and source fields. Input-path failures should tell the user to fix `-uiInputImageFolder` first. `GenerateProvidedSkinReviewPackageBatch` should write a successful `review-package.md` with `Package Gate: Passed` and a directly reusable `Re-run` command, and should still write `Gate：Blocked` `review-package.md` for input, crop gate, or package gate failures, including prefab generation/cleanup gates, binding gates, and target/preview image gates.
+
+Skin JSON under `Assets/UIAITools/Skinning` must be covered by `skin.json` or manifest.generated paths; new skin JSON files must register matching load and validation logic instead of remaining orphan work-package files.
+
+Use `UseProvidedSkinAssetCropsBatch` and `GenerateProvidedSkinPrefabDraftBatch` only for debugging the registration and draft generation steps. `review-package.md` is the human review entry.
+
+If real art is unavailable, do not stop. In the host project, use or add a synthetic smoke entry such as `GenerateSyntheticProvidedSkinReviewPackageBatch` to generate temporary concept/crops and exercise the same review-package chain.
+
+## Reports
+
+Prefer existing outputs under `UIAIToolsProfile.logRoot` before inventing analysis:
+
+- scanning: `UIAssetTriageReport.csv`, `UIAssetTriagePlan.csv`, `UIReuseIndex.csv`, `UIPrefabOptimizationTargets.csv`
+- reuse search: `UIReuseSearchResults.csv`, `UIReuseSearchSummary.md`
+- automatic UI creation: `UIComponentCandidateIndex.csv`, `UIComponentCandidateReview.csv`, `UICreationLayoutDryRun.csv`, `UICreationHostGenerateChecklist.md`
+- skinning: `skin.json`, `Generated/asset-crops.json`, `Generated/skin-layout.json`, `Prefabs/<SourcePrefabName>_v2.prefab`, `host-adapter-checklist.md`, `provided-crops-spec.md`, `provided-crops-check.md`, `binding-check.md`, `visual-check.md`, `review-package.md`, `apply-checklist.md`, `auto-build-notes.md`
+- host maintenance: `UIVipcardSpriteBackfillReport.md`, `UIVipcardTitleTextBindingCheck.md`
+
+For automatic UI creation reports, keep the Markdown resumable: component candidate summaries should point to the candidate/review CSVs and source batch sequence CSV, layout dry-run summaries should point to the layout draft JSON and dry-run CSV, and host generate checklists should point back to the layout draft JSON plus the dry-run/checklist rerun entries.
+
+For host prefab generation reports, `UICreationHostGenerateResult.md` should include `Layout Draft JSON`, target prefab, result CSV, host checklist, layout dry-run CSV, component candidate review CSV, and directly reusable `Re-run Generate` / `Re-run Validate` commands.
+
+For scan and reuse-search reports, keep the Markdown resumable too: `UIAIToolsSummary.md` and `UIAIToolsPanelFocus.md` should include source CSVs plus validate/rerun entries, and `UIReuseSearchSummary.md` should include the query image, results CSV, and directly reusable `Re-run Search` command.
+
+The host master plan validates existing non-skin Markdown report section order for scan summaries, panel focus, reuse-search summary, component candidate summary, layout dry-run summary, host generate checklist/result, global runtime checklist, and UIVipcard host maintenance reports.
+
+For global runtime update checklists, keep `checklist.md` resumable with the batch name, work package, `replace-map.csv`, `Images` folder, and directly reusable `Re-run Template` / `Re-run Validate` commands.
+
+The host master plan revalidates existing real CSV headers and readability for scanning core CSVs, `UIReuseSearchResults.csv`, component candidate CSVs, layout dry-run, host generate result, skin `generate-result.csv`, and global runtime `replace-map.csv`; new real CSVs must be registered in that validation, and CSV field changes must update generation, validation, and real artifacts together.
+
+The host master plan also reloads existing Creation brief/layout template JSON under `UIAIToolsReports/Creation`; new Creation JSON files must register matching load and validation logic.
+
+For host-specific maintenance reports, avoid sidecar text islands. `UIVipcardSpriteBackfillReport.md` should include the target prefab, related prefabs, report path, directly reusable `Re-run Report` / `Re-run Validate` commands, empty Sprite list, and a clear note that reporting/validation do not modify prefab assets.
+
+`UIVipcardTitleTextBindingCheck.md` should include the source prefab, report path, directly reusable `Re-run Check` command, title text nodes, parent nodes, layout values, background image state, and per-row status so host prefab structure changes cannot silently break title text binding.
 
 ## Verification
 
-Use the cheapest checks that prove the change. If generated `.csproj` files exist, a focused build is acceptable:
+Use the cheapest check that proves the change. For skin work, start with:
 
-```powershell
-dotnet build Xipin.UIAITools.Editor.csproj
-dotnet build GameApp.Editor.csproj
+```text
+UIAssetTriageScanner.ValidateSkinContractBatch
 ```
 
-When `.csproj` files are absent, prefer Unity batchmode and build arguments from the current project path instead of hardcoding a machine path:
-
-```powershell
-$project = (Get-Location).Path
-$args = @('-quit','-batchmode','-nographics','-projectPath',$project,'-executeMethod','UIAssetTriageScanner.ValidateReports','-logFile','Logs/UIReportValidation.log')
-Start-Process -FilePath $env:UNITY_EXE -ArgumentList $args -Wait -PassThru -WindowStyle Hidden
-```
-
-For redesign workflow changes, also run the package preparation batch on a known prefab sample when available.
-
-If `UNITY_EXE` is not configured or Unity is already open, report that clearly and fall back to static checks.
+For screenshots, remove `-nographics`. If `.csproj` files exist, focused `dotnet build Xipin.UIAITools.Editor.csproj` or `dotnet build GameApp.Editor.csproj` is acceptable.
