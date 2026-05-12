@@ -33,7 +33,7 @@ namespace Xipin.UIAITools
             window.manifestPath = SelectedManifestPath();
             window.Show();
             if (EditorApplication.isPlaying)
-                window.ShowPreview();
+                window.ShowOverlayPreview();
         }
 
         void OnEnable()
@@ -47,10 +47,12 @@ namespace Xipin.UIAITools
         void OnGUI()
         {
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
-            EditorGUILayout.HelpBox("仅用于 Unity Editor Play Mode。预览实例会挂到包内临时 Canvas，不替换宿主 prefab。", MessageType.Info);
+            EditorGUILayout.HelpBox("仅用于 Unity Editor。临时 Canvas 预览不替换宿主 prefab；真实运行时替换会在进入 Play 前临时覆盖源 prefab 内容，退出 Play 自动恢复。", MessageType.Info);
             DrawManifestPicker();
             EditorGUILayout.Space();
-            DrawActions();
+            DrawOverlayActions();
+            EditorGUILayout.Space();
+            DrawRealRuntimeActions();
             DrawStatus();
             EditorGUILayout.EndScrollView();
         }
@@ -77,14 +79,15 @@ namespace Xipin.UIAITools
             manifestPath = manifests[nextIndex];
         }
 
-        void DrawActions()
+        void DrawOverlayActions()
         {
+            EditorGUILayout.LabelField("临时 Canvas 预览", EditorStyles.boldLabel);
             using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying))
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("打开预览"))
-                        ShowPreview();
+                    if (GUILayout.Button("打开临时预览"))
+                        ShowOverlayPreview();
                     using (new EditorGUI.DisabledScope(!UISkinRuntimePreviewService.IsPreviewing))
                     {
                         if (GUILayout.Button("关闭预览"))
@@ -99,16 +102,41 @@ namespace Xipin.UIAITools
                 EditorGUILayout.HelpBox("先进入 Play Mode，再打开预览。", MessageType.Warning);
         }
 
+        void DrawRealRuntimeActions()
+        {
+            EditorGUILayout.LabelField("真实运行时替换", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox("进入 Play 前临时把 source prefab 内容替换成换皮 prefab，游戏仍按原 UI 入口加载。退出 Play 会自动恢复源 prefab。", MessageType.None);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode || UISkinRuntimePrefabOverrideService.IsActive))
+                {
+                    if (GUILayout.Button("真实替换并进入 Play"))
+                        StartRealRuntimePreview();
+                }
+                using (new EditorGUI.DisabledScope(!UISkinRuntimePrefabOverrideService.IsActive))
+                {
+                    if (GUILayout.Button("恢复源 Prefab"))
+                        UISkinRuntimePrefabOverrideService.Restore();
+                }
+            }
+
+            if (UISkinRuntimePrefabOverrideService.IsActive)
+                EditorGUILayout.HelpBox("真实替换已生效。退出 Play Mode 时会自动恢复源 prefab。", MessageType.Warning);
+        }
+
         void DrawStatus()
         {
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("当前 Manifest", manifestPath);
-            EditorGUILayout.LabelField("预览状态", UISkinRuntimePreviewService.IsPreviewing ? "已打开" : "未打开");
+            EditorGUILayout.LabelField("临时 Canvas 预览", UISkinRuntimePreviewService.IsPreviewing ? "已打开" : "未打开");
+            EditorGUILayout.LabelField("真实运行时替换", UISkinRuntimePrefabOverrideService.IsActive ? "已替换" : "未替换");
             if (!string.IsNullOrEmpty(UISkinRuntimePreviewService.LastMessage))
                 EditorGUILayout.HelpBox(UISkinRuntimePreviewService.LastMessage, MessageType.None);
+            if (!string.IsNullOrEmpty(UISkinRuntimePrefabOverrideService.LastMessage))
+                EditorGUILayout.HelpBox(UISkinRuntimePrefabOverrideService.LastMessage, MessageType.None);
         }
 
-        void ShowPreview()
+        void ShowOverlayPreview()
         {
             try
             {
@@ -118,6 +146,20 @@ namespace Xipin.UIAITools
             catch (Exception ex)
             {
                 UISkinRuntimePreviewService.LastMessage = ex.Message;
+                Debug.LogError(ex);
+            }
+        }
+
+        void StartRealRuntimePreview()
+        {
+            try
+            {
+                UISkinRuntimePreviewService.Close();
+                UISkinRuntimePrefabOverrideService.ApplyAndEnterPlay(manifestPath);
+            }
+            catch (Exception ex)
+            {
+                UISkinRuntimePrefabOverrideService.LastMessage = ex.Message;
                 Debug.LogError(ex);
             }
         }

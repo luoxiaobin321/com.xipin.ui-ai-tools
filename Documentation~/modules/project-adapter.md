@@ -41,7 +41,10 @@ Tools/UIAITools/初始化宿主工作区
 Tools/UIAITools/新版换皮/运行时预览窗口
 ```
 
-这个窗口只在 Unity Editor Play Mode 内工作。它读取 `skin.json` 的 `generated.outputPrefabPath`，用 `AssetDatabase` 加载 `_v2.prefab`，挂到包内临时 Screen Space Overlay Canvas；不调用宿主 `OpenPanel`、不注册宿主 UI 管理器、不替换正式 prefab。选中 `skin.json` 时也可以从 Project 右键菜单 `Assets/UIAITools/运行时预览 skin.json` 打开。退出 Play Mode、按 Esc 或点击窗口里的关闭按钮会销毁预览实例。
+这个窗口只在 Unity Editor 内工作，提供两种预览：
+
+- `临时 Canvas 预览`：Play Mode 中读取 `skin.json` 的 `generated.outputPrefabPath`，用 `AssetDatabase` 加载 `_v2.prefab`，挂到包内临时 Screen Space Overlay Canvas；不调用宿主 `OpenPanel`、不注册宿主 UI 管理器、不替换正式 prefab。选中 `skin.json` 时也可以从 Project 右键菜单 `Assets/UIAITools/运行时预览 skin.json` 打开。退出 Play Mode、按 Esc 或点击窗口里的关闭按钮会销毁预览实例。
+- `真实运行时替换`：从 Edit Mode 点击 `真实替换并进入 Play`，包会先备份 `sourcePrefabPath` 指向的 prefab 文件，再把 `generated.outputPrefabPath` 指向的 `_v2.prefab` 内容临时写到源 prefab 路径，保留源 `.meta` 和 GUID。游戏仍按原 UI 入口、原资源地址加载，因此脚本、按钮、数据刷新和面板生命周期走真实链路。退出 Play Mode、点击 `恢复源 Prefab`，或下次 Editor 检测到遗留状态时，会把备份写回源 prefab。这个能力只用于编辑器预览，不代表正式替换，也不修改 SpriteAtlas、YooAsset 配置或 player 构建资源。
 
 宿主推荐另行只暴露一个业务工作台菜单：
 

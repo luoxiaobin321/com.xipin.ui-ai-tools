@@ -7,7 +7,7 @@
 - 纯 Editor 工具、扫描服务、报告生成、JSON/CSV/Markdown 契约验证。
 - 与项目无关的数据结构、dry-run、gate、manifest、Prompt、布局/切图契约和报告。
 - 自动皮肤 prefab 生成的通用 schema、JSON 校验、Markdown 汇总和 dry-run/gate。
-- Unity Editor Play Mode 内的通用换皮预览窗口；只能通过 `skin.json` 和 `AssetDatabase` 预览 `_v2.prefab`，不能依赖宿主 UI 框架。
+- Unity Editor Play Mode 内的通用换皮预览窗口；可以通过 `skin.json` 和 `AssetDatabase` 临时 Canvas 预览 `_v2.prefab`，也可以在编辑器内临时热替换 `sourcePrefabPath` 的 prefab 文件并在退出 Play 后恢复，不能依赖宿主 UI 框架。
 - 通过 `UIAIToolsProfile`、`UIControlCatalog` 表达的路径、控件角色和项目规则。
 - 不依赖业务程序集的 Unity API、UGUI、TextMeshPro 能力。
 
@@ -16,7 +16,7 @@
 - 菜单和 batch 薄包装。
 - 业务程序集、业务控件类型、MotionFramework、GameApp、YooAsset 直接调用。
 - 真正移动资源、写 prefab、改 SpriteAtlas、改 YooAsset 配置的执行器。
-- Development Build、真机包或宿主资源系统里的运行时预览加载 adapter。
+- Development Build、真机包或宿主资源系统里的运行时预览加载 adapter，以及任何正式资源替换流程。
 - UIVipcard 这类具体界面的字段语义、按钮/奖励格/spine gate、目标图规则识别和皮肤 prefab 生成器。
 - 测试样本、真实 prefab、profile、catalog、截图和日志。
 

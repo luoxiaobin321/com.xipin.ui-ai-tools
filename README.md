@@ -16,7 +16,7 @@
 
 - 资源治理：图片归类、图集审计、复用反查、prefab 依赖和 DrawCall 静态风险报告。
 - 新版换皮 prefab 生成：定义 `skin.json`、`detected-layout.json`、`asset-crops.json`、`skin-layout.json` 等通用契约；宿主负责具体 prefab 生成和业务 gate。
-- 新版换皮运行时预览：在 Unity Editor Play Mode 中读取 `skin.json`，把 `_v2.prefab` 挂到包内临时 Canvas，只预览不替换宿主 prefab。
+- 新版换皮运行时预览：在 Unity Editor Play Mode 中读取 `skin.json`；可用临时 Canvas 查看静态运行效果，也可临时热替换 `sourcePrefabPath` 让游戏原 UI 入口真实加载 `_v2.prefab`，退出 Play 后自动恢复。
 - 自动制作 UI 输入链路：需求 Brief、组件候选索引、布局草稿、资源需求清单、prefab 生成前 dry-run、宿主确认清单和宿主生成结果只读校验。
 
 ## 文档入口
