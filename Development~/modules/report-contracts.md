@@ -40,16 +40,16 @@ CSV、JSON 和 Markdown 报告是包与宿主流程之间的契约。改文件�
 | --- | --- |
 | 扫描摘要 | `UIAIToolsSummary.md`、`UIAIToolsPanelFocus.md` |
 | 复用反查 | `UIReuseSearchResults.csv`、`UIReuseSearchSummary.md` |
-| 新版换皮 | `Assets/UIAITools/Skinning/<UIName>/skin.json`、`Generated/detected-layout.json`、`Generated/asset-crops.json`、`Generated/skin-layout.json`、`Prefabs/<SourcePrefabName>_v2.prefab`、`UIAIToolsReports/Skinning/<UIName>/host-adapter-checklist.md`、`provided-crops-spec.md`、`provided-crops-check.md`、`binding-check.md`、`visual-check.md`、`review-package.md`、`apply-checklist.md`、`auto-build-notes.md` |
+| 新版换皮 | `Assets/UIAITools/Skinning/<UIName>/skin.json`、`Generated/detected-layout.json`、`Generated/asset-crops.json`、`Generated/skin-layout.json`、`Prefabs/<SourcePrefabName>_v2.prefab`、`Assets/UIAITools/Reports/Skinning/<UIName>/art-package-import.md`、`host-adapter-checklist.md`、`provided-crops-spec.md`、`provided-crops-check.md`、`binding-check.md`、`visual-check.md`、`review-package.md`、`apply-checklist.md`、`auto-build-notes.md` |
 | 组件候选 | `UIComponentCandidateIndex.csv`、`UIComponentCandidateIndexSummary.md`、`UIComponentCandidateReview.csv` |
 | 自动制作 UI | `UICreationLayoutDryRun.csv`、`UICreationLayoutDryRunSummary.md`、`UICreationHostGenerateChecklist.md` |
 | 宿主草稿生成 | `UICreationHostGenerateResult.csv`、`UICreationHostGenerateResult.md` |
-| 全局动态资源更新 | `Assets/UIAITools/GlobalRuntimeUpdates/<BatchName>/replace-map.csv`、`UIAIToolsReports/GlobalRuntimeUpdates/<BatchName>/checklist.md` |
-| 宿主专项维护 | `UIAIToolsReports/GlobalRuntimeUpdates/UIVipcardSpriteBackfillReport.md`、`UIAIToolsReports/Skinning/UIVipcardTitleTextBindingCheck.md` |
+| 全局动态资源更新 | `Assets/UIAITools/GlobalRuntimeUpdates/<BatchName>/replace-map.csv`、`Assets/UIAITools/Reports/GlobalRuntimeUpdates/<BatchName>/checklist.md` |
+| 宿主专项维护 | `Assets/UIAITools/Reports/GlobalRuntimeUpdates/UIVipcardSpriteBackfillReport.md`、`Assets/UIAITools/Reports/Skinning/UIVipcardTitleTextBindingCheck.md` |
 
 这些按需报告不属于核心扫描 CSV 契约，但各自的生成和 validate 入口仍会校验结构。宿主 master plan 还会检查已存在真实 CSV 的表头和可读性，覆盖扫描核心 CSV、`UIReuseSearchResults.csv`、组件候选 CSV、layout dry-run、host generate result、skin `generate-result.csv` 和 global runtime `replace-map.csv`；新增真实 CSV 必须纳入该校验，防止旧实物报告在生成逻辑变化后静默漂移。
 
-宿主 master plan 还会复读 `UIAIToolsReports/Creation` 下已存在的 Creation brief/layout template JSON；新增 Creation JSON 必须登记对应加载和校验逻辑，不能只写出文件不纳入契约。
+宿主 master plan 还会复读 `<logRoot>/Creation` 下已存在的 Creation brief/layout template JSON；新增 Creation JSON 必须登记对应加载和校验逻辑，不能只写出文件不纳入契约。
 
 扫描摘要不能成为孤岛：`UIAIToolsSummary.md` 和 `UIAIToolsPanelFocus.md` 应包含 `输入` 区，列出来源 CSV、`ValidateReports` 和可直接复用的重跑入口。
 
@@ -59,7 +59,9 @@ CSV、JSON 和 Markdown 报告是包与宿主流程之间的契约。改文件�
 
 `provided-crops-spec.md` 是“目标效果图 + 已提供切图”换皮分支的交付清单，应按 `Inputs`、`Required Crops` 的顺序分段，并包含 `Id`、文件路径、源区域、参考矩形、`Expected Size` 和带引号的 `Validate Command`。`-uiInputImageFolder` 必须是 `Assets` 下的文件夹；切图交付清单入口允许目录尚未创建，方便先出交付规格；“切图交付清单”“验证已提供切图”“一键验收包”三条入口遇到误选 PNG 文件或 `Assets` 外路径时都必须阻断。
 
-`provided-crops-check.md` 是同一批切图的体检报告，应按 `Inputs`、`Gate Summary`、`Crop Rows` 的顺序分段，并包含通过/阻断数量、带引号的 `Re-run Check` 命令、实际尺寸、`Expected Size`、状态和阻断原因；缺少 PNG、解码失败、尺寸过小或尺寸不等于 `Expected Size` 都必须阻断。验证、登记、草稿和一键验收入口遇到切图目录不存在、误选 PNG 文件或 `Assets` 外路径时，也要写出 `provided-crops-spec.md` 和 `Gate：Blocked` 的 `provided-crops-check.md`，列出必需文件名，方便补齐后重跑；输入路径本身非法时下一步应提示先修正 `-uiInputImageFolder`。
+`art-package-import.md` 是可视化换皮主流程的美术包导入报告，应记录源 prefab、项目外美术目录、自动推导的皮肤名、工作包、manifest、识别到的目标效果图、复制后的 `Source/concept.png`、切图来源目录、复制到 `Textures` 的切图数量、每张切图的来源/目标路径、AI/语义映射报告路径，以及一键验收包状态。`art-package-map.md` 应记录 AI provider、模型、映射 gate、每个内部槽位对应的任意命名切图、置信度和原因。宿主不要从效果图自动裁切缺失素材；缺少可匹配切图时生成透明占位图并在报告标记缺失。AI 超时或不可用时，重跑不得覆盖上一轮可见工作区素材，应标记低置信兜底或保留旧图并提示重新 AI 映射。美术按运行时画面和功能设计即可，不需要照旧工程切图结构。美术目录只读；重跑只覆盖工作区复制件。
+
+`provided-crops-check.md` 是同一批内部槽位切图的体检报告，应按 `Inputs`、`Gate Summary`、`Crop Rows` 的顺序分段，并包含通过/阻断数量、带引号的 `Re-run Check` 命令、实际尺寸、`Expected Size`、状态和阻断原因；缺少 PNG、解码失败或尺寸过小必须阻断，尺寸不等于 `Expected Size` 时提示按效果图槽位适配但不阻断。宿主生成器应按新制作处理，效果图识别区域决定静态视觉位置和目标大小，图标、角色和徽章按槽位等比缩放，允许放大或缩小；按钮、底板、资源条和页签等框体按槽位九宫适配；源 Prefab 只作为功能绑定、热区、运行时文案和数据节点来源。验证、登记、草稿和一键验收入口遇到切图目录不存在、误选 PNG 文件或 `Assets` 外路径时，也要写出 `provided-crops-spec.md` 和 `Gate：Blocked` 的 `provided-crops-check.md`，列出必需文件名，方便补齐后重跑；输入路径本身非法时下一步应提示先修正 `-uiInputImageFolder`。
 
 `host-adapter-checklist.md` 是新 UI 或非 UIVipcard 换皮前的宿主接入清单，应包含 `Gate`、源 prefab、建议工作包、报告目录、现有适配器、带引号的 `Re-run Checklist` 命令、prefab 结构快照、宿主适配工作项、切图命名建议和验证顺序。它只读源 prefab 并生成 Markdown，不生成 prefab、图片或正式资源。现有 `host-adapter-checklist.md` 会被换皮验证复查章节顺序和可追溯字段，避免接入清单在生成逻辑变化后静默漂移。
 

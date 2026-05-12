@@ -16,7 +16,14 @@ public static partial class UIAssetScanService
         get
         {
             if (profile == null)
-                profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+            {
+                profile = AssetDatabase.LoadAssetAtPath<UIAIToolsProfile>(UIAIToolsHostWorkspaceInitializer.ProfilePath);
+                if (profile == null)
+                {
+                    profile = ScriptableObject.CreateInstance<UIAIToolsProfile>();
+                    profile.logRoot = UIAIToolsHostWorkspaceInitializer.ReportsRoot;
+                }
+            }
             return profile;
         }
         set { profile = value; }
@@ -27,7 +34,11 @@ public static partial class UIAssetScanService
         get
         {
             if (catalog == null)
-                catalog = ScriptableObject.CreateInstance<UIControlCatalog>();
+            {
+                catalog = AssetDatabase.LoadAssetAtPath<UIControlCatalog>(UIAIToolsHostWorkspaceInitializer.CatalogPath);
+                if (catalog == null)
+                    catalog = ScriptableObject.CreateInstance<UIControlCatalog>();
+            }
             return catalog;
         }
         set { catalog = value; }

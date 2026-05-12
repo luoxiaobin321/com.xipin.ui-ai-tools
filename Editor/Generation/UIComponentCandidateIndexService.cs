@@ -94,8 +94,9 @@ namespace Xipin.UIAITools
                 var indexRow = IndexRow("Component00000001");
                 WriteIndexCsv(profile, new[] { indexRow });
                 ReadIndexRows(profile);
-                var summaryPath = GenerateSummary(profile, "UIAIToolsReports/Scanning/UIPrefabBatchSequence.csv");
-                RequireLine(summaryPath, "- Source Batch Sequence CSV: `UIAIToolsReports/Scanning/UIPrefabBatchSequence.csv`");
+                var sourceBatchSequencePath = UIAIToolsHostWorkspaceInitializer.ReportsRoot + "/Scanning/UIPrefabBatchSequence.csv";
+                var summaryPath = GenerateSummary(profile, sourceBatchSequencePath);
+                RequireLine(summaryPath, "- Source Batch Sequence CSV: `" + sourceBatchSequencePath + "`");
                 RequireLine(summaryPath, "- Re-run Index: `UIAssetTriageScanner.GenerateComponentCandidateIndexBatch`");
                 ExpectFailure("duplicate_index_row", "Duplicate UI component candidate id", () => WriteIndexCsv(profile, new[] { indexRow, indexRow }), () => ReadIndexRows(profile));
                 ExpectFailure("bad_index_sample_prefab_path", "SamplePrefabs path is invalid", () => WriteIndexCsv(profile, new[]

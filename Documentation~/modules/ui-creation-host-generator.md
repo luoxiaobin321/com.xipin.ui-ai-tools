@@ -6,7 +6,7 @@
 
 ## 输入
 
-默认读取 `UIAIToolsReports/Creation` 下的这些产物：
+默认读取 `UIAIToolsProfile.logRoot/Creation` 下的这些产物：
 
 - `UICreationBriefTemplate_*.json`
 - `UILayoutDraftTemplate_*.json` 或补齐后的 layout draft JSON

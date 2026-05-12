@@ -6,15 +6,17 @@
 
 ## 包边界
 
-- 只包含 Unity Editor 工具，不包含运行时代码。
+- 只包含 Unity Editor 工具，不包含 player 运行时代码；Play Mode 预览也由 Editor 程序集提供。
 - 不编译引用 `GameApp`、`MotionFramework`、`com.xipin.lframework` 或 YooAsset。
 - 项目差异通过 `UIAIToolsProfile`、`UIControlCatalog` 和宿主薄包装接入。
+- 包会初始化 `Assets/UIAITools` 宿主工作区，把配置、工作包、报告和宿主契约集中到一个可删除目录。
 - 包内默认只生成 CSV、Markdown、JSON、Prompt、manifest 和 gate 报告，不直接修改 prefab、图片、SpriteAtlas 或 YooAsset 配置。
 
 ## 能力范围
 
 - 资源治理：图片归类、图集审计、复用反查、prefab 依赖和 DrawCall 静态风险报告。
 - 新版换皮 prefab 生成：定义 `skin.json`、`detected-layout.json`、`asset-crops.json`、`skin-layout.json` 等通用契约；宿主负责具体 prefab 生成和业务 gate。
+- 新版换皮运行时预览：在 Unity Editor Play Mode 中读取 `skin.json`，把 `_v2.prefab` 挂到包内临时 Canvas，只预览不替换宿主 prefab。
 - 自动制作 UI 输入链路：需求 Brief、组件候选索引、布局草稿、资源需求清单、prefab 生成前 dry-run、宿主确认清单和宿主生成结果只读校验。
 
 ## 文档入口

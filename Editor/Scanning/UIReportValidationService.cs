@@ -157,7 +157,7 @@ namespace Xipin.UIAITools
                     throw new Exception("Missing UI AI Tools core report header: " + report);
                 ValidateHeaderContract(report, UIReportFiles.CoreReportHeaders[report]);
             }
-            if (UIReportFiles.GetPath("UIAIToolsReports/", "Report.csv") != "UIAIToolsReports/Report.csv" || UIReportFiles.GetPath("UIAIToolsReports\\", "Report.csv") != "UIAIToolsReports/Report.csv")
+            if (UIReportFiles.GetPath(UIAIToolsHostWorkspaceInitializer.ReportsRoot + "/", "Report.csv") != UIAIToolsHostWorkspaceInitializer.ReportsRoot + "/Report.csv" || UIReportFiles.GetPath(UIAIToolsHostWorkspaceInitializer.ReportsRoot + "\\", "Report.csv") != UIAIToolsHostWorkspaceInitializer.ReportsRoot + "/Report.csv")
                 throw new Exception("UI AI Tools report path contract failed.");
             Debug.Log("UI AI Tools report file contract validation passed.");
         }

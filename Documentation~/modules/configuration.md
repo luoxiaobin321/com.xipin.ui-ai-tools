@@ -6,6 +6,7 @@
 
 通过 `Create > Xipin > UI AI Tools > Profile` 创建。
 默认路径、文本扫描根和地图排除开关可用 `ValidateProfileContractBatch` 复验。
+新接入项目也可以直接使用菜单 `Tools/UIAITools/初始化宿主工作区`，包会创建 `Assets/UIAITools/Settings/UIAIToolsProfile.asset` 和 `Assets/UIAITools/Settings/UIControlCatalog.asset`，并把新 profile 的报告根设为 `Assets/UIAITools/Reports`。
 
 | 字段 | 默认值 | 用途 |
 | --- | --- | --- |
@@ -15,7 +16,7 @@
 | `uiAtlasRoot` | `Assets/Bundle/UIAtlas` | SpriteAtlas 和图集图片目录。 |
 | `uiTextureRoot` | `Assets/Bundle/UITexture` | 大图、散图和按名加载图片目录。 |
 | `mapTextureRoot` | `Assets/Bundle/MapTexture` | 地图图片目录。 |
-| `logRoot` | `UIAIToolsReports` | CSV/Markdown/JSON 报告输出根目录，不放进 `Assets`。 |
+| `logRoot` | 类默认 `UIAIToolsReports`；初始化器创建值为 `Assets/UIAITools/Reports` | CSV/Markdown/JSON 报告输出根目录。新接入推荐放进 `Assets/UIAITools/Reports`，方便删除包时一并清理。 |
 | `yooAssetAddressRule` | `AddressByFileName` | 记录当前 YooAsset 地址规则。 |
 | `textSearchRoots` | `Assets/Scripts`、`Assets/Bundle/Config`、`Assets/Bundle/Setting` | 按文件名弱匹配图片引用的文本目录。 |
 | `excludeMapFromUITriage` | `true` | UI 审计时排除地图图片。 |
@@ -51,3 +52,20 @@ UIAssetScanService.Run(profile, catalog);
 项目专属路径、控件名和地址规则应进入 profile 或 catalog。包内代码不要直接依赖宿主项目程序集，也不要把业务控件写成强类型引用。
 
 Profile 和 Catalog 推荐放在 `Assets/UIAITools/Settings`。`Assets/Art/UI` 只作为项目美术扫描根，不作为工具输出目录。
+
+## 宿主工作区初始化
+
+`UIAIToolsHostWorkspaceInitializer` 会在交互式 Unity Editor 加载包后自动补齐宿主工作区，也可以通过菜单手动重跑。
+命令行或 CI 可直接执行 `Xipin.UIAITools.UIAIToolsHostWorkspaceInitializer.EnsureBatch`。
+
+```text
+Assets/UIAITools
+Assets/UIAITools/Settings
+Assets/UIAITools/Skinning
+Assets/UIAITools/Creation
+Assets/UIAITools/GlobalRuntimeUpdates
+Assets/UIAITools/Reports
+Assets/UIAITools/Docs
+```
+
+初始化器只写包专用目录，不移动业务资源，不修改正式 prefab、SpriteAtlas 或 YooAsset 配置。移除包时，删除 UPM 依赖和 `Assets/UIAITools` 即可清理干净。

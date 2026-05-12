@@ -249,7 +249,7 @@ namespace Xipin.UIAITools
 
         public static string ReportFolder(string skinFolder)
         {
-            return "UIAIToolsReports/Skinning/" + Path.GetFileName(skinFolder.TrimEnd('/', '\\').Replace('\\', '/'));
+            return UIAIToolsHostWorkspaceInitializer.ReportsRoot + "/Skinning/" + Path.GetFileName(skinFolder.TrimEnd('/', '\\').Replace('\\', '/'));
         }
 
         public static void ValidateContract()
@@ -448,7 +448,7 @@ namespace Xipin.UIAITools
                 paths.applyChecklistPath,
                 paths.autoBuildNotesPath
             })
-                if (!path.StartsWith(ReportFolder(manifest) + "/", StringComparison.Ordinal))
+                if (!IsManifestReportPath(manifest, path))
                     throw new Exception("UISkin report path must be under report folder: " + path);
         }
 
@@ -601,8 +601,19 @@ namespace Xipin.UIAITools
         static void RequireReportPath(string path, string field)
         {
             RequireNonEmpty(path, field);
-            if (!path.StartsWith("UIAIToolsReports/", StringComparison.Ordinal) || path.Contains("\\") || path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal))
+            if ((!path.StartsWith(UIAIToolsHostWorkspaceInitializer.ReportsRoot + "/", StringComparison.Ordinal) && !path.StartsWith("UIAIToolsReports/", StringComparison.Ordinal)) || path.Contains("\\") || path.Contains("/../") || path.EndsWith("/..", StringComparison.Ordinal))
                 throw new Exception("UISkin " + field + " report path is invalid: " + path);
+        }
+
+        static bool IsManifestReportPath(UISkinManifest manifest, string path)
+        {
+            return path.StartsWith(ReportFolder(manifest) + "/", StringComparison.Ordinal)
+                   || path.StartsWith(LegacyReportFolder(manifest.skinFolder) + "/", StringComparison.Ordinal);
+        }
+
+        static string LegacyReportFolder(string skinFolder)
+        {
+            return "UIAIToolsReports/Skinning/" + Path.GetFileName(skinFolder.TrimEnd('/', '\\').Replace('\\', '/'));
         }
 
         static void RequireImagePath(string path, string field)
