@@ -6,13 +6,14 @@
 
 - 配置项目路径、日志目录和控件角色：读 `modules/configuration.md`。
 - 安装或修复宿主工作区：使用菜单 `Tools/UIAITools/初始化宿主工作区`，细节读 `modules/configuration.md`。
+- 打开通用工作台：使用菜单 `Tools/UIAITools/打开工作台`，细节读 `modules/project-adapter.md`。
 - 生成 UI 图片、图集、prefab 和 DrawCall 静态审计报告：读 `modules/scanning.md`。
 - 从效果图裁剪图反查工程已有图片：读 `modules/reuse-search.md`。
 - 规划自动制作 UI 的输入契约、布局草稿和 dry-run：读 `modules/ui-creation.md`。
 - 设计宿主 UI prefab 草稿生成器：读 `modules/ui-creation-host-generator.md`。
 - 在 Unity Editor Play Mode 里预览新版换皮 prefab：菜单 `Tools/UIAITools/新版换皮/运行时预览窗口`，细节读 `modules/project-adapter.md`。
-- 给项目加菜单、默认配置或命令行入口：读 `modules/project-adapter.md`。
-- 已有 UI 新版换皮走 `Editor/Skinning` 契约和宿主工作台入口；旧自动设计效果图和资源替换实验链路已删除。
+- 给项目加专项菜单、默认配置或命令行入口：读 `modules/project-adapter.md`。
+- 已有 UI 新版换皮走 `Editor/Skinning` 契约、包内通用工作台和宿主专项适配；旧自动设计效果图和资源替换实验链路已删除。
 
 ## 包定位
 

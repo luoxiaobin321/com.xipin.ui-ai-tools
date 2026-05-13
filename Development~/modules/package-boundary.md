@@ -5,6 +5,7 @@
 ## 可以进入包内
 
 - 纯 Editor 工具、扫描服务、报告生成、JSON/CSV/Markdown 契约验证。
+- 不依赖业务框架的通用 Editor 工作台菜单和窗口。
 - 与项目无关的数据结构、dry-run、gate、manifest、Prompt、布局/切图契约和报告。
 - 自动皮肤 prefab 生成的通用 schema、JSON 校验、Markdown 汇总和 dry-run/gate。
 - Unity Editor Play Mode 内的通用换皮预览窗口；可以通过 `skin.json` 和 `AssetDatabase` 临时 Canvas 预览 `_v2.prefab`，也可以在编辑器内临时热替换 `sourcePrefabPath` 的 prefab 文件并在退出 Play 后恢复，不能依赖宿主 UI 框架。
@@ -13,7 +14,7 @@
 
 ## 必须留在宿主
 
-- 菜单和 batch 薄包装。
+- 项目专项菜单和 batch 薄包装。
 - 业务程序集、业务控件类型、MotionFramework、GameApp、YooAsset 直接调用。
 - 真正移动资源、写 prefab、改 SpriteAtlas、改 YooAsset 配置的执行器。
 - Development Build、真机包或宿主资源系统里的运行时预览加载 adapter，以及任何正式资源替换流程。

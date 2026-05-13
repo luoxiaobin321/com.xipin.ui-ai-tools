@@ -1,6 +1,6 @@
 # 项目适配模块
 
-本包不直接绑定业务菜单。包内只提供通用宿主工作区初始化菜单和不依赖业务框架的换皮 Play Mode 预览窗口；宿主项目仍只写薄包装：加载 `UIAIToolsProfile`、`UIControlCatalog`，把工作台按钮或 batch 参数转成包 API 调用。
+本包提供通用 Editor 工作台、宿主工作区初始化菜单和不依赖业务框架的换皮 Play Mode 预览窗口。宿主项目只保留项目专项适配：具体 prefab 生成器、业务 gate、batch 薄包装和正式资源替换确认流程。
 
 ## 默认路径
 
@@ -35,24 +35,21 @@ Assets/UIAITools/Skinning/<UIName>/Prefabs/<SourcePrefabName>_v2.prefab
 Tools/UIAITools/初始化宿主工作区
 ```
 
-包会提供一个通用换皮运行时预览窗口：
+包会提供通用工作台和通用换皮运行时预览窗口：
 
 ```text
+Tools/UIAITools/打开工作台
 Tools/UIAITools/新版换皮/运行时预览窗口
 ```
+
+工作台组织四个页签：自动整理、复用反查、自动制作、新版换皮。它只调用包内通用扫描、报告、JSON 契约、dry-run、宿主清单和运行时预览能力，不直接依赖 `GameApp`、`MotionFramework`、YooAsset 或具体业务面板。
 
 这个窗口只在 Unity Editor 内工作，提供两种预览：
 
 - `临时 Canvas 预览`：Play Mode 中读取 `skin.json` 的 `generated.outputPrefabPath`，用 `AssetDatabase` 加载 `_v2.prefab`，挂到包内临时 Screen Space Overlay Canvas；不调用宿主 `OpenPanel`、不注册宿主 UI 管理器、不替换正式 prefab。选中 `skin.json` 时也可以从 Project 右键菜单 `Assets/UIAITools/运行时预览 skin.json` 打开。退出 Play Mode、按 Esc 或点击窗口里的关闭按钮会销毁预览实例。
 - `真实运行时替换`：从 Edit Mode 点击 `真实替换并进入 Play`，包会先备份 `sourcePrefabPath` 指向的 prefab 文件，再把 `generated.outputPrefabPath` 指向的 `_v2.prefab` 内容临时写到源 prefab 路径，保留源 `.meta` 和 GUID。游戏仍按原 UI 入口、原资源地址加载，因此脚本、按钮、数据刷新和面板生命周期走真实链路。退出 Play Mode、点击 `恢复源 Prefab`，或下次 Editor 检测到遗留状态时，会把备份写回源 prefab。这个能力只用于编辑器预览，不代表正式替换，也不修改 SpriteAtlas、YooAsset 配置或 player 构建资源。
 
-宿主推荐另行只暴露一个业务工作台菜单：
-
-```text
-Tools/UIAITools/打开工作台
-```
-
-工作台组织四个页签：自动整理、复用反查、自动制作、新版换皮。旧自动设计效果图和资源替换实验链路不再作为入口。
+旧自动设计效果图和资源替换实验链路不再作为入口。
 
 ## Batch 参数
 
@@ -135,7 +132,7 @@ UIVipcard 标题文字绑定专项报告 `UIVipcardTitleTextBindingCheck.md` 应
 
 ## 宿主职责
 
-- 决定业务工作台 UI、命令行入口和项目专属默认配置资产。
+- 决定项目专项菜单、命令行入口和项目专属默认配置资产。
 - 按功能给 `profile.logRoot` 加子目录。
 - 提供组件候选人工确认流程和组件 prefab。
 - 为具体界面实现皮肤槽位、规则识别、切图登记和独立新版 prefab 生成器；新 UI 先生成 `host-adapter-checklist.md`。

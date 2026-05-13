@@ -20,6 +20,13 @@ namespace Xipin.UIAITools
             window.Show();
         }
 
+        public static void OpenForManifest(string path)
+        {
+            var window = GetWindow<UISkinRuntimePreviewWindow>("换皮运行时预览");
+            window.manifestPath = path;
+            window.Show();
+        }
+
         [MenuItem("Assets/UIAITools/运行时预览 skin.json", true)]
         static bool ValidatePreviewSelectedManifest()
         {
