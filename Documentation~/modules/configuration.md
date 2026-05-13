@@ -53,6 +53,18 @@ UIAssetScanService.Run(profile, catalog);
 
 Profile 和 Catalog 推荐放在 `Assets/UIAITools/Settings`。`Assets/Art/UI` 只作为项目美术扫描根，不作为工具输出目录。
 
+## 全局 AI 配置
+
+通用工作台顶部提供 `全局 AI 配置`，用于整个 UIAITools，而不是某个换皮页签的局部设置。
+
+| 配置 | 用途 |
+| --- | --- |
+| `AI API Key` | OpenAI Responses API Key；保存到当前机器 EditorPrefs，不写入项目资产。 |
+| `AI 接口地址` | Responses API 地址，默认 `https://api.openai.com/v1/responses`；也支持填 base url，工具会补齐 `/v1/responses`。 |
+| `AI 模型` | 默认 `gpt-5.5`，可按项目需要改成当前可用视觉模型。 |
+
+读取优先级：全局 `UIAITools.AI.*` EditorPrefs、旧换皮 `UIAITools.Skinning.OpenAI.*` EditorPrefs、环境变量、Codex `config.toml`、默认值。保存全局配置时也会同步写旧换皮 key，方便仍保留旧宿主换皮窗口的项目继续读取同一份配置。
+
 ## 宿主工作区初始化
 
 `UIAIToolsHostWorkspaceInitializer` 会在交互式 Unity Editor 加载包后自动补齐宿主工作区，也可以通过菜单手动重跑。
@@ -66,6 +78,17 @@ Assets/UIAITools/Creation
 Assets/UIAITools/GlobalRuntimeUpdates
 Assets/UIAITools/Reports
 Assets/UIAITools/Docs
+Assets/UIAITools/Docs/Training/Host
+Assets/UIAITools/Docs/Training/PackageCandidates
 ```
 
 初始化器只写包专用目录，不移动业务资源，不修改正式 prefab、SpriteAtlas 或 YooAsset 配置。移除包时，删除 UPM 依赖和 `Assets/UIAITools` 即可清理干净。
+
+## 训练沉淀路由
+
+工作台 `训练沉淀` 页签把经验分成两类：
+
+- `宿主专项`：写到 `Assets/UIAITools/Docs/Training/Host`，用于当前项目路径、业务控件、UI 专项规则和临时经验。
+- `包内通用候选`：写到 `Assets/UIAITools/Docs/Training/PackageCandidates`，表示可能进入 `com.xipin.ui-ai-tools` 的跨项目规则。训练记录不会直接改 `Packages/com.xipin.ui-ai-tools` 内的源码、文档或文件名；后续由包维护流程提升到包仓库。
+
+历史训练和旧文档用 `自动维护旧沉淀` 处理。它会读取 `Assets/UIAITools/Docs`、`Assets/UIAITools/Reports` 和当前包内 Markdown，输出 `Assets/UIAITools/Docs/Training/legacy-triage.md`，并自动维护 `Host/legacy-auto-maintained.md`、`PackageCandidates/legacy-auto-maintained.md` 和 `PackageCandidates/package-maintenance-items.md`；这个过程不移动旧文件，也不修改包内文件名。

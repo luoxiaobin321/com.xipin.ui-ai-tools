@@ -42,7 +42,26 @@ Tools/UIAITools/打开工作台
 Tools/UIAITools/新版换皮/运行时预览窗口
 ```
 
-工作台组织四个页签：自动整理、复用反查、自动制作、新版换皮。它只调用包内通用扫描、报告、JSON 契约、dry-run、宿主清单和运行时预览能力，不直接依赖 `GameApp`、`MotionFramework`、YooAsset 或具体业务面板。
+工作台组织五个页签：自动整理、复用反查、自动制作、新版换皮、训练沉淀。它只调用包内通用扫描、报告、JSON 契约、dry-run、宿主清单、AI 辅助、训练记录和运行时预览能力，不直接依赖 `GameApp`、`MotionFramework`、YooAsset 或具体业务面板。
+
+工作台顶部的 `全局 AI 配置` 供所有 AI 辅助能力共用；新版换皮页签里的 `AI 映射美术包` 会读取 `skin.json`、目标效果图和 `Textures` 下的候选切图，调用 Responses API 输出：
+
+```text
+Assets/UIAITools/Skinning/<UIName>/Generated/ai-mapping-request.md
+Assets/UIAITools/Skinning/<UIName>/Generated/ai-mapping.json
+Assets/UIAITools/Skinning/<UIName>/Generated/ai-mapping-response.json
+Assets/UIAITools/Reports/Skinning/<UIName>/ai-mapping.md
+```
+
+`ai-mapping.json` 只作为候选建议，后续由宿主 adapter 接入现有切图登记、prefab 生成、绑定验证和真实运行时预览；它不会直接修改正式 prefab、图集或 YooAsset 配置。
+
+`训练沉淀` 页签按记录类型写入宿主工作区：
+
+- `宿主专项`：`Assets/UIAITools/Docs/Training/Host`。
+- `包内通用候选`：`Assets/UIAITools/Docs/Training/PackageCandidates`。
+
+即使在正式工程里训练，也不会自动写入 `Packages/com.xipin.ui-ai-tools` 或改包内文件名；包内候选由包维护流程提升到包仓库。
+旧沉淀可通过 `自动维护旧沉淀` 归档，输出 `Assets/UIAITools/Docs/Training/legacy-triage.md`、`Host/legacy-auto-maintained.md`、`PackageCandidates/legacy-auto-maintained.md` 和 `PackageCandidates/package-maintenance-items.md`。
 
 这个窗口只在 Unity Editor 内工作，提供两种预览：
 

@@ -11,12 +11,16 @@
 - 项目差异通过 `UIAIToolsProfile`、`UIControlCatalog` 和宿主薄包装接入。
 - 包会初始化 `Assets/UIAITools` 宿主工作区，把配置、工作包、报告和宿主契约集中到一个可删除目录。
 - 包内提供 `Tools/UIAITools/打开工作台` 通用 Editor 工作台。
+- 包内提供全局 AI 配置和换皮 AI 映射助手；AI 输出只作为候选 JSON 和报告，不直接写正式资源。
+- 包内提供训练沉淀路由，把宿主专项经验和包内通用候选分开写到宿主工作区，避免训练时直接改包文件。
 - 包内默认只生成 CSV、Markdown、JSON、Prompt、manifest 和 gate 报告，不直接修改 prefab、图片、SpriteAtlas 或 YooAsset 配置。
 
 ## 能力范围
 
 - 资源治理：图片归类、图集审计、复用反查、prefab 依赖和 DrawCall 静态风险报告。
 - 通用工作台：自动整理、复用反查、自动制作和新版换皮的包内入口。
+- AI 辅助：全局配置 OpenAI Responses API，读取效果图和候选切图生成换皮槽位映射建议。
+- 训练沉淀：记录宿主专项规则和包内通用候选，包内候选后续由包维护流程提升到包仓库。
 - 新版换皮 prefab 生成：定义 `skin.json`、`detected-layout.json`、`asset-crops.json`、`skin-layout.json` 等通用契约；宿主负责具体 prefab 生成和业务 gate。
 - 新版换皮运行时预览：在 Unity Editor Play Mode 中读取 `skin.json`；可用临时 Canvas 查看静态运行效果，也可临时热替换 `sourcePrefabPath` 让游戏原 UI 入口真实加载 `_v2.prefab`，退出 Play 后自动恢复。
 - 自动制作 UI 输入链路：需求 Brief、组件候选索引、布局草稿、资源需求清单、prefab 生成前 dry-run、宿主确认清单和宿主生成结果只读校验。

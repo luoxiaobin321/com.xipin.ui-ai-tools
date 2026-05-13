@@ -6,6 +6,8 @@
 
 - 纯 Editor 工具、扫描服务、报告生成、JSON/CSV/Markdown 契约验证。
 - 不依赖业务框架的通用 Editor 工作台菜单和窗口。
+- 通用 AI 配置、Responses API 客户端和只输出候选 JSON/报告的 AI 辅助分析。
+- 宿主工作区内的训练沉淀路由：宿主专项与包内通用候选分开记录；包内候选不自动改包源码。
 - 与项目无关的数据结构、dry-run、gate、manifest、Prompt、布局/切图契约和报告。
 - 自动皮肤 prefab 生成的通用 schema、JSON 校验、Markdown 汇总和 dry-run/gate。
 - Unity Editor Play Mode 内的通用换皮预览窗口；可以通过 `skin.json` 和 `AssetDatabase` 临时 Canvas 预览 `_v2.prefab`，也可以在编辑器内临时热替换 `sourcePrefabPath` 的 prefab 文件并在退出 Play 后恢复，不能依赖宿主 UI 框架。

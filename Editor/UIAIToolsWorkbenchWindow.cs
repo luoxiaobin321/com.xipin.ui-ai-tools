@@ -9,7 +9,8 @@ namespace Xipin.UIAITools
 {
     public sealed class UIAIToolsWorkbenchWindow : EditorWindow
     {
-        readonly string[] tabs = { "自动整理", "复用反查", "自动制作", "新版换皮" };
+        readonly string[] tabs = { "自动整理", "复用反查", "自动制作", "新版换皮", "训练沉淀" };
+        readonly string[] trainingScopes = { "宿主专项", "包内通用候选" };
         int tab;
         Vector2 scroll;
         string queryImagePath = "";
@@ -23,6 +24,13 @@ namespace Xipin.UIAITools
         string briefJsonPath = "";
         string layoutDraftJsonPath = "";
         string skinManifestPath = "";
+        string aiApiKey = "";
+        string aiResponsesUrl = "";
+        string aiModel = "";
+        bool showAISettings;
+        int trainingScope;
+        string trainingTitle = "";
+        string trainingBody = "";
         string lastMessage = "";
 
         [MenuItem("Tools/UIAITools/打开工作台", false, 1)]
@@ -36,6 +44,7 @@ namespace Xipin.UIAITools
             UIAIToolsHostWorkspaceInitializer.Ensure();
             if (string.IsNullOrEmpty(skinManifestPath))
                 skinManifestPath = UISkinRuntimePreviewService.FindManifestPaths().FirstOrDefault() ?? "";
+            LoadAISettings();
         }
 
         void OnGUI()
@@ -49,8 +58,10 @@ namespace Xipin.UIAITools
                 DrawReuseSearch();
             else if (tab == 2)
                 DrawCreation();
-            else
+            else if (tab == 3)
                 DrawSkinning();
+            else
+                DrawTraining();
             EditorGUILayout.EndScrollView();
             if (!string.IsNullOrEmpty(lastMessage))
                 EditorGUILayout.HelpBox(lastMessage, MessageType.None);
@@ -69,7 +80,38 @@ namespace Xipin.UIAITools
                 if (GUILayout.Button("打开报告根", GUILayout.Width(120)))
                     OpenFolder(Profile().logRoot);
             }
+            DrawAISettings();
             EditorGUILayout.Space();
+        }
+
+        void DrawAISettings()
+        {
+            EditorGUILayout.LabelField("AI 配置", (string.IsNullOrEmpty(aiApiKey) ? "未配置" : "已配置") + " / " + aiModel);
+            showAISettings = EditorGUILayout.Foldout(showAISettings, "全局 AI 配置", true);
+            if (!showAISettings)
+                return;
+
+            EditorGUI.indentLevel++;
+            aiResponsesUrl = EditorGUILayout.TextField("AI 接口地址", aiResponsesUrl);
+            aiModel = EditorGUILayout.TextField("AI 模型", aiModel);
+            aiApiKey = EditorGUILayout.PasswordField("AI API Key", aiApiKey);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("从 Codex 配置读取 AI 地址"))
+                {
+                    var settings = UIAIToolsAISettingsService.LoadCodexDefaults();
+                    aiResponsesUrl = settings.ResponsesUrl;
+                    aiModel = settings.Model;
+                }
+                if (GUILayout.Button("保存 AI 配置"))
+                    RunAction(() =>
+                    {
+                        UIAIToolsAISettingsService.Save(aiApiKey, aiResponsesUrl, aiModel);
+                        LoadAISettings();
+                        return "AI 配置已保存。";
+                    });
+            }
+            EditorGUI.indentLevel--;
         }
 
         void DrawScanning()
@@ -180,6 +222,8 @@ namespace Xipin.UIAITools
 
             using (new EditorGUI.DisabledScope(string.IsNullOrEmpty(skinManifestPath)))
             {
+                if (GUILayout.Button("AI 映射美术包"))
+                    RunAction(() => UISkinAIMappingService.Run(skinManifestPath));
                 if (GUILayout.Button("打开运行时预览窗口"))
                     UISkinRuntimePreviewWindow.OpenForManifest(skinManifestPath);
                 if (GUILayout.Button("打开换皮工作包"))
@@ -187,6 +231,39 @@ namespace Xipin.UIAITools
                 if (GUILayout.Button("打开换皮报告"))
                     OpenFolder(UISkinContractService.ReportFolder(Path.GetDirectoryName(skinManifestPath)));
             }
+        }
+
+        void DrawTraining()
+        {
+            EditorGUILayout.HelpBox("训练沉淀默认不写 Packages。宿主专项记录当前项目经验；包内通用候选先写到宿主工作区，后续由包维护流程提升到包仓库。", MessageType.Info);
+            trainingScope = EditorGUILayout.Popup("记录类型", trainingScope, trainingScopes);
+            trainingTitle = EditorGUILayout.TextField("标题", trainingTitle);
+            EditorGUILayout.LabelField("内容");
+            trainingBody = EditorGUILayout.TextArea(trainingBody, GUILayout.MinHeight(120));
+            using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(trainingTitle) || string.IsNullOrWhiteSpace(trainingBody)))
+            {
+                if (GUILayout.Button("记录训练沉淀"))
+                    RunAction(() => trainingScope == 0
+                        ? UIAIToolsTrainingLogService.RecordHost(trainingTitle, trainingBody)
+                        : UIAIToolsTrainingLogService.RecordPackageCandidate(trainingTitle, trainingBody));
+            }
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("打开宿主专项记录"))
+                    OpenFolder(UIAIToolsTrainingLogService.HostRoot);
+                if (GUILayout.Button("打开包内候选记录"))
+                    OpenFolder(UIAIToolsTrainingLogService.PackageCandidateRoot);
+            }
+            if (GUILayout.Button("自动维护旧沉淀"))
+                RunAction(UIAIToolsTrainingLogService.GenerateLegacyTriageReport);
+        }
+
+        void LoadAISettings()
+        {
+            var settings = UIAIToolsAISettingsService.Load();
+            aiApiKey = settings.ApiKey;
+            aiResponsesUrl = settings.ResponsesUrl;
+            aiModel = settings.Model;
         }
 
         UICreationBrief CreationBrief()

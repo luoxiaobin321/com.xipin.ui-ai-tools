@@ -32,7 +32,10 @@ namespace Xipin.UIAITools
             Root + "/Docs/UIControlContracts",
             Root + "/Docs/UIControlContracts/Controls",
             Root + "/Docs/UIControlContracts/Variants",
-            Root + "/Docs/ReusableCandidates"
+            Root + "/Docs/ReusableCandidates",
+            Root + "/Docs/Training",
+            Root + "/Docs/Training/Host",
+            Root + "/Docs/Training/PackageCandidates"
         };
 
         static UIAIToolsHostWorkspaceInitializer()
@@ -84,6 +87,8 @@ namespace Xipin.UIAITools
             ExpectFolder(ReportsRoot + "/Skinning");
             ExpectFolder(Root + "/Docs/UIControlContracts/Controls");
             ExpectFolder(Root + "/Docs/UIControlContracts/Variants");
+            ExpectFolder(Root + "/Docs/Training/Host");
+            ExpectFolder(Root + "/Docs/Training/PackageCandidates");
             var profile = CreateHostProfile();
             try
             {
@@ -96,6 +101,8 @@ namespace Xipin.UIAITools
             }
             ExpectContains(HostReadme(), "删除这个文件夹");
             ExpectContains(ControlContractsReadme(), "按需读取");
+            ExpectContains(TrainingReadme(), "不直接修改包源码");
+            ExpectContains(TrainingReadme(), "自动维护旧沉淀");
             Debug.Log("UI AI Tools host workspace initializer contract validation passed.");
         }
 
@@ -175,6 +182,7 @@ namespace Xipin.UIAITools
             WriteIfMissing(Root + "/Docs/UIControlContracts/Controls/README.md", ControlContractsFolderReadme(), report);
             WriteIfMissing(Root + "/Docs/UIControlContracts/Variants/README.md", VariantContractsFolderReadme(), report);
             WriteIfMissing(Root + "/Docs/ReusableCandidates/README.md", ReusableCandidatesReadme(), report);
+            WriteIfMissing(Root + "/Docs/Training/README.md", TrainingReadme(), report);
         }
 
         static void WriteIfMissing(string path, string content, UIAIToolsHostWorkspaceReport report)
@@ -230,6 +238,14 @@ namespace Xipin.UIAITools
         {
             return "# 可复用候选\n\n"
                    + "这里记录后续可能抽成通用预设、插件或独立组件的候选项。还没有复用价值证据前，只记录候选和触发场景，不提前设计接口。\n";
+        }
+
+        static string TrainingReadme()
+        {
+            return "# 训练沉淀\n\n"
+                   + "- `Host`：只适用于当前宿主项目的规则、路径、业务控件和专项经验。\n"
+                   + "- `PackageCandidates`：可能进入 `com.xipin.ui-ai-tools` 包的通用候选。这里先记录候选，不直接修改包源码或文件名；后续由包维护流程提升到包仓库。\n\n"
+                   + "工作台可以自动维护旧沉淀：把历史文档和报告归入宿主专项、包内通用候选和包维护处理项；过程只读旧内容，不移动文件，也不从宿主直接修改包源码。\n";
         }
 
         static void ExpectFolder(string path)

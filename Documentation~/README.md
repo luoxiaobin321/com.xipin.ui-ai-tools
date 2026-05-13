@@ -5,6 +5,8 @@
 ## 能力地图
 
 - 配置项目路径、日志目录和控件角色：读 `modules/configuration.md`。
+- 配置整个工具共用的大模型能力：在 `Tools/UIAITools/打开工作台` 顶部展开 `全局 AI 配置`，细节读 `modules/configuration.md`。
+- 区分宿主专项与包内通用候选训练记录：在 `Tools/UIAITools/打开工作台` 的 `训练沉淀` 页签记录，细节读 `modules/configuration.md`。
 - 安装或修复宿主工作区：使用菜单 `Tools/UIAITools/初始化宿主工作区`，细节读 `modules/configuration.md`。
 - 打开通用工作台：使用菜单 `Tools/UIAITools/打开工作台`，细节读 `modules/project-adapter.md`。
 - 生成 UI 图片、图集、prefab 和 DrawCall 静态审计报告：读 `modules/scanning.md`。
